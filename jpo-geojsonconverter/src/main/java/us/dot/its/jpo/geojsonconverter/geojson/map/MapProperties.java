@@ -20,6 +20,18 @@ public class MapProperties {
     @JsonProperty("connected_lanes")
     private Integer[] connectedLanes;
 
+    @JsonProperty("connects_to_signal_group")
+    private Integer connectsToSignalGroupId;
+
+    public Integer getConnectsToSignalGroup() {
+        return connectsToSignalGroupId;
+    }
+
+    
+    public void setConnectsToSignalGroup(int connectsToSignalGroupId) {
+        this.connectsToSignalGroupId = connectsToSignalGroupId;
+    }
+
     public void setLaneId(Integer laneId) {
         this.laneId = laneId;
     }

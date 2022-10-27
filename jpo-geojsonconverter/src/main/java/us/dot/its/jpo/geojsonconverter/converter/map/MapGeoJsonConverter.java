@@ -76,9 +76,18 @@ public class MapGeoJsonConverter implements Transformer<Void, OdeMapData, KeyVal
             mapProps.setEgressPath(lane.getLaneAttributes().getDirectionalUse().get("egressPath"));
             mapProps.setIngressApproach(lane.getIngressApproach() != null ? lane.getIngressApproach() : 0);
 			mapProps.setEgressApproach(lane.getEgressApproach() != null ? lane.getEgressApproach() : 0);
+            
 
             List<Integer> connectsToLaneList = new ArrayList<>();
-            if (lane.getConnectsTo() != null) {
+            if (lane.getConnectsTo() != null && lane.getConnectsTo().getConnectsTo() != null) {
+                var connectsTo = lane.getConnectsTo().getConnectsTo();
+                if (connectsTo.size() > 0) {
+                    var firstSignalGroup = connectsTo.get(0).getSignalGroup();
+                    if (firstSignalGroup != null) {
+                        mapProps.setConnectsToSignalGroup(firstSignalGroup);
+                    }
+                }
+                
                 for (int x = 0; x < lane.getConnectsTo().getConnectsTo().size(); x++) {
 					Integer connectsToLane = lane.getConnectsTo().getConnectsTo().get(x).getConnectingLane().getLane();
 					connectsToLaneList.add(connectsToLane);
