@@ -6,10 +6,15 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 public class DateJsonMapper {
 
+    private static final ObjectMapper _instance;
+
+    static {
+        _instance = new ObjectMapper();
+        _instance.registerModule(new JavaTimeModule());
+        _instance.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+    }
+
     public static ObjectMapper getInstance() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-        return objectMapper;
+        return _instance;
     }
 }
