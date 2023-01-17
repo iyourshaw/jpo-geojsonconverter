@@ -17,7 +17,7 @@
             "description": "Timestamp derived from the timestamp=DE_MinuteOfTheYear of the top level of the spat message and the timeStamp=DE_Dsecond of the IntersectionState."
         },
         "originIp": {
-            "$ref": "intersection-common.schema.json#/$defs/IPAddress"
+            "$ref": "#/$defs/IPAddress"
         },
         "name": {
             "oneOf": [
@@ -35,7 +35,7 @@
             "type": "boolean"
         },
         "validationMessages": {
-            "$ref": "intersection-common.schema.json#/$defs/ValidationMessageList"
+            "$ref": "#/$defs/ValidationMessageList"
         },
         "revision": {
             "$ref": "spat.schema.json#/$defs/J2735MsgCount"
@@ -84,7 +84,7 @@
                     ]
                 },
                 "signalGroup": {
-                    "$ref": "intersection-common.schema.json#/$defs/J2735SignalGroupID"
+                    "$ref": "#/$defs/J2735SignalGroupID"
                 },
                 "stateTimeSpeed": {
                     "$ref": "#/$defs/MovementEventList"
