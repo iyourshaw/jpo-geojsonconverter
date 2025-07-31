@@ -12,12 +12,12 @@
 
     <scm>
         <developerConnection>scm:git:https://github.com/usdot-jpo-ode/jpo-geojsonconverter.git</developerConnection>
-        <tag>jpo-geojsonconverter-usdot-3.0.0</tag>
+        <tag>jpo-geojsonconverter-usdot-3.0.1</tag>
     </scm>
 
     <groupId>usdot.jpo.ode</groupId>
     <artifactId>jpo-geojsonconverter</artifactId>
-    <version>3.0.0</version>
+    <version>3.0.1</version>
     <packaging>jar</packaging>
     <name>jpo-geojsonconverter</name>
     <description>J2735 message to GeoJSON converter for US DOT ITS JPO ODE</description>
