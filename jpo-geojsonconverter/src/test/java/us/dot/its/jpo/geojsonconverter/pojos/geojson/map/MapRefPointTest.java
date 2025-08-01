@@ -7,15 +7,16 @@ import us.dot.its.jpo.asn.j2735.r2024.Common.Elevation;
 import us.dot.its.jpo.asn.j2735.r2024.Common.Latitude;
 import us.dot.its.jpo.asn.j2735.r2024.Common.Longitude;
 import us.dot.its.jpo.asn.j2735.r2024.Common.Position3D;
+import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedPosition3D;
 
 public class MapRefPointTest {
     @Test
     public void testSetFromPosition3D() {
         MapRefPoint mapRefPoint = new MapRefPoint();
-        Position3D position3D = new Position3D();
-        Latitude latitude = new Latitude(404565300L);
-        Longitude longitude = new Longitude(-1051292800L);
-        Elevation elevation = new Elevation(16384L);
+        var position3D = new ProcessedPosition3D();
+        Integer latitude = 404565300;
+        Integer longitude = -1051292800;
+        Integer elevation = 16384;
         position3D.setLat(latitude);
         position3D.setLong_(longitude);
         position3D.setElevation(elevation);
@@ -30,7 +31,7 @@ public class MapRefPointTest {
     @Test
     public void testSetFromPosition3DNullFields() {
         MapRefPoint mapRefPoint = new MapRefPoint();
-        Position3D position3D = new Position3D();
+        var position3D = new ProcessedPosition3D();
         position3D.setLat(null);
         position3D.setLong_(null);
         position3D.setElevation(null);

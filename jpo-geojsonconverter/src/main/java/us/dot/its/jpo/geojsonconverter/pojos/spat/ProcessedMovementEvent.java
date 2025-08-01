@@ -8,8 +8,7 @@ import lombok.Data;
 import lombok.Generated;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import us.dot.its.jpo.asn.j2735.r2024.SPAT.AdvisorySpeedList;
-import us.dot.its.jpo.asn.j2735.r2024.SPAT.MovementPhaseState;
+
 
 /**
  * Contains information regarding the dynamic flow of traffic in relation to a signal group.
@@ -28,7 +27,7 @@ import us.dot.its.jpo.asn.j2735.r2024.SPAT.MovementPhaseState;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Slf4j
 public class ProcessedMovementEvent {
-    private MovementPhaseState eventState;
+    private ProcessedMovementPhaseState eventState;
     private TimingChangeDetails timing;
-    private AdvisorySpeedList speeds;
+    private ProcessedAdvisorySpeedList speeds;
 }

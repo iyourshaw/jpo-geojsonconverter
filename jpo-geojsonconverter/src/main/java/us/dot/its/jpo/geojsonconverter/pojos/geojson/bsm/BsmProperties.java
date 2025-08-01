@@ -10,10 +10,10 @@ import lombok.Data;
 import lombok.Generated;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import us.dot.its.jpo.asn.j2735.r2024.Common.BrakeSystemStatus;
-import us.dot.its.jpo.asn.j2735.r2024.Common.TransmissionState;
-import us.dot.its.jpo.asn.j2735.r2024.Common.VehicleSize;
 import us.dot.its.jpo.geojsonconverter.pojos.ProcessedValidationMessage;
+import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedBrakeSystemStatus;
+import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedTransmissionState;
+import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedVehicleSize;
 
 /**
  * Represents a processed BSM (Basic Safety Message) J2735 PositionalAccuracy.
@@ -82,12 +82,12 @@ public class BsmProperties {
     private ProcessedBsmAccelerationSet4Way accelSet;
     private ProcessedBsmPositionalAccuracy accuracy;
     private Double angle;
-    private BrakeSystemStatus brakes;
+    private ProcessedBrakeSystemStatus brakes;
     private Double heading;
     private String id;
-    private Long msgCnt;
-    private Long secMark;
-    private VehicleSize size;
+    private Integer msgCnt;
+    private Integer secMark;
+    private ProcessedVehicleSize size;
     private Double speed;
-    private TransmissionState transmission;
+    private ProcessedTransmissionState transmission;
 }

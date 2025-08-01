@@ -33,11 +33,11 @@
 				"rightFront": false,
 				"rightRear": false
 			},
-			"traction": "unavailable",
-			"abs": "unavailable",
-			"scs": "unavailable",
-			"brakeBoost": "unavailable",
-			"auxBrakes": "unavailable"
+			"traction": "UNAVAILABLE",
+			"abs": "UNAVAILABLE",
+			"scs": "UNAVAILABLE",
+			"brakeBoost": "UNAVAILABLE",
+			"auxBrakes": "UNAVAILABLE"
 		},
 		"heading": 313.25,
 		"id": "31325433",
@@ -48,6 +48,6 @@
 			"length": 570
 		},
 		"speed": 0.28,
-		"transmission": "unavailable"
+		"transmission": "UNAVAILABLE"
 	}
 }

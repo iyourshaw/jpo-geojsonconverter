@@ -7,8 +7,8 @@ import lombok.Data;
 import lombok.Generated;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import us.dot.its.jpo.asn.j2735.r2024.Common.Position3D;
 import us.dot.its.jpo.geojsonconverter.converter.FieldConversions;
+import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedPosition3D;
 
 @Data
 @Generated
@@ -28,14 +28,14 @@ public class MapRefPoint {
          *
          * @param refPoint the Position3D object containing the reference point data
          */
-        public void setFromPosition3D(Position3D refPoint) {
-                this.latitude = refPoint.getLat() != null ? FieldConversions.convertLat(refPoint.getLat().getValue())
+        public void setFromPosition3D(ProcessedPosition3D refPoint) {
+                this.latitude = refPoint.getLat() != null ? FieldConversions.convertLat(refPoint.getLat())
                                 : null;
                 this.longitude = refPoint.getLong_() != null
-                                ? FieldConversions.convertLong(refPoint.getLong_().getValue())
+                                ? FieldConversions.convertLong(refPoint.getLong_())
                                 : null;
                 this.elevation = refPoint.getElevation() != null
-                                ? FieldConversions.convertElevation(refPoint.getElevation().getValue())
+                                ? FieldConversions.convertElevation(refPoint.getElevation())
                                 : null;
         }
 }

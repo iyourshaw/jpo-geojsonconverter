@@ -10,7 +10,6 @@ import lombok.Data;
 import lombok.Generated;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import us.dot.its.jpo.asn.j2735.r2024.PersonalSafetyMessage.PersonalDeviceUserType;
 import us.dot.its.jpo.geojsonconverter.pojos.ProcessedValidationMessage;
 
 /**
@@ -63,7 +62,7 @@ public class PsmProperties {
     private List<ProcessedValidationMessage> validationMessages = null;
 
     // Payload properties
-    private PersonalDeviceUserType basicType;
+    private ProcessedPersonalDeviceUserType basicType;
     private String id;
     private Integer msgCnt;
     private Integer secMark;

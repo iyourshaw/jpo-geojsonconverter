@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 
 import com.networknt.schema.ValidationMessage;
 
+import us.dot.its.jpo.asn.j2735.r2024.Common.*;
+import us.dot.its.jpo.geojsonconverter.pojos.common.*;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.Point;
 import us.dot.its.jpo.geojsonconverter.converter.FieldConversions;
 import us.dot.its.jpo.geojsonconverter.partitioner.RsuLogKey;
@@ -26,13 +28,13 @@ import us.dot.its.jpo.geojsonconverter.pojos.geojson.bsm.DeserializedRawBsm;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.bsm.ProcessedBsm;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.bsm.ProcessedBsmAccelerationSet4Way;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.bsm.ProcessedBsmPositionalAccuracy;
+import us.dot.its.jpo.geojsonconverter.utils.BitstringUtils;
 import us.dot.its.jpo.geojsonconverter.utils.ProcessedSchemaVersions;
 import us.dot.its.jpo.geojsonconverter.validator.JsonValidatorResult;
 
 import us.dot.its.jpo.ode.model.OdeMessageFrameData;
 import us.dot.its.jpo.ode.model.OdeMessageFrameMetadata;
 import us.dot.its.jpo.asn.j2735.r2024.BasicSafetyMessage.BasicSafetyMessageMessageFrame;
-import us.dot.its.jpo.asn.j2735.r2024.Common.BSMcoreData;
 
 public class BsmProcessedJsonConverter
         implements Transformer<Void, DeserializedRawBsm, KeyValue<RsuLogKey, ProcessedBsm<Point>>> {
@@ -168,16 +170,69 @@ public class BsmProcessedJsonConverter
                 FieldConversions.convertSemiMinor(coreData.getAccuracy().getSemiMinor().getValue()),
                 FieldConversions.convertOrientation(coreData.getAccuracy().getOrientation().getValue())));
         bsmProps.setAngle(FieldConversions.convertAngle(coreData.getAngle().getValue()));
-        bsmProps.setBrakes(coreData.getBrakes());
+        bsmProps.setBrakes(convertBrakeSystemStatus(coreData.getBrakes()));
         bsmProps.setHeading(FieldConversions.convertHeading(coreData.getHeading().getValue()));
         bsmProps.setId(coreData.getId().getValue());
-        bsmProps.setMsgCnt(coreData.getMsgCnt().getValue());
-        bsmProps.setSecMark(coreData.getSecMark().getValue());
-        bsmProps.setSize(coreData.getSize());
+        bsmProps.setMsgCnt(Math.toIntExact(coreData.getMsgCnt().getValue()));
+        bsmProps.setSecMark(Math.toIntExact(coreData.getSecMark().getValue()));
+        bsmProps.setSize(convertVehicleSize(coreData.getSize()));
         bsmProps.setSpeed(FieldConversions.convertSpeed(coreData.getSpeed().getValue()));
-        bsmProps.setTransmission(coreData.getTransmission());
+        if (coreData.getTransmission() != null) {
+            TransmissionState transmissionState = coreData.getTransmission();
+            ProcessedTransmissionState processedTransmissionState = ProcessedTransmissionState.fromName(transmissionState.getName());
+            bsmProps.setTransmission(processedTransmissionState);
+        }
+
 
         return new ProcessedBsm<Point>(null, bsmPoint, bsmProps);
+    }
+
+    private ProcessedBrakeSystemStatus convertBrakeSystemStatus(BrakeSystemStatus bss) {
+        if (bss == null) return null;
+
+        ProcessedBrakeSystemStatus pbss = new ProcessedBrakeSystemStatus();
+
+        AntiLockBrakeStatus abs = bss.getAbs();
+        if (abs != null) {
+            pbss.setAbs(ProcessedAntiLockBrakeStatus.fromName(abs.getName()));
+        }
+
+        AuxiliaryBrakeStatus auxiliaryBrakeStatus = bss.getAuxBrakes();
+        if (auxiliaryBrakeStatus != null) {
+            pbss.setAuxBrakes(ProcessedAuxiliaryBrakeStatus.fromName(auxiliaryBrakeStatus.getName()));
+        }
+
+        BrakeBoostApplied brakeBoostApplied = bss.getBrakeBoost();
+        if (brakeBoostApplied != null) {
+            pbss.setBrakeBoost(ProcessedBrakeBoostApplied.fromName(brakeBoostApplied.getName()));
+        }
+
+        StabilityControlStatus stabilityControlStatus = bss.getScs();
+        if (stabilityControlStatus != null) {
+            pbss.setScs(ProcessedStabilityControlStatus.fromName(stabilityControlStatus.getName()));
+        }
+
+        BrakeAppliedStatus brakeAppliedStatus = bss.getWheelBrakes();
+        if (brakeAppliedStatus != null) {
+            ProcessedBrakeAppliedStatus processedBrakeAppliedStatus = new ProcessedBrakeAppliedStatus();
+            BitstringUtils.processBitstring(processedBrakeAppliedStatus, brakeAppliedStatus);
+            pbss.setWheelBrakes(processedBrakeAppliedStatus);
+        }
+
+        TractionControlStatus tractionControlStatus = bss.getTraction();
+        if (tractionControlStatus != null) {
+            pbss.setTraction(ProcessedTractionControlStatus.fromName(tractionControlStatus.getName()));
+        }
+
+        return pbss;
+    }
+
+    private ProcessedVehicleSize convertVehicleSize(VehicleSize vs) {
+        if (vs == null) return null;
+        ProcessedVehicleSize pvs = new ProcessedVehicleSize();
+        pvs.setLength(vs.getLength() != null ? (int)vs.getLength().getValue() : null);
+        pvs.setWidth(vs.getWidth() != null ? (int)vs.getWidth().getValue() : null);
+        return pvs;
     }
 
     public ZonedDateTime generateOffsetUTCTimestamp(ZonedDateTime odeReceivedAt, Long secMark) {

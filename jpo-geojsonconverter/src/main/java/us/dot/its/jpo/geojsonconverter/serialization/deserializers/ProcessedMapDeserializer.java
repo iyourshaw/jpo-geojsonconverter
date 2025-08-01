@@ -2,19 +2,19 @@ package us.dot.its.jpo.geojsonconverter.serialization.deserializers;
 
 import java.io.IOException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.JavaType;
-import us.dot.its.jpo.asn.runtime.serialization.OdeCustomJsonMapper;
 import us.dot.its.jpo.geojsonconverter.DateJsonMapper;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.map.ProcessedMap;
 
 public class ProcessedMapDeserializer<T> implements Deserializer<ProcessedMap<T>> {
     private static Logger logger = LoggerFactory.getLogger(ProcessedMapDeserializer.class);
 
-    private final OdeCustomJsonMapper mapper = DateJsonMapper.getOdeInstance();
+    private final ObjectMapper mapper = DateJsonMapper.getInstance();
 
     private Class<T> geometryClass;
 

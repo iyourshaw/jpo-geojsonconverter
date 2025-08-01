@@ -15,22 +15,16 @@ import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import us.dot.its.jpo.asn.j2735.r2024.Common.MinuteOfTheYear;
-import us.dot.its.jpo.asn.j2735.r2024.Common.NodeOffsetPointXY;
-import us.dot.its.jpo.asn.j2735.r2024.Common.NodeSetXY;
-import us.dot.its.jpo.asn.j2735.r2024.Common.NodeXY;
-import us.dot.its.jpo.asn.j2735.r2024.Common.Node_LLmD_64b;
-import us.dot.its.jpo.asn.j2735.r2024.MapData.Connection;
-import us.dot.its.jpo.asn.j2735.r2024.MapData.GenericLane;
-import us.dot.its.jpo.asn.j2735.r2024.MapData.IntersectionGeometry;
-import us.dot.its.jpo.asn.j2735.r2024.MapData.MapData;
-import us.dot.its.jpo.asn.j2735.r2024.MapData.MapDataMessageFrame;
+import us.dot.its.jpo.asn.j2735.r2024.Common.*;
+import us.dot.its.jpo.asn.j2735.r2024.MapData.*;
 import us.dot.its.jpo.geojsonconverter.converter.FieldConversions;
 import us.dot.its.jpo.geojsonconverter.partitioner.RsuIntersectionKey;
 import us.dot.its.jpo.geojsonconverter.pojos.ProcessedValidationMessage;
+import us.dot.its.jpo.geojsonconverter.pojos.common.*;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.LineString;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.connectinglanes.*;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.map.*;
+import us.dot.its.jpo.geojsonconverter.utils.BitstringUtils;
 import us.dot.its.jpo.geojsonconverter.utils.ProcessedSchemaVersions;
 import us.dot.its.jpo.geojsonconverter.validator.CTI4501Validator;
 import us.dot.its.jpo.geojsonconverter.validator.JsonValidatorResult;
@@ -113,7 +107,7 @@ public class MapProcessedJsonConverter
             IntersectionGeometry intersection, JsonValidatorResult validationMessages) {
         // Save for geometry calculations
         MapRefPoint refPoint = new MapRefPoint();
-        refPoint.setFromPosition3D(intersection.getRefPoint());
+        refPoint.setFromPosition3D(convertPosition3D(intersection.getRefPoint()));
 
         String odeTimestamp = metadata.getOdeReceivedAt();
         ZonedDateTime odeDate = Instant.parse(odeTimestamp).atZone(ZoneId.of("UTC"));
@@ -143,7 +137,7 @@ public class MapProcessedJsonConverter
         sharedProps.setAsn1(metadata.getAsn1());
         sharedProps.setOdeReceivedAt(odeDate);
         sharedProps.setIntersectionName(intersection.getName() != null ? intersection.getName().getValue() : null);
-        sharedProps.setIntersectionReferenceID(intersection.getId());
+        sharedProps.setIntersectionReferenceID(convertIntersectionReferenceID(intersection.getId()));
         sharedProps.setMsgIssueRevision(
                 mapData.getMsgIssueRevision() != null ? (int) mapData.getMsgIssueRevision().getValue() : null);
         sharedProps
@@ -151,7 +145,7 @@ public class MapProcessedJsonConverter
         sharedProps.setRefPoint(refPoint);
         sharedProps.setLaneWidth(
                 intersection.getLaneWidth() != null ? (int) intersection.getLaneWidth().getValue() : null);
-        sharedProps.setSpeedLimits(intersection.getSpeedLimits() != null ? intersection.getSpeedLimits() : null);
+        sharedProps.setSpeedLimits(convertSpeedLimitList(intersection.getSpeedLimits()));
         sharedProps.setMapSource(metadata.getSource());
         sharedProps.setTimeStamp(generateUTCTimestamp(mapData.getTimeStamp(), odeDate));
         // Setting validation fields
@@ -161,11 +155,43 @@ public class MapProcessedJsonConverter
         return sharedProps;
     }
 
+    private ProcessedPosition3D convertPosition3D(Position3D p) {
+        if (p == null) return null;
+        ProcessedPosition3D processed = new ProcessedPosition3D();
+        processed.setLat(p.getLat() != null ? (int)p.getLat().getValue() : null);
+        processed.setLong_(p.getLong_() != null ? (int)p.getLong_().getValue() : null);
+        processed.setElevation(p.getElevation() != null ? (int)p.getElevation().getValue() : null);
+        return processed;
+    }
+
+    private ProcessedIntersectionReferenceID convertIntersectionReferenceID(IntersectionReferenceID intersectionReferenceID) {
+        if (intersectionReferenceID == null) return null;
+        ProcessedIntersectionReferenceID processed = new ProcessedIntersectionReferenceID();
+        processed.setId(intersectionReferenceID.getId() != null ? (int)intersectionReferenceID.getId().getValue() : null);
+        processed.setRegion(intersectionReferenceID.getRegion() != null ? (int)intersectionReferenceID.getRegion().getValue() : null);
+        return processed;
+    }
+
+    private ProcessedSpeedLimitList convertSpeedLimitList(SpeedLimitList speedLimitList) {
+        if (speedLimitList == null) return null;
+        ProcessedSpeedLimitList processed = new ProcessedSpeedLimitList();
+        for (RegulatorySpeedLimit speedLimit : speedLimitList) {
+            var processedSpeedLimit = new ProcessedRegulatorySpeedLimit();
+            processedSpeedLimit.setSpeed(speedLimit.getSpeed() != null ? (int)speedLimit.getSpeed().getValue() : null);
+            if (speedLimit.getType() != null) {
+                ProcessedSpeedLimitType processedSpeedLimitType = ProcessedSpeedLimitType.fromName(speedLimit.getType().getName());
+                processedSpeedLimit.setType(processedSpeedLimitType);
+            }
+            processed.add(processedSpeedLimit);
+        }
+        return processed;
+    }
+
     @SuppressWarnings("unchecked")
     public MapFeatureCollection<LineString> createFeatureCollection(IntersectionGeometry intersection) {
         // Save for geometry calculations
         MapRefPoint refPoint = new MapRefPoint();
-        refPoint.setFromPosition3D(intersection.getRefPoint());
+        refPoint.setFromPosition3D(convertPosition3D(intersection.getRefPoint()));
 
         List<MapFeature<LineString>> mapFeatures = new ArrayList<>();
         for (GenericLane lane : intersection.getLaneSet()) {
@@ -176,17 +202,23 @@ public class MapProcessedJsonConverter
             }
             mapProps.setLaneId(lane.getLaneID() != null ? (int) lane.getLaneID().getValue() : null);
             mapProps.setLaneName(lane.getName() != null ? lane.getName().getValue() : null);
-            mapProps.setLaneType(
-                    lane.getLaneAttributes().getLaneType() != null ? lane.getLaneAttributes().getLaneType() : null);
-            mapProps.setSharedWith(lane.getLaneAttributes().getSharedWith());
-            mapProps.setIngressPath(lane.getLaneAttributes().getDirectionalUse().isIngressPath());
-            mapProps.setEgressPath(lane.getLaneAttributes().getDirectionalUse().isEgressPath());
+            LaneAttributes laneAttributes = lane.getLaneAttributes();
+            if (laneAttributes != null) {
+                mapProps.setLaneType(convertLaneTypeAttributes(laneAttributes.getLaneType()));
+                ProcessedLaneSharing processedLaneSharing = new ProcessedLaneSharing();
+                BitstringUtils.processBitstring(processedLaneSharing, laneAttributes.getSharedWith());
+                mapProps.setIngressPath(lane.getLaneAttributes().getDirectionalUse().isIngressPath());
+                mapProps.setEgressPath(lane.getLaneAttributes().getDirectionalUse().isEgressPath());
+            }
+
             mapProps.setIngressApproach(
                     lane.getIngressApproach() != null ? (int) lane.getIngressApproach().getValue() : 0);
             mapProps.setEgressApproach(
                     lane.getEgressApproach() != null ? (int) lane.getEgressApproach().getValue() : 0);
-            mapProps.setManeuvers(lane.getManeuvers());
-            mapProps.setConnectsTo(lane.getConnectsTo() != null ? lane.getConnectsTo() : null);
+            ProcessedAllowedManeuvers processedManeuvers = new ProcessedAllowedManeuvers();
+            BitstringUtils.processBitstring(processedManeuvers, lane.getManeuvers());
+            mapProps.setManeuvers(processedManeuvers);
+            mapProps.setConnectsTo(convertConnectsToList(lane.getConnectsTo()));
 
             // Create MAP geometry
             LineString geometry = createGeometry(lane, refPoint);
@@ -198,12 +230,76 @@ public class MapProcessedJsonConverter
         return new MapFeatureCollection<LineString>(mapFeatures.toArray(new MapFeature[0]));
     }
 
+    private ProcessedLaneTypeAttributes convertLaneTypeAttributes(LaneTypeAttributes laneTypeAttributes) {
+        if (laneTypeAttributes == null) return null;
+        ProcessedLaneTypeAttributes processed = new ProcessedLaneTypeAttributes();
+        if (laneTypeAttributes.getVehicle() != null) {
+            var processedVehicle = new ProcessedLaneAttributes_Vehicle();
+            BitstringUtils.processBitstring(processedVehicle, laneTypeAttributes.getVehicle());
+            processed.setVehicle(processedVehicle);
+        } else if (laneTypeAttributes.getCrosswalk() != null) {
+            var processedCrosswalk = new ProcessedLaneAttributes_Crosswalk();
+            BitstringUtils.processBitstring(processedCrosswalk, laneTypeAttributes.getCrosswalk());
+            processed.setCrosswalk(processedCrosswalk);
+        } else if (laneTypeAttributes.getBikeLane() != null) {
+            var processedBike = new ProcessedLaneAttributes_Bike();
+            BitstringUtils.processBitstring(processedBike, laneTypeAttributes.getBikeLane());
+            processed.setBikeLane(processedBike);
+        } else if (laneTypeAttributes.getSidewalk() != null) {
+            var processedSidewalk = new ProcessedLaneAttributes_Sidewalk();
+            BitstringUtils.processBitstring(processedSidewalk, laneTypeAttributes.getSidewalk());
+            processed.setSidewalk(processedSidewalk);
+        } else if (laneTypeAttributes.getMedian() != null) {
+            var processedMedian = new ProcessedLaneAttributes_Barrier();
+            BitstringUtils.processBitstring(processedMedian, laneTypeAttributes.getMedian());
+            processed.setMedian(processedMedian);
+        } else if (laneTypeAttributes.getStriping() != null) {
+            var processedStriping = new ProcessedLaneAttributes_Striping();
+            BitstringUtils.processBitstring(processedStriping, laneTypeAttributes.getStriping());
+            processed.setStriping(processedStriping);
+        } else if (laneTypeAttributes.getTrackedVehicle() != null) {
+            var processedTrackedVehicle = new ProcessedLaneAttributes_TrackedVehicle();
+            BitstringUtils.processBitstring(processedTrackedVehicle, laneTypeAttributes.getTrackedVehicle());
+            processed.setTrackedVehicle(processedTrackedVehicle);
+        } else if (laneTypeAttributes.getParking() != null) {
+            var processedParking = new ProcessedLaneAttributes_Parking();
+            BitstringUtils.processBitstring(processedParking, laneTypeAttributes.getParking());
+            processed.setParking(processedParking);
+        }
+        return processed;
+    }
+
+    private ProcessedConnectsToList convertConnectsToList(ConnectsToList connectsToList) {
+        if (connectsToList == null) return null;
+        ProcessedConnectsToList processedConnectsToList = new ProcessedConnectsToList();
+        for (Connection connection : connectsToList) {
+            ProcessedConnection processedConnection = new ProcessedConnection();
+            processedConnection.setSignalGroup(connection.getSignalGroup() != null ? (int) connection.getSignalGroup().getValue() : null);
+            processedConnection.setUserClass(connection.getUserClass() != null ? (int) connection.getUserClass().getValue() : null);
+            processedConnection.setConnectionID(connection.getConnectionID() != null ? (int) connection.getConnectionID().getValue() : null);
+            processedConnection.setRemoteIntersection(convertIntersectionReferenceID(connection.getRemoteIntersection()));
+            processedConnection.setConnectingLane(convertConnectingLane(connection.getConnectingLane()));
+            processedConnectsToList.add(processedConnection);
+        }
+        return processedConnectsToList;
+    }
+
+    private ProcessedConnectingLane convertConnectingLane(ConnectingLane connectingLane) {
+        if (connectingLane == null) return null;
+        ProcessedConnectingLane processedConnectingLane = new ProcessedConnectingLane();
+        processedConnectingLane.setLane(connectingLane.getLane() != null ?  (int) connectingLane.getLane().getValue() : null);
+        ProcessedAllowedManeuvers processedManeuvers = new ProcessedAllowedManeuvers();
+        BitstringUtils.processBitstring(processedManeuvers, connectingLane.getManeuver());
+        processedConnectingLane.setManeuver(processedManeuvers);
+        return processedConnectingLane;
+    }
+
     @SuppressWarnings("unchecked")
     public ConnectingLanesFeatureCollection<LineString> createConnectingLanesFeatureCollection(
             OdeMessageFrameMetadata metadata, IntersectionGeometry intersection) {
         // Save for geometry calculations
         MapRefPoint refPoint = new MapRefPoint();
-        refPoint.setFromPosition3D(intersection.getRefPoint());
+        refPoint.setFromPosition3D(convertPosition3D(intersection.getRefPoint()));
 
         HashMap<Integer, double[]> lanePoints = new HashMap<Integer, double[]>();
         for (GenericLane lane : intersection.getLaneSet()) {

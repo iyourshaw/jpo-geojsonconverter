@@ -13,6 +13,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.junit.Before;
@@ -28,6 +29,7 @@ import us.dot.its.jpo.geojsonconverter.serialization.deserializers.JsonDeseriali
 import us.dot.its.jpo.geojsonconverter.validator.JsonValidatorResult;
 import us.dot.its.jpo.ode.model.OdeMessageFrameData;
 
+@Slf4j
 public class MapProcessedJsonConverterTest {
     MapProcessedJsonConverter mapProcessedJsonConverter;
     OdeMessageFrameData mapMF;
@@ -70,6 +72,7 @@ public class MapProcessedJsonConverterTest {
     public void testTransform() {
         KeyValue<RsuIntersectionKey, ProcessedMap<LineString>> mapFeatureCollection =
                 mapProcessedJsonConverter.transform(null, rawMap);
+        log.info("mapFeatureCollection: {}", mapFeatureCollection);
         assertNotNull(mapFeatureCollection.key);
         assertEquals("172.18.0.1", mapFeatureCollection.key.getRsuId());
         assertEquals(12112, mapFeatureCollection.key.getIntersectionId());

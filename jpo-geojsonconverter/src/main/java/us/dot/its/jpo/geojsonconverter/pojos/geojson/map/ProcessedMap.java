@@ -4,12 +4,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Generated;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import us.dot.its.jpo.asn.runtime.serialization.OdeCustomJsonMapper;
 import us.dot.its.jpo.geojsonconverter.DateJsonMapper;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.connectinglanes.ConnectingLanesFeatureCollection;
 
@@ -28,7 +28,7 @@ public class ProcessedMap<TGeometry> {
 
     @Override
     public String toString() {
-        OdeCustomJsonMapper mapper = DateJsonMapper.getOdeInstance();
+        ObjectMapper mapper = DateJsonMapper.getInstance();
         String testReturn = "";
         try {
             testReturn = (mapper.writeValueAsString(this));

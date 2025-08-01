@@ -1,17 +1,14 @@
 package us.dot.its.jpo.geojsonconverter.converter.spat;
 
-import us.dot.its.jpo.asn.j2735.r2024.SPAT.IntersectionState;
-import us.dot.its.jpo.asn.j2735.r2024.SPAT.SPATMessageFrame;
-import us.dot.its.jpo.asn.j2735.r2024.SPAT.MovementEvent;
-import us.dot.its.jpo.asn.j2735.r2024.SPAT.MovementState;
-import us.dot.its.jpo.asn.j2735.r2024.SPAT.SPAT;
+import us.dot.its.jpo.asn.j2735.r2024.Common.IntersectionReferenceID;
+import us.dot.its.jpo.asn.j2735.r2024.Common.SpeedConfidence;
+import us.dot.its.jpo.asn.j2735.r2024.SPAT.*;
 import us.dot.its.jpo.geojsonconverter.partitioner.RsuIntersectionKey;
 import us.dot.its.jpo.geojsonconverter.pojos.ProcessedValidationMessage;
-import us.dot.its.jpo.geojsonconverter.pojos.spat.DeserializedRawSpat;
-import us.dot.its.jpo.geojsonconverter.pojos.spat.ProcessedMovementEvent;
-import us.dot.its.jpo.geojsonconverter.pojos.spat.ProcessedMovementState;
-import us.dot.its.jpo.geojsonconverter.pojos.spat.ProcessedSpat;
-import us.dot.its.jpo.geojsonconverter.pojos.spat.TimingChangeDetails;
+import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedIntersectionReferenceID;
+import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedSpeedConfidence;
+import us.dot.its.jpo.geojsonconverter.pojos.spat.*;
+import us.dot.its.jpo.geojsonconverter.utils.BitstringUtils;
 import us.dot.its.jpo.geojsonconverter.utils.ProcessedSchemaVersions;
 import us.dot.its.jpo.geojsonconverter.validator.CTI4501Validator;
 import us.dot.its.jpo.geojsonconverter.validator.JsonValidatorResult;
@@ -106,7 +103,11 @@ public class SpatProcessedJsonConverter
         processedSpat.setOriginIp(metadata.getOriginIp());
         processedSpat.setAsn1(metadata.getAsn1());
         processedSpat.setName(intersectionState.getName() != null ? intersectionState.getName().getValue() : null);
-        processedSpat.setIntersectionReferenceID(intersectionState.getId());
+        IntersectionReferenceID intersectionReferenceID = intersectionState.getId();
+        ProcessedIntersectionReferenceID processedIntersectionReferenceID = new ProcessedIntersectionReferenceID();
+        processedIntersectionReferenceID.setId(intersectionReferenceID.getId() != null ? (int)intersectionReferenceID.getId().getValue() : null);
+        processedIntersectionReferenceID.setRegion(intersectionReferenceID.getRegion() != null ? (int)intersectionReferenceID.getRegion().getValue() : null);
+        processedSpat.setIntersectionReferenceID(processedIntersectionReferenceID);
 
         // Handle validation messages for the J2735 and CTI-4501 SPaT conformance validation
         List<ProcessedValidationMessage> processedSpatValidationMessages = new ArrayList<ProcessedValidationMessage>();
@@ -130,9 +131,14 @@ public class SpatProcessedJsonConverter
 
         processedSpat.setRevision(
                 intersectionState.getRevision() != null ? (int) intersectionState.getRevision().getValue() : null);
-        processedSpat.setStatus(intersectionState.getStatus());
-        processedSpat.setEnabledLanes(
-                intersectionState.getEnabledLanes() != null ? intersectionState.getEnabledLanes() : null);
+        ProcessedIntersectionStatusObject processedStatus = new ProcessedIntersectionStatusObject();
+        BitstringUtils.processBitstring(processedStatus, intersectionState.getStatus());
+        processedSpat.setStatus(processedStatus);
+        List<Integer> enabledLanes = new ArrayList<>();
+        if (intersectionState.getEnabledLanes() != null) {
+            enabledLanes.addAll(intersectionState.getEnabledLanes().stream().map(laneId -> (int)laneId.getValue()).toList());
+        }
+        processedSpat.setEnabledLanes(enabledLanes);
 
         // Retrieve all relevant timestamp-based fields to calculate the UTC timestamp
         Integer spatMoy = spat.getTimeStamp() != null ? (int) spat.getTimeStamp().getValue() : null;
@@ -162,7 +168,12 @@ public class SpatProcessedJsonConverter
             if (signalGroupState.getState_time_speed() != null) {
                 for (MovementEvent incomingMovementEvent : signalGroupState.getState_time_speed()) {
                     ProcessedMovementEvent processedMovementEvent = new ProcessedMovementEvent();
-                    processedMovementEvent.setEventState(incomingMovementEvent.getEventState());
+                    MovementPhaseState phaseState = incomingMovementEvent.getEventState();
+                    if  (phaseState != null) {
+                        ProcessedMovementPhaseState processedMovementPhaseState = ProcessedMovementPhaseState.fromName(phaseState.getName());
+                        processedMovementEvent.setEventState(processedMovementPhaseState);
+                    }
+
 
                     // Calculate the UTC timestamps for the movement event states and account for null values
                     TimingChangeDetails spatTimingDetails = new TimingChangeDetails();
@@ -192,8 +203,7 @@ public class SpatProcessedJsonConverter
                     processedMovementEvent.setTiming(spatTimingDetails);
 
                     // Set the speeds if they exist, otherwise set to null
-                    processedMovementEvent.setSpeeds(
-                            incomingMovementEvent.getSpeeds() != null ? incomingMovementEvent.getSpeeds() : null);
+                    processedMovementEvent.setSpeeds(convertAdvisorySpeedList(incomingMovementEvent.getSpeeds()));
 
                     processedMovementEventList.add(processedMovementEvent);
                 }
@@ -204,6 +214,38 @@ public class SpatProcessedJsonConverter
 
         processedSpat.setStates(processedMovementStateList);
         return processedSpat;
+    }
+
+    private ProcessedAdvisorySpeedList convertAdvisorySpeedList(AdvisorySpeedList advisorySpeedList) {
+        if (advisorySpeedList != null) {
+            ProcessedAdvisorySpeedList processedAdvisorySpeedList = new ProcessedAdvisorySpeedList();
+            for (AdvisorySpeed advisorySpeed : advisorySpeedList) {
+                ProcessedAdvisorySpeed processedAdvisorySpeed = new ProcessedAdvisorySpeed();
+
+                Integer speed = advisorySpeed.getSpeed() != null ? (int)advisorySpeed.getSpeed().getValue() : null;
+                processedAdvisorySpeed.setSpeed(speed);
+
+                Integer class_ = advisorySpeed.getClass_() != null ? (int)advisorySpeed.getClass_().getValue() : null;
+                processedAdvisorySpeed.setClass_(class_);
+
+                Integer distance = advisorySpeed.getDistance() != null ? (int)advisorySpeed.getDistance().getValue() : null;
+                processedAdvisorySpeed.setDistance(distance);
+
+                AdvisorySpeedType advisorySpeedType = advisorySpeed.getType();
+                if (advisorySpeedType != null) {
+                    processedAdvisorySpeed.setType(ProcessedAdvisorySpeedType.fromName(advisorySpeedType.getName()));
+                }
+
+                SpeedConfidence speedConfidence = advisorySpeed.getConfidence();
+                if (speedConfidence != null) {
+                    processedAdvisorySpeed.setConfidence(ProcessedSpeedConfidence.fromName(speedConfidence.getName()));
+                }
+
+                processedAdvisorySpeedList.add(processedAdvisorySpeed);
+            }
+            return processedAdvisorySpeedList;
+        }
+        return null;
     }
 
     public ProcessedSpat createFailureProcessedSpat(JsonValidatorResult validatorResult, String message) {

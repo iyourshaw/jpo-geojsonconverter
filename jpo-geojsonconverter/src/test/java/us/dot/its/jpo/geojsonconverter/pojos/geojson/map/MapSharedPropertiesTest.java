@@ -7,6 +7,7 @@ import org.junit.Test;
 import us.dot.its.jpo.asn.j2735.r2024.Common.IntersectionID;
 import us.dot.its.jpo.asn.j2735.r2024.Common.IntersectionReferenceID;
 import us.dot.its.jpo.asn.j2735.r2024.Common.RoadRegulatorID;
+import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedIntersectionReferenceID;
 
 public class MapSharedPropertiesTest {
     @Test
@@ -20,8 +21,8 @@ public class MapSharedPropertiesTest {
     @Test
     public void testSetIntersectionReferenceID_WithNullIntersectionID() {
         MapSharedProperties mapSharedProperties = new MapSharedProperties();
-        IntersectionReferenceID referenceID = new IntersectionReferenceID();
-        RoadRegulatorID regionID = new RoadRegulatorID(67890L);
+        ProcessedIntersectionReferenceID referenceID = new ProcessedIntersectionReferenceID();
+        Integer regionID = 67890;
         referenceID.setId(null);
         referenceID.setRegion(regionID);
 
@@ -34,8 +35,8 @@ public class MapSharedPropertiesTest {
     @Test
     public void testSetIntersectionReferenceID_WithNullRegion() {
         MapSharedProperties mapSharedProperties = new MapSharedProperties();
-        IntersectionReferenceID referenceID = new IntersectionReferenceID();
-        IntersectionID intersectionID = new IntersectionID(12345L);
+        var referenceID = new ProcessedIntersectionReferenceID();
+        Integer intersectionID = 12345;
         referenceID.setId(intersectionID);
         referenceID.setRegion(null);
 

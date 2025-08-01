@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.fail;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +22,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import com.fasterxml.jackson.databind.JavaType;
-import us.dot.its.jpo.asn.runtime.serialization.OdeCustomJsonMapper;
 import us.dot.its.jpo.geojsonconverter.DateJsonMapper;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.LineString;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.Point;
@@ -64,7 +64,7 @@ public class JsonSerializerTest {
         try (JsonSerializer<ProcessedSpat> serializer = new JsonSerializer<ProcessedSpat>()) {
             BufferedInputStream inputStream = new BufferedInputStream(validSpatJsonResource.getInputStream());
             String spatString = IOUtils.toString(inputStream, "UTF-8");
-            OdeCustomJsonMapper mapper = DateJsonMapper.getOdeInstance();
+            ObjectMapper mapper = DateJsonMapper.getInstance();
             ProcessedSpat spat = mapper.readValue(spatString, ProcessedSpat.class);
 
             final String str = mapper.writeValueAsString(spat);
@@ -82,7 +82,7 @@ public class JsonSerializerTest {
         try (JsonSerializer<ProcessedMap<LineString>> serializer = new JsonSerializer<ProcessedMap<LineString>>()) {
             BufferedInputStream inputStream = new BufferedInputStream(validMapGeoJsonResource.getInputStream());
             String mapString = IOUtils.toString(inputStream, "UTF-8");
-            OdeCustomJsonMapper mapper = DateJsonMapper.getOdeInstance();
+            ObjectMapper mapper = DateJsonMapper.getInstance();
             JavaType javaType = mapper.getTypeFactory().constructParametricType(ProcessedMap.class, LineString.class);
             ProcessedMap<LineString> map = mapper.readValue(mapString, javaType);
 
@@ -100,7 +100,7 @@ public class JsonSerializerTest {
         try (JsonSerializer<ProcessedMap<String>> serializer = new JsonSerializer<ProcessedMap<String>>()) {
             BufferedInputStream inputStream = new BufferedInputStream(validMapWKTJsonResource.getInputStream());
             String mapString = IOUtils.toString(inputStream, "UTF-8");
-            OdeCustomJsonMapper mapper = DateJsonMapper.getOdeInstance();
+            ObjectMapper mapper = DateJsonMapper.getInstance();
             JavaType javaType = mapper.getTypeFactory().constructParametricType(ProcessedMap.class, String.class);
             ProcessedMap<String> map = mapper.readValue(mapString, javaType);
 
@@ -118,7 +118,7 @@ public class JsonSerializerTest {
         try (var serializer = new JsonSerializer<ProcessedBsm<Point>>();
                 BufferedInputStream inputStream = new BufferedInputStream(validProcessedBsmResource.getInputStream())) {
             final String bsmString = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-            final OdeCustomJsonMapper mapper = DateJsonMapper.getOdeInstance();
+            final ObjectMapper mapper = DateJsonMapper.getInstance();
             final JavaType javaType = mapper.getTypeFactory().constructParametricType(ProcessedBsm.class, Point.class);
             final ProcessedBsm<Point> bsm = mapper.readValue(bsmString, javaType);
             final byte[] bytes = serializer.serialize("the_topic", bsm);

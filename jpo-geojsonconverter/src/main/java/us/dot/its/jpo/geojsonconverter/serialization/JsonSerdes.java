@@ -37,7 +37,7 @@ public class JsonSerdes {
 
     public static Serde<ProcessedSpat> ProcessedSpat() {
         return Serdes.serdeFrom(new JsonSerializer<ProcessedSpat>(),
-                new OdeCustomJsonDeserializer<>(ProcessedSpat.class));
+                new JsonDeserializer<>(ProcessedSpat.class));
     }
 
     public static Serde<ProcessedBsm<Point>> ProcessedBsm() {

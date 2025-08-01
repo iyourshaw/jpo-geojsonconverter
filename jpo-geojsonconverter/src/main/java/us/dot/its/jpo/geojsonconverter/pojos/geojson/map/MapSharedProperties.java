@@ -9,9 +9,9 @@ import lombok.Data;
 import lombok.Generated;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import us.dot.its.jpo.asn.j2735.r2024.Common.IntersectionReferenceID;
-import us.dot.its.jpo.asn.j2735.r2024.Common.SpeedLimitList;
 import us.dot.its.jpo.geojsonconverter.pojos.ProcessedValidationMessage;
+import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedIntersectionReferenceID;
+import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedSpeedLimitList;
 import us.dot.its.jpo.ode.model.OdeMessageFrameMetadata.Source;
 
 @Data
@@ -37,7 +37,7 @@ public class MapSharedProperties {
     private Boolean cti4501Conformant;
     private List<ProcessedValidationMessage> validationMessages;
     private Integer laneWidth;
-    private SpeedLimitList speedLimits;
+    private ProcessedSpeedLimitList speedLimits;
     private Source mapSource;
     private ZonedDateTime timeStamp;
 
@@ -46,14 +46,10 @@ public class MapSharedProperties {
      * 
      * @param referenceID IntersectionReferenceID
      */
-    public void setIntersectionReferenceID(IntersectionReferenceID referenceID) {
+    public void setIntersectionReferenceID(ProcessedIntersectionReferenceID referenceID) {
         if (referenceID != null) {
-            if (referenceID.getId() != null) {
-                setIntersectionId((int) referenceID.getId().getValue());
-            }
-            if (referenceID.getRegion() != null) {
-                setRegion((int) referenceID.getRegion().getValue());
-            }
+            setIntersectionId(referenceID.getId());
+            setRegion(referenceID.getRegion());
         }
     }
 }

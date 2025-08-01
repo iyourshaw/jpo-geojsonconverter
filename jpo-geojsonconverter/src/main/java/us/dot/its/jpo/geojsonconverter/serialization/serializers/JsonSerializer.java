@@ -1,7 +1,7 @@
 package us.dot.its.jpo.geojsonconverter.serialization.serializers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import us.dot.its.jpo.asn.runtime.serialization.OdeCustomJsonMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import us.dot.its.jpo.geojsonconverter.DateJsonMapper;
 
 import org.apache.kafka.common.serialization.Serializer;
@@ -18,7 +18,7 @@ public class JsonSerializer<T> implements Serializer<T> {
 
     private static Logger logger = LoggerFactory.getLogger(JsonSerializer.class);
 
-    private final OdeCustomJsonMapper mapper = DateJsonMapper.getOdeInstance();
+    private final ObjectMapper mapper = DateJsonMapper.getInstance();
 
     @Override
     public byte[] serialize(String topic, T data) {

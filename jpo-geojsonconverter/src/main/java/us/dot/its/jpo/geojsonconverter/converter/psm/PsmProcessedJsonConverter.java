@@ -14,8 +14,10 @@ import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import us.dot.its.jpo.asn.j2735.r2024.PersonalSafetyMessage.PersonalDeviceUserType;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.Point;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.psm.DeserializedRawPsm;
+import us.dot.its.jpo.geojsonconverter.pojos.geojson.psm.ProcessedPersonalDeviceUserType;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.psm.ProcessedPsm;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.psm.PsmProperties;
 import us.dot.its.jpo.asn.j2735.r2024.PersonalSafetyMessage.PersonalSafetyMessage;
@@ -132,7 +134,11 @@ public class PsmProcessedJsonConverter
 
         // Create the PSM Properties
         PsmProperties psmProps = new PsmProperties();
-        psmProps.setBasicType(psm.getBasicType());
+        PersonalDeviceUserType personalDeviceUserType = psm.getBasicType();
+        if (personalDeviceUserType != null) {
+            var processedPersonalDeviceUserType = ProcessedPersonalDeviceUserType.fromName(personalDeviceUserType.getName());
+            psmProps.setBasicType(processedPersonalDeviceUserType);
+        }
         psmProps.setId(psm.getId().getValue());
         psmProps.setMsgCnt((int) psm.getMsgCnt().getValue());
         psmProps.setSecMark((int) psm.getSecMark().getValue());

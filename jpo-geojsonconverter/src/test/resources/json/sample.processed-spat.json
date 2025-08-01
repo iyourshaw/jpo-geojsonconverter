@@ -43,7 +43,7 @@
 			"signalGroup": 1,
 			"stateTimeSpeed": [
 				{
-					"eventState": "stop-And-Remain",
+					"eventState": "STOP_AND_REMAIN",
 					"timing": {
 						"minEndTime": "2025-07-16T22:31:58.6Z",
 						"maxEndTime": "2025-07-16T22:31:58.6Z"
@@ -55,7 +55,7 @@
 			"signalGroup": 2,
 			"stateTimeSpeed": [
 				{
-					"eventState": "protected-Movement-Allowed",
+					"eventState": "PROTECTED_MOVEMENT_ALLOWED",
 					"timing": {
 						"minEndTime": "2025-07-16T22:30:02.4Z",
 						"maxEndTime": "2025-07-16T22:30:23.4Z"
@@ -67,7 +67,7 @@
 			"signalGroup": 3,
 			"stateTimeSpeed": [
 				{
-					"eventState": "stop-And-Remain",
+					"eventState": "STOP_AND_REMAIN",
 					"timing": {
 						"minEndTime": "2025-07-16T22:31:58.6Z",
 						"maxEndTime": "2025-07-16T22:31:58.6Z"
@@ -79,7 +79,7 @@
 			"signalGroup": 4,
 			"stateTimeSpeed": [
 				{
-					"eventState": "stop-And-Remain",
+					"eventState": "STOP_AND_REMAIN",
 					"timing": {
 						"minEndTime": "2025-07-16T22:31:58.6Z",
 						"maxEndTime": "2025-07-16T22:31:58.6Z"
@@ -91,7 +91,7 @@
 			"signalGroup": 5,
 			"stateTimeSpeed": [
 				{
-					"eventState": "stop-And-Remain",
+					"eventState": "STOP_AND_REMAIN",
 					"timing": {
 						"minEndTime": "2025-07-16T22:31:58.6Z",
 						"maxEndTime": "2025-07-16T22:31:58.6Z"
@@ -103,7 +103,7 @@
 			"signalGroup": 6,
 			"stateTimeSpeed": [
 				{
-					"eventState": "protected-Movement-Allowed",
+					"eventState": "PROTECTED_MOVEMENT_ALLOWED",
 					"timing": {
 						"minEndTime": "2025-07-16T22:30:02.4Z",
 						"maxEndTime": "2025-07-16T22:30:23.4Z"
@@ -115,7 +115,7 @@
 			"signalGroup": 7,
 			"stateTimeSpeed": [
 				{
-					"eventState": "stop-And-Remain",
+					"eventState": "STOP_AND_REMAIN",
 					"timing": {
 						"minEndTime": "2025-07-16T22:31:58.6Z",
 						"maxEndTime": "2025-07-16T22:31:58.6Z"
@@ -127,7 +127,7 @@
 			"signalGroup": 8,
 			"stateTimeSpeed": [
 				{
-					"eventState": "stop-And-Remain",
+					"eventState": "STOP_AND_REMAIN",
 					"timing": {
 						"minEndTime": "2025-07-16T22:31:58.6Z",
 						"maxEndTime": "2025-07-16T22:31:58.6Z"

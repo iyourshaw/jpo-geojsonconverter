@@ -6,17 +6,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Generated;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import us.dot.its.jpo.asn.j2735.r2024.Common.IntersectionReferenceID;
-import us.dot.its.jpo.asn.j2735.r2024.Common.LaneID;
-import us.dot.its.jpo.asn.j2735.r2024.SPAT.IntersectionStatusObject;
-import us.dot.its.jpo.asn.runtime.serialization.OdeCustomJsonMapper;
+
+
 import us.dot.its.jpo.geojsonconverter.DateJsonMapper;
 import us.dot.its.jpo.geojsonconverter.pojos.ProcessedValidationMessage;
+import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedIntersectionReferenceID;
 
 /**
  * Represents a processed SPaT (Signal Phase and Timing) message.
@@ -73,9 +74,9 @@ public class ProcessedSpat {
     private Integer intersectionId;
     private boolean cti4501Conformant;
     private Integer revision;
-    private IntersectionStatusObject status;
+    private ProcessedIntersectionStatusObject status;
     private ZonedDateTime utcTimeStamp;
-    private List<LaneID> enabledLanes = new ArrayList<>();
+    private List<Integer> enabledLanes = new ArrayList<>();
     private List<ProcessedMovementState> states = null;
 
     /**
@@ -83,20 +84,16 @@ public class ProcessedSpat {
      * 
      * @param referenceID IntersectionReferenceID
      */
-    public void setIntersectionReferenceID(IntersectionReferenceID referenceID) {
+    public void setIntersectionReferenceID(ProcessedIntersectionReferenceID referenceID) {
         if (referenceID != null) {
-            if (referenceID.getId() != null) {
-                setIntersectionId((int) referenceID.getId().getValue());
-            }
-            if (referenceID.getRegion() != null) {
-                setRegion((int) referenceID.getRegion().getValue());
-            }
+            setIntersectionId(referenceID.getId());
+            setRegion(referenceID.getRegion());
         }
     }
 
     @Override
     public String toString() {
-        OdeCustomJsonMapper mapper = DateJsonMapper.getOdeInstance();
+        ObjectMapper mapper = DateJsonMapper.getInstance();
         String testReturn = "";
         try {
             testReturn = (mapper.writeValueAsString(this));

@@ -16,35 +16,35 @@ public class PointTest {
 
     @Test
     public void testListConstructor() {
-        Double[] coordinates = new Double[] {39.7392, 104.9903};
+        double[] coordinates = new double[] {39.7392, 104.9903};
         Point geometry = new Point(coordinates);
         assertNotNull(geometry);
     }
 
     @Test
     public void testCoordinates() {
-        Double[] coordinates = new Double[] {39.7392, 104.9903};
+        double[] coordinates = new double[] {39.7392, 104.9903};
         Point geometry = new Point(coordinates);
         assertEquals(39.7392, geometry.getCoordinates()[0]);
     }
 
     @Test
     public void testBbox() {
-        Double[] coordinates = new Double[] {39.7392, 104.9903};
+        double[] coordinates = new double[] {39.7392, 104.9903};
         Point geometry = new Point(coordinates);
         assertNull(geometry.getBbox());
     }
 
     @Test
     public void testGeoJSONType() {
-        Double[] coordinates = new Double[] {39.7392, 104.9903};
+        double[] coordinates = new double[] {39.7392, 104.9903};
         Point geometry = new Point(coordinates);
         assertEquals("Point", geometry.getGeoJSONType());
     }
 
     @Test
     public void testHashCode() {
-        Double[] coordinates = new Double[] {39.7392, 104.9903};
+        double[] coordinates = new double[] {39.7392, 104.9903};
         Point geometry = new Point(coordinates);
 
         Integer hash = geometry.hashCode();
@@ -53,8 +53,8 @@ public class PointTest {
 
     @Test
     public void testEquals() {
-        Double[] coordinates = new Double[] {39.7392, 104.9903};
-        Double[] otherCoordinates = new Double[] {1.0, 1.0};
+        double[] coordinates = new double[] {39.7392, 104.9903};
+        double[] otherCoordinates = new double[] {1.0, 1.0};
 
         Point object = new Point(coordinates);
         Point otherObject = new Point(otherCoordinates);
@@ -72,7 +72,7 @@ public class PointTest {
 
     @Test
     public void testToString() {
-        Double[] coordinates = new Double[] {39.7392, 104.9903};
+        double[] coordinates = new double[] {39.7392, 104.9903};
         Point geometry = new Point(coordinates);
 
         String string = geometry.toString();
