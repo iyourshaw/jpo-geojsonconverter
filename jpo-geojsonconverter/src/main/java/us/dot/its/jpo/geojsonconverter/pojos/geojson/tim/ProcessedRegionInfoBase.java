@@ -1,0 +1,33 @@
+package us.dot.its.jpo.geojsonconverter.pojos.geojson.tim;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import lombok.Data;
+import lombok.Generated;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Base class for TIM region information.
+ * <p>
+ * regionType - The type of region (PATH, POLYGON, CIRCLE)
+ * <p>
+ * elevationProfile - Profile of elevations along the region
+ * <p>
+ * anchorPoint - The anchor point for the region
+ * <p>
+ * directionInfo - Information about the direction and heading for this region
+ */
+@Data
+@Generated
+@NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@Slf4j
+public abstract class ProcessedRegionInfoBase {
+    private ProcessedRegionType regionType;
+    private ProcessedElevationProfile elevationProfile;
+    private ProcessedAnchorPoint anchorPoint;
+    private ProcessedDirectionInfoBase directionInfo;
+}

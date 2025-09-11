@@ -9,26 +9,16 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
+@JsonInclude(Include.NON_NULL)
 @Getter
 @EqualsAndHashCode(callSuper = false)
 @ToString
-@JsonInclude(Include.NON_NULL)
-public class Point extends Geometry {
-    private final double[] coordinates;
+public class MultiLineString extends Geometry {
+    private final double[][][] coordinates;
     private final double[] bbox;
 
-    public Point(Double longitude, Double latitude) {
-        super();
-        if (longitude != null && latitude != null) {
-            this.coordinates = new double[] {longitude, latitude};
-        } else {
-            coordinates = null;
-        }
-        this.bbox = null;
-    }
-
     @JsonCreator
-    public Point(@JsonProperty("coordinates") double[] coordinates) {
+    public MultiLineString(@JsonProperty("coordinates") double[][][] coordinates) {
         super();
         this.coordinates = coordinates;
         this.bbox = null;

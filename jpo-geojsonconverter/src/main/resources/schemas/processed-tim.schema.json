@@ -1,0 +1,289 @@
+{
+  "$schema" : "https://json-schema.org/draft/2020-12/schema",
+  "$defs" : {
+    "Point-1" : {
+      "type" : "object",
+      "properties" : {
+        "bbox" : {
+          "type" : "array",
+          "items" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        },
+        "coordinates" : {
+          "type" : "array",
+          "items" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        }
+      }
+    },
+    "Point-2" : {
+      "$ref" : "#/$defs/Point-1",
+      "type" : "object",
+      "properties" : {
+        "type" : {
+          "const" : "Point"
+        }
+      },
+      "required" : [ "type" ]
+    },
+    "ProcessedAnchorPoint" : {
+      "type" : "object",
+      "properties" : {
+        "elevationMeters" : {
+          "type" : "number",
+          "format" : "double"
+        },
+        "latitude" : {
+          "type" : "number",
+          "format" : "double"
+        },
+        "longitude" : {
+          "type" : "number",
+          "format" : "double"
+        }
+      }
+    },
+    "ProcessedCompliance" : {
+      "type" : "object",
+      "properties" : {
+        "compliant" : {
+          "type" : "boolean"
+        },
+        "standard" : {
+          "$ref" : "#/$defs/Standard"
+        },
+        "validationMessages" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ProcessedValidationMessage"
+          }
+        }
+      }
+    },
+    "ProcessedContentType" : {
+      "type" : "string",
+      "enum" : [ "ADVISORY", "ROAD_SIGNAGE", "COMMERCIAL_SIGNAGE" ]
+    },
+    "ProcessedDeploymentAgency" : {
+      "type" : "string",
+      "enum" : [ "STATE_OR_LOCAL", "COMMERCIAL", "UNKNOWN" ]
+    },
+    "ProcessedDirectionInfoBase" : {
+      "type" : "object",
+      "properties" : {
+        "directionType" : {
+          "$ref" : "#/$defs/ProcessedDirectionType"
+        }
+      }
+    },
+    "ProcessedDirectionType" : {
+      "type" : "string",
+      "enum" : [ "DIRECTIONALITY", "HEADING" ]
+    },
+    "ProcessedElevationProfile" : {
+      "type" : "object",
+      "properties" : {
+        "defaultElevationMeters" : {
+          "type" : "number",
+          "format" : "double"
+        },
+        "nodeElevationMeters" : {
+          "type" : "array",
+          "items" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        }
+      }
+    },
+    "ProcessedRegionInfoBase" : {
+      "type" : "object",
+      "properties" : {
+        "anchorPoint" : {
+          "$ref" : "#/$defs/ProcessedAnchorPoint"
+        },
+        "directionInfo" : {
+          "$ref" : "#/$defs/ProcessedDirectionInfoBase"
+        },
+        "elevationProfile" : {
+          "$ref" : "#/$defs/ProcessedElevationProfile"
+        },
+        "regionType" : {
+          "$ref" : "#/$defs/ProcessedRegionType"
+        }
+      }
+    },
+    "ProcessedRegionType" : {
+      "type" : "string",
+      "enum" : [ "PATH", "POLYGON", "CIRCLE", "UNKNOWN" ]
+    },
+    "ProcessedTimContent" : {
+      "type" : "object",
+      "properties" : {
+        "contentItems" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ProcessedTimContentItem"
+          }
+        },
+        "sentence" : {
+          "type" : "string"
+        },
+        "type" : {
+          "$ref" : "#/$defs/ProcessedContentType"
+        }
+      }
+    },
+    "ProcessedTimContentItem" : {
+      "type" : "object",
+      "properties" : {
+        "itisCode" : {
+          "type" : "integer",
+          "format" : "int64"
+        },
+        "itisPhrase" : {
+          "type" : "string"
+        },
+        "type" : {
+          "$ref" : "#/$defs/TimContentItemType"
+        }
+      }
+    },
+    "ProcessedTimFeature(Object)" : {
+      "type" : "object",
+      "properties" : {
+        "geometry" : { },
+        "id" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "properties" : {
+          "$ref" : "#/$defs/ProcessedTimProperties"
+        }
+      }
+    },
+    "ProcessedTimFeatureCollection" : {
+      "type" : "object",
+      "properties" : {
+        "features" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ProcessedTimFeature(Object)"
+          }
+        }
+      }
+    },
+    "ProcessedTimProperties" : {
+      "type" : "object",
+      "properties" : {
+        "content" : {
+          "$ref" : "#/$defs/ProcessedTimContent"
+        },
+        "deploymentAgencyType" : {
+          "$ref" : "#/$defs/ProcessedDeploymentAgency"
+        },
+        "priority" : {
+          "type" : "integer",
+          "format" : "int32"
+        },
+        "regionInfoList" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/$defs/ProcessedRegionInfoBase"
+          }
+        },
+        "validityPeriod" : {
+          "$ref" : "#/$defs/ProcessedValidityPeriod"
+        }
+      }
+    },
+    "ProcessedValidationMessage" : {
+      "type" : "object",
+      "properties" : {
+        "exception" : {
+          "type" : "string"
+        },
+        "jsonPath" : {
+          "type" : "string"
+        },
+        "message" : {
+          "type" : "string"
+        },
+        "schemaPath" : {
+          "type" : "string"
+        }
+      }
+    },
+    "ProcessedValidityPeriod" : {
+      "type" : "object",
+      "properties" : {
+        "endTime" : {
+          "type" : "string",
+          "format" : "date-time"
+        },
+        "startTime" : {
+          "type" : "string",
+          "format" : "date-time"
+        }
+      }
+    },
+    "Standard" : {
+      "type" : "string",
+      "enum" : [ "ITWG", "CTW" ]
+    },
+    "TimContentItemType" : {
+      "type" : "string",
+      "enum" : [ "ITIS_CODE", "PLAIN_TEXT" ]
+    }
+  },
+  "type" : "object",
+  "properties" : {
+    "asn1" : {
+      "type" : "string"
+    },
+    "compliance" : {
+      "type" : "array",
+      "items" : {
+        "$ref" : "#/$defs/ProcessedCompliance"
+      }
+    },
+    "gnisRegionId" : {
+      "type" : "integer",
+      "format" : "int32"
+    },
+    "location" : {
+      "$ref" : "#/$defs/Point-2"
+    },
+    "messageType" : {
+      "type" : "string"
+    },
+    "msgCnt" : {
+      "type" : "integer",
+      "format" : "int32"
+    },
+    "odeReceivedAt" : {
+      "type" : "string"
+    },
+    "originIp" : {
+      "type" : "string"
+    },
+    "packetId" : {
+      "type" : "string"
+    },
+    "regionFeatureCollection" : {
+      "$ref" : "#/$defs/ProcessedTimFeatureCollection"
+    },
+    "schemaVersion" : {
+      "type" : "integer",
+      "format" : "int32"
+    },
+    "timeStamp" : {
+      "type" : "string",
+      "format" : "date-time"
+    }
+  }
+}

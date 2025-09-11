@@ -8,6 +8,13 @@ import java.time.ZoneOffset;
 import java.util.List;
 
 public class FieldConversions {
+
+    // Heading sector constants
+    private static final double HEADING_SECTOR_DEGREES = 22.5;
+    private static final double HEADING_SECTOR_RANGE = 22.5; // Keep exact decimal value
+    private static final int MAX_HEADING_SECTORS = 16;
+    private static final int HEX_STRING_MIN_LENGTH = 4;
+
     public static Double convertLong(long j2735Long) {
         // Longitude ::= INTEGER (-1799999999..1800000001)
         // -- LSB = 1/10 microdegree
@@ -202,54 +209,64 @@ public class FieldConversions {
 
         ZoneOffset offset = convertDOffset(dDateTime.getOffset());
 
-        if (year != null && month != null && dayOfMonth != null && hour != null
-                && minute != null && secondNanos != null) {
-            OffsetDateTime odt = OffsetDateTime.of(year, month, dayOfMonth, hour, minute,
-                    secondNanos.secondOfMinute(), secondNanos.nanoOfSecond(), offset);
+        if (year != null && month != null && dayOfMonth != null && hour != null && minute != null
+                && secondNanos != null) {
+            OffsetDateTime odt = OffsetDateTime.of(year, month, dayOfMonth, hour, minute, secondNanos.secondOfMinute(),
+                    secondNanos.nanoOfSecond(), offset);
             return odt.toInstant().toEpochMilli();
         }
         return null;
     }
 
     public static Integer convertDYear(DYear dYear) {
-        if (dYear == null) return null;
+        if (dYear == null)
+            return null;
         long value = dYear.getValue();
         // 0 represents unknown year
-        if (value == 0) return null;
+        if (value == 0)
+            return null;
         return (int) value;
     }
 
     public static Integer convertDMonth(DMonth dMonth) {
-        if (dMonth == null) return null;
+        if (dMonth == null)
+            return null;
         long value = dMonth.getValue();
         // 0 Represents unknown month
-        if (value == 0) return null;
+        if (value == 0)
+            return null;
         return (int) value;
     }
 
     public static Integer convertDDay(DDay dDay) {
-        if (dDay == null) return null;
+        if (dDay == null)
+            return null;
         long value = dDay.getValue();
         // 0 represents unknown day
-        if (value == 0) return null;
+        if (value == 0)
+            return null;
         return (int) value;
     }
 
     public static Integer convertDHour(DHour dHour) {
-        if (dHour == null) return null;
+        if (dHour == null)
+            return null;
         long value = dHour.getValue();
         // Per J2735 (2024) sec 7.34: 31 represents unknown hours and the values 24-30 are used by some applications
         // to represent schedule adherence.
         // But they are omitted here for use by the RTCM timestamp.
-        if (value > 23) return null;
+        if (value > 23)
+            return null;
         return (int) value;
     }
 
     public static Integer convertDMinute(DMinute dMinute) {
-        if (dMinute == null) return null;
+        if (dMinute == null)
+            return null;
         long value = dMinute.getValue();
         // Per J2735 (2024) sec 7.37: 60 represents unknown hours
-        if (value == 60) return null;
+        if (value == 60)
+            return null;
         return (int) value;
     }
 
@@ -260,10 +277,12 @@ public class FieldConversions {
      * @return milliseconds or null if absent
      */
     public static SecondNanos convertDSecond(DSecond dSecond) {
-        if (dSecond == null) return null;
+        if (dSecond == null)
+            return null;
         long value = dSecond.getValue();
         // Per J2735 (2024) sec. 7.43: 65535 represents unavailable, and values 61000 and above are reserved.
-        if (value >= 61000) return null;
+        if (value >= 61000)
+            return null;
         final int secondOfMinute = Math.floorDiv((int) value, 1000);
         final int milliOfSecond = (int) value - (secondOfMinute * 1000);
         final int nanoOfSecond = milliOfSecond * 1000000;
@@ -282,10 +301,186 @@ public class FieldConversions {
      * @return Java ZoneOffset
      */
     public static ZoneOffset convertDOffset(DOffset dOffset) {
-        if (dOffset == null) return ZoneOffset.UTC;
+        if (dOffset == null)
+            return ZoneOffset.UTC;
         final int value = (int) dOffset.getValue();
         int offsetHours = Math.floorDiv(value, 60);
         int offsetMinutes = value - (offsetHours * 60);
         return ZoneOffset.ofHoursMinutes(offsetHours, offsetMinutes);
+    }
+
+    /**
+     * Converts a J2735 LaneWidth value to meters. Providing a range of 0 to + 327.67 m meters.
+     *
+     * @param j2735Elev J2735 lane width value.
+     * @return Lane width in meters, or null if unavailable.
+     */
+    public static Double convertLaneWidth(long j2735LaneWidth) {
+        Double returnValue = j2735LaneWidth * 1e-2;
+        return returnValue;
+    }
+
+    /**
+     * Calculates the lane width based on the lane width meter and lane width offset in centimeters.
+     *
+     * @param laneWidthMeter J2735 lane width meter value.
+     * @param laneWidthOffsetCm J2735 lane width offset in centimeters.
+     * @return Lane width in meters.
+     */
+    public static Double calculateLaneWidthOffset(Double laneWidthMeter, long laneWidthOffsetCm) {
+        Double returnValue = null;
+        returnValue = laneWidthMeter + (laneWidthOffsetCm * 1e-2);
+        return returnValue;
+    }
+
+    /**
+     * Calculates the elevation based on the elevation meter and elevation offset in centimeters.
+     *
+     * @param elevationMeter J2735 elevation meter value.
+     * @param elevationOffsetCm J2735 elevation offset in centimeters.
+     * @return Elevation in meters.
+     */
+    public static Double calculateElevationOffset(Double elevationMeter, long elevationOffsetCm) {
+        Double returnValue = null;
+        if (elevationMeter != null) {
+            returnValue = elevationMeter + (elevationOffsetCm * 1e-2);
+        }
+        return returnValue;
+    }
+
+    /**
+     * Converts a binary string to hexadecimal string.
+     *
+     * @param binary The binary string
+     * @return Hexadecimal representation
+     */
+    public static String binaryToHex(String binary) {
+        if (binary == null || binary.isEmpty()) {
+            return null;
+        }
+
+        try {
+            // Pad the binary string to ensure it's a multiple of 4 bits
+            while (binary.length() % 4 != 0) {
+                binary = "0" + binary;
+            }
+
+            // Convert binary to hex
+            int decimal = Integer.parseInt(binary, 2);
+            String hex = Integer.toHexString(decimal).toUpperCase();
+
+            // Pad with leading zeros if needed to maintain 4-character hex format
+            while (hex.length() < 4) {
+                hex = "0" + hex;
+            }
+
+            return hex;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Check if a string represents a binary value.
+     *
+     * @param value The string to check
+     * @return True if the string contains only 0s and 1s
+     */
+    public static boolean isBinaryString(String value) {
+        if (value == null || value.isEmpty()) {
+            return false;
+        }
+        return value.matches("[01]+");
+    }
+
+    /**
+     * Extract direction value from ASN.1 direction field using reflection.
+     *
+     * @param direction The direction field object
+     * @return Direction value as string or null if extraction fails
+     */
+    public static String extractDirectionValue(Object direction) {
+        if (direction == null) {
+            return null;
+        }
+
+        try {
+            // Try to get the value using reflection to handle different ASN.1 types
+            Object value = direction.getClass().getMethod("getValue").invoke(direction);
+            if (value != null) {
+                String stringValue = value.toString();
+
+                // Check if it's a binary string and convert to hex
+                if (isBinaryString(stringValue)) {
+                    return binaryToHex(stringValue);
+                }
+
+                return stringValue;
+            }
+        } catch (Exception e) {
+            // Try toString() as fallback
+            try {
+                String stringValue = direction.toString();
+                if (stringValue != null && !stringValue.isEmpty()) {
+                    // Check if it's a binary string and convert to hex
+                    if (isBinaryString(stringValue)) {
+                        return binaryToHex(stringValue);
+                    }
+
+                    return stringValue;
+                }
+            } catch (Exception ex) {
+                // Both methods failed
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Parse heading sectors from hex-encoded direction bitmap. Each bit represents a 22.5-degree sector starting from
+     * North (0°) and moving clockwise.
+     *
+     * @param directionHex The hex-encoded direction string (e.g., "E0E0")
+     * @return Array of active sector bit positions
+     */
+    public static int[] parseHeadingSectors(String directionHex) {
+        if (directionHex == null || directionHex.length() < HEX_STRING_MIN_LENGTH) {
+            return new int[0];
+        }
+
+        try {
+            int directionValue = Integer.parseInt(directionHex, 16);
+            java.util.List<Integer> activeSectors = new java.util.ArrayList<>();
+
+            for (int bit = 0; bit < MAX_HEADING_SECTORS; bit++) {
+                if ((directionValue & (1 << bit)) != 0) {
+                    activeSectors.add(bit);
+                }
+            }
+
+            return activeSectors.stream().mapToInt(Integer::intValue).toArray();
+        } catch (NumberFormatException e) {
+            return new int[0];
+        }
+    }
+
+    /**
+     * Convert sector bit position to heading degrees.
+     *
+     * @param sectorBit The sector bit position (0-15)
+     * @return Heading in degrees
+     */
+    public static double sectorBitToHeading(int sectorBit) {
+        return sectorBit * HEADING_SECTOR_DEGREES;
+    }
+
+    /**
+     * Get the range for a heading sector (22.5 degrees).
+     *
+     * @return Range in degrees (22.5)
+     */
+    public static double getHeadingSectorRange() {
+        return HEADING_SECTOR_RANGE; // Each sector is exactly 22.5° wide
     }
 }

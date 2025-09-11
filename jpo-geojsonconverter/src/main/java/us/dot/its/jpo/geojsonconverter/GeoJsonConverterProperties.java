@@ -68,8 +68,20 @@ public class GeoJsonConverterProperties implements EnvironmentAware {
     private String kafkaTopicProcessedPsm = "topic.ProcessedPsm";
 
     // RTCM
-    @Getter @Setter private String kafkaTopicOdeRtcmJson;
-    @Getter @Setter private String kafkaTopicProcessedRtcm;
+    @Getter
+    @Setter
+    private String kafkaTopicOdeRtcmJson;
+    @Getter
+    @Setter
+    private String kafkaTopicProcessedRtcm;
+
+    // TIM
+    @Getter
+    @Setter
+    private String kafkaTopicOdeTimJson;
+    @Getter
+    @Setter
+    private String kafkaTopicProcessedTim;
 
     private int lingerMs = 0;
 

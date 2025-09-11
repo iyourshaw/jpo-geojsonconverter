@@ -9,6 +9,7 @@ import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedIntersectionReferen
 import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedSpeedConfidence;
 import us.dot.its.jpo.geojsonconverter.pojos.spat.*;
 import us.dot.its.jpo.geojsonconverter.utils.BitstringUtils;
+import us.dot.its.jpo.geojsonconverter.utils.J2735DateTimeConverter;
 import us.dot.its.jpo.geojsonconverter.utils.ProcessedSchemaVersions;
 import us.dot.its.jpo.geojsonconverter.validator.CTI4501Validator;
 import us.dot.its.jpo.geojsonconverter.validator.JsonValidatorResult;
@@ -18,7 +19,6 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -105,8 +105,11 @@ public class SpatProcessedJsonConverter
         processedSpat.setName(intersectionState.getName() != null ? intersectionState.getName().getValue() : null);
         IntersectionReferenceID intersectionReferenceID = intersectionState.getId();
         ProcessedIntersectionReferenceID processedIntersectionReferenceID = new ProcessedIntersectionReferenceID();
-        processedIntersectionReferenceID.setId(intersectionReferenceID.getId() != null ? (int)intersectionReferenceID.getId().getValue() : null);
-        processedIntersectionReferenceID.setRegion(intersectionReferenceID.getRegion() != null ? (int)intersectionReferenceID.getRegion().getValue() : null);
+        processedIntersectionReferenceID.setId(
+                intersectionReferenceID.getId() != null ? (int) intersectionReferenceID.getId().getValue() : null);
+        processedIntersectionReferenceID.setRegion(
+                intersectionReferenceID.getRegion() != null ? (int) intersectionReferenceID.getRegion().getValue()
+                        : null);
         processedSpat.setIntersectionReferenceID(processedIntersectionReferenceID);
 
         // Handle validation messages for the J2735 and CTI-4501 SPaT conformance validation
@@ -136,7 +139,8 @@ public class SpatProcessedJsonConverter
         processedSpat.setStatus(processedStatus);
         List<Integer> enabledLanes = new ArrayList<>();
         if (intersectionState.getEnabledLanes() != null) {
-            enabledLanes.addAll(intersectionState.getEnabledLanes().stream().map(laneId -> (int)laneId.getValue()).toList());
+            enabledLanes.addAll(
+                    intersectionState.getEnabledLanes().stream().map(laneId -> (int) laneId.getValue()).toList());
         }
         processedSpat.setEnabledLanes(enabledLanes);
 
@@ -147,12 +151,14 @@ public class SpatProcessedJsonConverter
         Integer intersectionDSecond =
                 intersectionState.getTimeStamp() != null ? (int) intersectionState.getTimeStamp().getValue() : null;
 
+        String odeTimestamp = metadata.getOdeReceivedAt();
+        ZonedDateTime odeDate = Instant.parse(odeTimestamp).atZone(ZoneId.of("UTC"));
         // Generate the UTC timestamp based on the moy that isn't null and let the function handle the rest
         // If both are null or intersectionDSecond is null, the function will still use the ODE received timestamp to
         // fill in the blanks
         ZonedDateTime utcTimestamp = intersectionMoy != null
-                ? generateUTCTimestamp(intersectionMoy, intersectionDSecond, metadata.getOdeReceivedAt())
-                : generateUTCTimestamp(spatMoy, intersectionDSecond, metadata.getOdeReceivedAt());
+                ? J2735DateTimeConverter.generateUTCTimestamp(intersectionMoy, intersectionDSecond, odeDate)
+                : J2735DateTimeConverter.generateUTCTimestamp(spatMoy, intersectionDSecond, odeDate);
         processedSpat.setUtcTimeStamp(utcTimestamp);
 
         List<ProcessedMovementState> processedMovementStateList = new ArrayList<ProcessedMovementState>();
@@ -169,8 +175,9 @@ public class SpatProcessedJsonConverter
                 for (MovementEvent incomingMovementEvent : signalGroupState.getState_time_speed()) {
                     ProcessedMovementEvent processedMovementEvent = new ProcessedMovementEvent();
                     MovementPhaseState phaseState = incomingMovementEvent.getEventState();
-                    if  (phaseState != null) {
-                        ProcessedMovementPhaseState processedMovementPhaseState = ProcessedMovementPhaseState.fromName(phaseState.getName());
+                    if (phaseState != null) {
+                        ProcessedMovementPhaseState processedMovementPhaseState =
+                                ProcessedMovementPhaseState.fromName(phaseState.getName());
                         processedMovementEvent.setEventState(processedMovementPhaseState);
                     }
 
@@ -192,11 +199,16 @@ public class SpatProcessedJsonConverter
                     Integer nextTime = incomingMovementEvent.getTiming().getNextTime() != null
                             ? (int) incomingMovementEvent.getTiming().getNextTime().getValue()
                             : null;
-                    spatTimingDetails.setStartTime(generateOffsetUTCTimestamp(utcTimestamp, startTime));
-                    spatTimingDetails.setMinEndTime(generateOffsetUTCTimestamp(utcTimestamp, minEndTime));
-                    spatTimingDetails.setMaxEndTime(generateOffsetUTCTimestamp(utcTimestamp, maxEndTime));
-                    spatTimingDetails.setLikelyTime(generateOffsetUTCTimestamp(utcTimestamp, likelyTime));
-                    spatTimingDetails.setNextTime(generateOffsetUTCTimestamp(utcTimestamp, nextTime));
+                    spatTimingDetails.setStartTime(
+                            J2735DateTimeConverter.generateOffsetUTCTimestampForTimeMark(utcTimestamp, startTime));
+                    spatTimingDetails.setMinEndTime(
+                            J2735DateTimeConverter.generateOffsetUTCTimestampForTimeMark(utcTimestamp, minEndTime));
+                    spatTimingDetails.setMaxEndTime(
+                            J2735DateTimeConverter.generateOffsetUTCTimestampForTimeMark(utcTimestamp, maxEndTime));
+                    spatTimingDetails.setLikelyTime(
+                            J2735DateTimeConverter.generateOffsetUTCTimestampForTimeMark(utcTimestamp, likelyTime));
+                    spatTimingDetails.setNextTime(
+                            J2735DateTimeConverter.generateOffsetUTCTimestampForTimeMark(utcTimestamp, nextTime));
                     spatTimingDetails.setConfidence(incomingMovementEvent.getTiming().getConfidence() != null
                             ? (int) incomingMovementEvent.getTiming().getConfidence().getValue()
                             : null);
@@ -222,13 +234,14 @@ public class SpatProcessedJsonConverter
             for (AdvisorySpeed advisorySpeed : advisorySpeedList) {
                 ProcessedAdvisorySpeed processedAdvisorySpeed = new ProcessedAdvisorySpeed();
 
-                Integer speed = advisorySpeed.getSpeed() != null ? (int)advisorySpeed.getSpeed().getValue() : null;
+                Integer speed = advisorySpeed.getSpeed() != null ? (int) advisorySpeed.getSpeed().getValue() : null;
                 processedAdvisorySpeed.setSpeed(speed);
 
-                Integer class_ = advisorySpeed.getClass_() != null ? (int)advisorySpeed.getClass_().getValue() : null;
+                Integer class_ = advisorySpeed.getClass_() != null ? (int) advisorySpeed.getClass_().getValue() : null;
                 processedAdvisorySpeed.setClass_(class_);
 
-                Integer distance = advisorySpeed.getDistance() != null ? (int)advisorySpeed.getDistance().getValue() : null;
+                Integer distance =
+                        advisorySpeed.getDistance() != null ? (int) advisorySpeed.getDistance().getValue() : null;
                 processedAdvisorySpeed.setDistance(distance);
 
                 AdvisorySpeedType advisorySpeedType = advisorySpeed.getType();
@@ -265,77 +278,5 @@ public class SpatProcessedJsonConverter
         return processedSpat;
     }
 
-    public ZonedDateTime generateUTCTimestamp(Integer moy, Integer dSecond, String odeTimestamp) { //
-        // 2022-10-31T15:40:26.687292Z
-        ZonedDateTime date = null;
-        try {
-            ZonedDateTime odeDate = Instant.parse(odeTimestamp).atZone(ZoneId.of("UTC"));
-            int year = odeDate.getYear();
-            String dateString;
-            long milliseconds;
-            if (moy != null) {
-                long minutes = moy;
-                milliseconds = (long) dSecond; // milliseconds in current minute
-                dateString = String.format("%d-01-01T00:00:00.00Z", year);
-                date = Instant.parse(dateString).atZone(ZoneId.of("UTC"));
-                date = date.plusMinutes(minutes);
-                date = date.plus(milliseconds, ChronoUnit.MILLIS);
-            } else {
-                date = odeDate;
-                if (dSecond != null) {
-                    milliseconds = dSecond; // milliseconds from beginning of minute
-                    date = date.withSecond(0);
-                    date = date.withNano(0);
-                    date = date.plus(milliseconds, ChronoUnit.MILLIS);
-                }
-            }
 
-        } catch (Exception e) {
-            String errMsg = String.format("Failed to generateUTCTimestamp - SpatProcessedJsonConverter. Message: %s",
-                    e.getMessage());
-            logger.error(errMsg, e);
-        }
-
-        return date;
-    }
-
-    public ZonedDateTime generateOffsetUTCTimestamp(ZonedDateTime originTimestamp, Integer timeMark) {
-        try {
-            if (timeMark != null) {
-                long millis = Long.valueOf(timeMark) * 100;
-                ZonedDateTime date = originTimestamp;
-                if (timeMark == 36011 || timeMark == 36001) {
-
-                    // Return UTC time zero if the Zoned Date time is marked as unknown, UTC time zero chosen so that a
-                    // null value can represent an empty field in the SPaT. But 36011, can represent an intentionally
-                    // unidentified field.
-                    return ZonedDateTime.ofInstant(Instant.ofEpochMilli(0), ZoneId.of("UTC"));
-
-                } else {
-                    // If we are within 10 minutes of the next hour, and the timeMark is a small number, it probably
-                    // means that the time is rolling over.
-                    // In this case, add an hour to the UTC timestamp so that it appears in the future instead of in the
-                    // past.s
-                    if (originTimestamp.getMinute() > 50 && timeMark < 6000) {
-                        date = date.plusHours(1);
-                    }
-
-                    date = date.withMinute(0);
-                    date = date.withSecond(0);
-                    date = date.withNano(0);
-                    date = date.plus(millis, ChronoUnit.MILLIS);
-                    return date;
-                }
-
-
-            } else {
-                return null;
-            }
-        } catch (Exception e) {
-            String errMsg = String.format(
-                    "Failed to generateOffsetUTCTimestamp - SpatProcessedJsonConverter. Message: %s", e.getMessage());
-            logger.error(errMsg, e);
-            return null;
-        }
-    }
 }
