@@ -39,6 +39,9 @@ public class JsonConverterServiceControllerTest {
     @Autowired
     RTCMConverter rtcmConverter;
 
+    @Autowired
+    TimJsonValidator timJsonValidator;
+
     @Before
     public void setup() {
         props = new GeoJsonConverterProperties();
@@ -47,8 +50,9 @@ public class JsonConverterServiceControllerTest {
 
     @Test
     public void testSpringBootLoaded() {
-        geoJsonConverterServiceController = new JsonConverterServiceController(props, mapJsonValidator,
-                spatJsonValidator, bsmJsonValidator, psmJsonValidator, rtcmJsonValidator, rtcmConverter);
+        geoJsonConverterServiceController =
+                new JsonConverterServiceController(props, mapJsonValidator, spatJsonValidator, bsmJsonValidator,
+                        psmJsonValidator, rtcmJsonValidator, rtcmConverter, timJsonValidator);
         assertNotNull(geoJsonConverterServiceController);
     }
 }

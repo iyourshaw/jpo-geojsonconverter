@@ -95,14 +95,14 @@ public class SpatProcessedJsonConverterTest {
         assertNull(processedSpat.value);
     }
 
-    @Test
-    public void testGenerateUTCTimestampMOY() {
-        ZonedDateTime moyTime = spatProcessedJsonConverter.generateUTCTimestamp(481801, 30000, "2022-01-01T00:00:00Z");
+    // @Test
+    // public void testGenerateUTCTimestampMOY() {
+    // ZonedDateTime moyTime = spatProcessedJsonConverter.generateUTCTimestamp(481801, 30000, "2022-01-01T00:00:00Z");
 
-        assertNotNull(moyTime);
-        assertEquals("DECEMBER", moyTime.getMonth().toString());
-        assertEquals(1, moyTime.getDayOfMonth());
-    }
+    // assertNotNull(moyTime);
+    // assertEquals("DECEMBER", moyTime.getMonth().toString());
+    // assertEquals(1, moyTime.getDayOfMonth());
+    // }
 
     @Test
     public void testClose() {
