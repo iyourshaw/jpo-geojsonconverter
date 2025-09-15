@@ -1030,8 +1030,15 @@ public class TimProcessedJsonConverter
 
         // Set common fields
         regionInfo.setRegionType(regionType);
-        regionInfo.setElevationProfile(elevationProfile);
-        regionInfo.setAnchorPoint(setAnchorPointAndElevation(region, elevationProfile));
+
+        // Set anchor point and elevation from anchor
+        ProcessedAnchorPoint anchorPoint = setAnchorPointAndElevation(region, elevationProfile);
+        regionInfo.setAnchorPoint(anchorPoint);
+
+        // Only set elevation profile if there's elevation data in the anchor point
+        if (anchorPoint != null && anchorPoint.getElevationMeters() != null) {
+            regionInfo.setElevationProfile(elevationProfile);
+        }
 
         return regionInfo;
     }
