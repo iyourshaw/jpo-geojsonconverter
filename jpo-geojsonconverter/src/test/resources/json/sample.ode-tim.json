@@ -1,0 +1,376 @@
+{
+	"metadata": {
+		"payloadType": "us.dot.its.jpo.ode.model.OdeMessageFramePayload",
+		"serialId": {
+			"streamId": "3060f60c-8d7c-4c9b-9a25-4229684e56ae",
+			"bundleSize": 1,
+			"bundleId": 11,
+			"recordId": 0,
+			"serialNumber": 11
+		},
+		"odeReceivedAt": "2025-09-11T22:32:01.969Z",
+		"schemaVersion": 9,
+		"maxDurationTime": 8640,
+		"recordGeneratedAt": "2024-09-25T10:00:00.000Z",
+		"recordGeneratedBy": "TMC",
+		"sanitized": false,
+		"odePacketID": "8D442EF003FC6B1B04",
+		"odeTimStartDateTime": "2024-09-25T10:00:00.000Z",
+		"request": {
+			"ode": {
+				"version": 3,
+				"verb": "POST"
+			},
+			"rsus": [
+				{
+					"rsuTarget": "10.145.2.100",
+					"rsuUsername": "rwUser",
+					"rsuPassword": "*",
+					"rsuRetries": 3,
+					"rsuTimeout": 5000,
+					"rsuIndex": 31,
+					"snmpProtocol": "NTCIP1218"
+				}
+			],
+			"snmp": {
+				"rsuid": "83",
+				"msgid": 31,
+				"mode": 1,
+				"channel": 183,
+				"interval": 1000,
+				"deliverystart": "2024-09-25T10:00:00.0Z",
+				"deliverystop": "2024-09-30T10:00:00.0Z",
+				"enable": 1,
+				"status": 4
+			}
+		},
+		"isCertPresent": false
+	},
+	"payload": {
+		"data": {
+			"messageId": 31,
+			"value": {
+				"TravelerInformation": {
+					"msgCnt": 1,
+					"timeStamp": 386520,
+					"packetID": "8D442EF003FC6B1B04",
+					"urlB": "null",
+					"dataFrames": [
+						{
+							"doNotUse1": 0,
+							"frameType": "advisory",
+							"msgId": {
+								"roadSignID": {
+									"position": {
+										"lat": 411513384,
+										"long": -1046444217
+									},
+									"viewAngle": "FFFF",
+									"mutcdCode": "warning"
+								}
+							},
+							"startYear": 2024,
+							"startTime": 386520,
+							"durationTime": 8640,
+							"priority": 5,
+							"doNotUse2": 0,
+							"regions": [
+								{
+									"name": "SpeedLimit 55 Archer Q4.2",
+									"id": {
+										"region": 0,
+										"id": 0
+									},
+									"anchor": {
+										"lat": 411531501,
+										"long": -1046471010
+									},
+									"laneWidth": 5000,
+									"directionality": "both",
+									"closedPath": false,
+									"direction": "000F",
+									"description": {
+										"path": {
+											"scale": 0,
+											"offset": {
+												"ll": {
+													"nodes": [
+														{
+															"delta": {
+																"node-LL2": {
+																	"lon": -5853,
+																	"lat": 2057
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-LL3": {
+																	"lon": -8454,
+																	"lat": 1861
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-LL3": {
+																	"lon": -9494,
+																	"lat": 1469
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-LL3": {
+																	"lon": -11835,
+																	"lat": 1175
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-LL3": {
+																	"lon": -10405,
+																	"lat": 490
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-LL2": {
+																	"lon": -7283,
+																	"lat": 196
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-LL2": {
+																	"lon": -7413,
+																	"lat": 0
+																}
+															}
+														}
+													]
+												}
+											}
+										}
+									}
+								}
+							],
+							"doNotUse3": 0,
+							"doNotUse4": 0,
+							"content": {
+								"speedLimit": [
+									{
+										"item": {
+											"itis": 268
+										}
+									},
+									{
+										"item": {
+											"itis": 12599
+										}
+									},
+									{
+										"item": {
+											"itis": 8720
+										}
+									}
+								]
+							},
+							"url": "null"
+						},
+						{
+							"doNotUse1": 0,
+							"frameType": "advisory",
+							"msgId": {
+								"roadSignID": {
+									"position": {
+										"lat": 411513384,
+										"long": -1046444217
+									},
+									"viewAngle": "FFFF",
+									"mutcdCode": "warning"
+								}
+							},
+							"startYear": 2024,
+							"startTime": 386520,
+							"durationTime": 8640,
+							"priority": 5,
+							"doNotUse2": 0,
+							"regions": [
+								{
+									"name": "SpeedLimit 55 Archer Q4.2",
+									"id": {
+										"region": 0,
+										"id": 0
+									},
+									"anchor": {
+										"lat": 411531501,
+										"long": -1046471010
+									},
+									"laneWidth": 5000,
+									"directionality": "both",
+									"closedPath": false,
+									"direction": "000F",
+									"description": {
+										"path": {
+											"scale": 15,
+											"offset": {
+												"ll": {
+													"nodes": [
+														{
+															"delta": {
+																"node-LL2": {
+																	"lon": -5853,
+																	"lat": 2057
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-LL3": {
+																	"lon": -8454,
+																	"lat": 1861
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-LL3": {
+																	"lon": -9494,
+																	"lat": 1469
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-LL3": {
+																	"lon": -11835,
+																	"lat": 1175
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-LL3": {
+																	"lon": -10405,
+																	"lat": 490
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-LL2": {
+																	"lon": -7283,
+																	"lat": 196
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-LL2": {
+																	"lon": -7413,
+																	"lat": 0
+																}
+															}
+														}
+													]
+												}
+											}
+										}
+									}
+								}
+							],
+							"doNotUse3": 0,
+							"doNotUse4": 0,
+							"content": {
+								"speedLimit": [
+									{
+										"item": {
+											"itis": 268
+										}
+									},
+									{
+										"item": {
+											"itis": 12599
+										}
+									},
+									{
+										"item": {
+											"itis": 8720
+										}
+									}
+								]
+							},
+							"url": "null"
+						},
+						{
+							"doNotUse1": 0,
+							"frameType": "advisory",
+							"msgId": {
+								"roadSignID": {
+									"position": {
+										"lat": 405598000,
+										"long": -748771000
+									},
+									"viewAngle": "FFFF",
+									"mutcdCode": "warning"
+								}
+							},
+							"startYear": 2025,
+							"startTime": 78360,
+							"durationTime": 28800,
+							"priority": 5,
+							"doNotUse2": 0,
+							"regions": [
+								{
+									"name": "Snow Archer Traffic CIRCLE",
+									"id": {
+										"region": 0,
+										"id": 0
+									},
+									"anchor": {
+										"lat": 405598000,
+										"long": -748771000
+									},
+									"directionality": "both",
+									"closedPath": false,
+									"direction": "FFFF",
+									"description": {
+										"geometry": {
+											"direction": "FFFF",
+											"circle": {
+												"center": {
+													"lat": 405598000,
+													"long": -748771000,
+													"elevation": 18240
+												},
+												"radius": 250,
+												"units": "meter"
+											}
+										}
+									}
+								}
+							],
+							"doNotUse3": 0,
+							"doNotUse4": 0,
+							"content": {
+								"advisory": [
+									{
+										"item": {
+											"itis": 4868
+										}
+									}
+								]
+							},
+							"url": "null"
+						}
+					]
+				}
+			}
+		},
+		"dataType": "us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.TravelerInformationMessageFrame"
+	}
+}

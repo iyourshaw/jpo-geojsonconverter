@@ -417,13 +417,19 @@ public class TimProcessedJsonConverter
         List<List<Double>> points = new ArrayList<>();
         List<Double> prevPoint = Arrays.asList(anchorLon, anchorLat);
 
+        // Get scale factor (zoom) - defaults to 0 (1:1 zoom) if not present
+        int scale = 0;
+        if (path.getScale() != null) {
+            scale = (int) path.getScale().getValue();
+        }
+
         OffsetChoice choice = path.getOffset();
         if (choice != null) {
             if (choice.getXy() != null) {
                 // Handle XY offset points
                 NodeListXY nodes = choice.getXy();
                 for (NodeXY node : nodes.getNodes()) {
-                    List<Double> nextPoint = convertNodeToCoordinate(node.getDelta(), prevPoint);
+                    List<Double> nextPoint = convertNodeToCoordinate(node.getDelta(), prevPoint, scale);
                     if (nextPoint != null) {
                         points.add(nextPoint);
                         prevPoint = nextPoint;
@@ -433,7 +439,7 @@ public class TimProcessedJsonConverter
                 // Handle LL (latitude/longitude) points
                 NodeListLL nodes = choice.getLl();
                 for (NodeLL node : nodes.getNodes()) {
-                    List<Double> nextPoint = convertLLNodeToCoordinate(node.getDelta(), prevPoint);
+                    List<Double> nextPoint = convertLLNodeToCoordinate(node.getDelta(), prevPoint, scale);
                     if (nextPoint != null) {
                         points.add(nextPoint);
                         prevPoint = nextPoint;
@@ -449,25 +455,25 @@ public class TimProcessedJsonConverter
     /**
      * Convert XY node to coordinate
      */
-    private List<Double> convertNodeToCoordinate(NodeOffsetPointXY node, List<Double> prevPoint) {
+    private List<Double> convertNodeToCoordinate(NodeOffsetPointXY node, List<Double> prevPoint, int scale) {
         if (node.getNode_XY1() != null) {
             Node_XY_20b xy = node.getNode_XY1();
-            return offsetCoordinate(prevPoint, xy.getX().getValue(), xy.getY().getValue());
+            return offsetCoordinate(prevPoint, xy.getX().getValue(), xy.getY().getValue(), scale);
         } else if (node.getNode_XY2() != null) {
             Node_XY_22b xy = node.getNode_XY2();
-            return offsetCoordinate(prevPoint, xy.getX().getValue(), xy.getY().getValue());
+            return offsetCoordinate(prevPoint, xy.getX().getValue(), xy.getY().getValue(), scale);
         } else if (node.getNode_XY3() != null) {
             Node_XY_24b xy = node.getNode_XY3();
-            return offsetCoordinate(prevPoint, xy.getX().getValue(), xy.getY().getValue());
+            return offsetCoordinate(prevPoint, xy.getX().getValue(), xy.getY().getValue(), scale);
         } else if (node.getNode_XY4() != null) {
             Node_XY_26b xy = node.getNode_XY4();
-            return offsetCoordinate(prevPoint, xy.getX().getValue(), xy.getY().getValue());
+            return offsetCoordinate(prevPoint, xy.getX().getValue(), xy.getY().getValue(), scale);
         } else if (node.getNode_XY5() != null) {
             Node_XY_28b xy = node.getNode_XY5();
-            return offsetCoordinate(prevPoint, xy.getX().getValue(), xy.getY().getValue());
+            return offsetCoordinate(prevPoint, xy.getX().getValue(), xy.getY().getValue(), scale);
         } else if (node.getNode_XY6() != null) {
             Node_XY_32b xy = node.getNode_XY6();
-            return offsetCoordinate(prevPoint, xy.getX().getValue(), xy.getY().getValue());
+            return offsetCoordinate(prevPoint, xy.getX().getValue(), xy.getY().getValue(), scale);
         } else if (node.getNode_LatLon() != null) {
             Node_LLmD_64b ll = node.getNode_LatLon();
             return Arrays.asList(FieldConversions.convertLong(ll.getLon().getValue()),
@@ -479,29 +485,29 @@ public class TimProcessedJsonConverter
     /**
      * Convert LL node to coordinate
      */
-    private List<Double> convertLLNodeToCoordinate(NodeOffsetPointLL node, List<Double> prevPoint) {
+    private List<Double> convertLLNodeToCoordinate(NodeOffsetPointLL node, List<Double> prevPoint, int scale) {
         if (node == null) {
             return null;
         }
 
         if (node.getNode_LL1() != null) {
             Node_LL_24B ll = node.getNode_LL1();
-            return offsetLatLonCoordinate(prevPoint, ll.getLon().getValue(), ll.getLat().getValue());
+            return offsetLatLonCoordinate(prevPoint, ll.getLon().getValue(), ll.getLat().getValue(), scale);
         } else if (node.getNode_LL2() != null) {
             Node_LL_28B ll = node.getNode_LL2();
-            return offsetLatLonCoordinate(prevPoint, ll.getLon().getValue(), ll.getLat().getValue());
+            return offsetLatLonCoordinate(prevPoint, ll.getLon().getValue(), ll.getLat().getValue(), scale);
         } else if (node.getNode_LL3() != null) {
             Node_LL_32B ll = node.getNode_LL3();
-            return offsetLatLonCoordinate(prevPoint, ll.getLon().getValue(), ll.getLat().getValue());
+            return offsetLatLonCoordinate(prevPoint, ll.getLon().getValue(), ll.getLat().getValue(), scale);
         } else if (node.getNode_LL4() != null) {
             Node_LL_36B ll = node.getNode_LL4();
-            return offsetLatLonCoordinate(prevPoint, ll.getLon().getValue(), ll.getLat().getValue());
+            return offsetLatLonCoordinate(prevPoint, ll.getLon().getValue(), ll.getLat().getValue(), scale);
         } else if (node.getNode_LL5() != null) {
             Node_LL_44B ll = node.getNode_LL5();
-            return offsetLatLonCoordinate(prevPoint, ll.getLon().getValue(), ll.getLat().getValue());
+            return offsetLatLonCoordinate(prevPoint, ll.getLon().getValue(), ll.getLat().getValue(), scale);
         } else if (node.getNode_LL6() != null) {
             Node_LL_48B ll = node.getNode_LL6();
-            return offsetLatLonCoordinate(prevPoint, ll.getLon().getValue(), ll.getLat().getValue());
+            return offsetLatLonCoordinate(prevPoint, ll.getLon().getValue(), ll.getLat().getValue(), scale);
         } else if (node.getNode_LatLon() != null) {
             Node_LLmD_64b ll = node.getNode_LatLon();
             return Arrays.asList(FieldConversions.convertLong(ll.getLon().getValue()),
@@ -516,15 +522,21 @@ public class TimProcessedJsonConverter
      * @param prevPoint The previous coordinate point [longitude, latitude]
      * @param offsetX X offset in centimeters
      * @param offsetY Y offset in centimeters
+     * @param scale Scale factor (zoom) applied as 2^N
      * @return New coordinate point [longitude, latitude]
      */
-    private List<Double> offsetCoordinate(List<Double> prevPoint, long offsetX, long offsetY) {
+    private List<Double> offsetCoordinate(List<Double> prevPoint, long offsetX, long offsetY, int scale) {
         double prevLon = prevPoint.get(0);
         double prevLat = prevPoint.get(1);
 
+        // Apply scale factor: multiply by 2^scale
+        double scaleFactor = Math.pow(2, scale);
+        double scaledOffsetX = offsetX * scaleFactor;
+        double scaledOffsetY = offsetY * scaleFactor;
+
         // Convert centimeter offsets to meters
-        double offsetXMeters = offsetX / CENTIMETERS_TO_METERS_DIVISOR;
-        double offsetYMeters = offsetY / CENTIMETERS_TO_METERS_DIVISOR;
+        double offsetXMeters = scaledOffsetX / CENTIMETERS_TO_METERS_DIVISOR;
+        double offsetYMeters = scaledOffsetY / CENTIMETERS_TO_METERS_DIVISOR;
 
         // Use proper geodetic calculations for accurate coordinate transformation
         Coordinate newCoord = GeodeticUtils.offsetCoordinate(prevLon, prevLat, offsetXMeters, offsetYMeters);
@@ -535,13 +547,18 @@ public class TimProcessedJsonConverter
     /**
      * Offset coordinate using lat/lon offsets
      */
-    private List<Double> offsetLatLonCoordinate(List<Double> prevPoint, long offsetLon, long offsetLat) {
+    private List<Double> offsetLatLonCoordinate(List<Double> prevPoint, long offsetLon, long offsetLat, int scale) {
         double prevLon = prevPoint.get(0);
         double prevLat = prevPoint.get(1);
 
+        // Apply scale factor: multiply by 2^scale
+        double scaleFactor = Math.pow(2, scale);
+        double scaledOffsetLon = offsetLon * scaleFactor;
+        double scaledOffsetLat = offsetLat * scaleFactor;
+
         // Convert scaled offsets to decimal degrees
-        double latOffset = FieldConversions.convertLat(offsetLat);
-        double lonOffset = FieldConversions.convertLong(offsetLon);
+        double latOffset = FieldConversions.convertLat((long) scaledOffsetLat);
+        double lonOffset = FieldConversions.convertLong((long) scaledOffsetLon);
 
         return Arrays.asList(prevLon + lonOffset, prevLat + latOffset);
     }
@@ -1079,10 +1096,10 @@ public class TimProcessedJsonConverter
                 if (path != null && path.getOffset() != null) {
                     if (path.getOffset().getXy() != null) {
                         processXYNodesForElevation(path.getOffset().getXy().getNodes(), segmentsElevation,
-                                currentElevation);
+                                currentElevation, 0); // Default scale for elevation processing
                     } else if (path.getOffset().getLl() != null) {
                         processLLNodesForElevation(path.getOffset().getLl().getNodes(), segmentsElevation,
-                                currentElevation);
+                                currentElevation, 0); // Default scale for elevation processing
                     }
                 }
             }
@@ -1111,10 +1128,10 @@ public class TimProcessedJsonConverter
                 if (path != null && path.getOffset() != null) {
                     if (path.getOffset().getXy() != null) {
                         processXYNodesForElevation(path.getOffset().getXy().getNodes(), segmentsElevation,
-                                currentElevation);
+                                currentElevation, 0); // Default scale for elevation processing
                     } else if (path.getOffset().getLl() != null) {
                         processLLNodesForElevation(path.getOffset().getLl().getNodes(), segmentsElevation,
-                                currentElevation);
+                                currentElevation, 0); // Default scale for elevation processing
                     }
                 }
             }
@@ -1156,9 +1173,10 @@ public class TimProcessedJsonConverter
      * @param nodes List of XY nodes
      * @param segmentsElevation List to store segment elevations
      * @param currentElevation Current elevation
+     * @param scale Scale factor (zoom) applied as 2^N
      */
-    private void processXYNodesForElevation(List<NodeXY> nodes, List<Double> segmentsElevation,
-            Double currentElevation) {
+    private void processXYNodesForElevation(List<NodeXY> nodes, List<Double> segmentsElevation, Double currentElevation,
+            int scale) {
         for (NodeXY segment : nodes) {
             NodeAttributeSetXY attributes = segment.getAttributes();
             if (attributes != null) {
@@ -1177,9 +1195,10 @@ public class TimProcessedJsonConverter
      * @param nodes List of LL nodes
      * @param segmentsElevation List to store segment elevations
      * @param currentElevation Current elevation
+     * @param scale Scale factor (zoom) applied as 2^N
      */
-    private void processLLNodesForElevation(List<NodeLL> nodes, List<Double> segmentsElevation,
-            Double currentElevation) {
+    private void processLLNodesForElevation(List<NodeLL> nodes, List<Double> segmentsElevation, Double currentElevation,
+            int scale) {
         for (NodeLL segment : nodes) {
             NodeAttributeSetLL attributes = segment.getAttributes();
             if (attributes != null) {
@@ -1217,12 +1236,18 @@ public class TimProcessedJsonConverter
         // Process offset nodes if they exist
         OffsetSystem path = region.getDescription().getPath();
         if (path != null && path.getOffset() != null) {
+            // Get scale factor (zoom) - defaults to 0 (1:1 zoom) if not present
+            int scale = 0;
+            if (path.getScale() != null) {
+                scale = (int) path.getScale().getValue();
+            }
+
             if (path.getOffset().getXy() != null) {
                 processXYNodes(path.getOffset().getXy().getNodes(), segmentsMeters, segmentsElevation, currentLaneWidth,
-                        currentElevation);
+                        currentElevation, scale);
             } else if (path.getOffset().getLl() != null) {
                 processLLNodes(path.getOffset().getLl().getNodes(), segmentsMeters, segmentsElevation, currentLaneWidth,
-                        currentElevation);
+                        currentElevation, scale);
             }
         }
 
@@ -1243,9 +1268,10 @@ public class TimProcessedJsonConverter
      * @param segmentsElevation List to store segment elevations
      * @param currentLaneWidth Current lane width
      * @param currentElevation Current elevation
+     * @param scale Scale factor (zoom) applied as 2^N
      */
     private void processXYNodes(List<NodeXY> nodes, List<Double> segmentsMeters, List<Double> segmentsElevation,
-            Double currentLaneWidth, Double currentElevation) {
+            Double currentLaneWidth, Double currentElevation, int scale) {
         for (NodeXY segment : nodes) {
             NodeAttributeSetXY attributes = segment.getAttributes();
             if (attributes != null) {
@@ -1269,9 +1295,10 @@ public class TimProcessedJsonConverter
      * @param segmentsElevation List to store segment elevations
      * @param currentLaneWidth Current lane width
      * @param currentElevation Current elevation
+     * @param scale Scale factor (zoom) applied as 2^N
      */
     private void processLLNodes(List<NodeLL> nodes, List<Double> segmentsMeters, List<Double> segmentsElevation,
-            Double currentLaneWidth, Double currentElevation) {
+            Double currentLaneWidth, Double currentElevation, int scale) {
         for (NodeLL segment : nodes) {
             NodeAttributeSetLL attributes = segment.getAttributes();
             if (attributes != null) {

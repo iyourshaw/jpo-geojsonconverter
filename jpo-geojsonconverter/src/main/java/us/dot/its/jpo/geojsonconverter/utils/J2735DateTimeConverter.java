@@ -2,7 +2,6 @@ package us.dot.its.jpo.geojsonconverter.utils;
 
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
