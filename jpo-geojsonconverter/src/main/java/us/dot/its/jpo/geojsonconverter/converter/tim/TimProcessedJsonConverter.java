@@ -6,7 +6,7 @@ import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.OffsetSystem.OffsetCho
 import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.TravelerDataFrame.ContentChoice;
 import us.dot.its.jpo.asn.j2735.r2024.Common.*;
 import us.dot.its.jpo.asn.j2735.r2024.ITIS.*;
-import us.dot.its.jpo.geojsonconverter.partitioner.RsuIntersectionKey;
+import us.dot.its.jpo.geojsonconverter.partitioner.RsuTimKey;
 import us.dot.its.jpo.geojsonconverter.pojos.ProcessedValidationMessage;
 import us.dot.its.jpo.geojsonconverter.pojos.tim.*;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.tim.*;
@@ -40,7 +40,7 @@ import org.apache.kafka.streams.processor.ProcessorContext;
  */
 @Slf4j
 public class TimProcessedJsonConverter
-        implements Transformer<Void, DeserializedRawTim, KeyValue<RsuIntersectionKey, ProcessedTim>> {
+        implements Transformer<Void, DeserializedRawTim, KeyValue<RsuTimKey, ProcessedTim>> {
 
     // Constants
     private static final String UTC_ZONE_ID = "UTC";
@@ -69,11 +69,11 @@ public class TimProcessedJsonConverter
      *
      * @param rawKey Void type because ODE topics have no specified key
      * @param rawTim The raw POJO containing TIM data
-     * @return A key-value pair: the key is an {@link RsuIntersectionKey} containing the RSU IP address and Intersection
-     *         ID, and the value is the ProcessedTim POJO
+     * @return A key-value pair: the key is an {@link RsuTimKey} containing the RSU IP address, packet ID, and message
+     *         count, and the value is the ProcessedTim POJO
      */
     @Override
-    public KeyValue<RsuIntersectionKey, ProcessedTim> transform(Void rawKey, DeserializedRawTim rawTim) {
+    public KeyValue<RsuTimKey, ProcessedTim> transform(Void rawKey, DeserializedRawTim rawTim) {
         try {
             if (!rawTim.isValidationFailure()) {
                 return processValidTim(rawTim);
@@ -92,7 +92,7 @@ public class TimProcessedJsonConverter
      * @param rawTim The valid TIM data
      * @return Key-value pair with processed TIM
      */
-    private KeyValue<RsuIntersectionKey, ProcessedTim> processValidTim(DeserializedRawTim rawTim) {
+    private KeyValue<RsuTimKey, ProcessedTim> processValidTim(DeserializedRawTim rawTim) {
         OdeMessageFrameData rawValue = new OdeMessageFrameData();
         rawValue.setMetadata(rawTim.getOdeTimMessageFrameData().getMetadata());
         OdeMessageFrameMetadata timMetadata = rawValue.getMetadata();
@@ -105,7 +105,19 @@ public class TimProcessedJsonConverter
                 createProcessedTim(travelerInfoMessageFrame.getValue(), timMetadata, rawTim.getValidatorResults());
         processedTim.setSchemaVersion(ProcessedSchemaVersions.PROCESSED_TIM_SCHEMA_VERSION);
 
-        RsuIntersectionKey key = createRsuIntersectionKey(timMetadata.getOriginIp());
+        // Create key with TIM-specific data
+        TravelerInformation travelerInfo = travelerInfoMessageFrame.getValue();
+        String packetId = null;
+        Integer msgCnt = null;
+
+        if (travelerInfo.getPacketID() != null) {
+            packetId = travelerInfo.getPacketID().getValue();
+        }
+        if (travelerInfo.getMsgCnt() != null) {
+            msgCnt = (int) travelerInfo.getMsgCnt().getValue();
+        }
+
+        RsuTimKey key = createRsuTimKey(timMetadata.getOriginIp(), packetId, msgCnt);
         return KeyValue.pair(key, processedTim);
     }
 
@@ -115,9 +127,9 @@ public class TimProcessedJsonConverter
      * @param rawTim The invalid TIM data
      * @return Key-value pair with failure information
      */
-    private KeyValue<RsuIntersectionKey, ProcessedTim> processInvalidTim(DeserializedRawTim rawTim) {
+    private KeyValue<RsuTimKey, ProcessedTim> processInvalidTim(DeserializedRawTim rawTim) {
         ProcessedTim processedTim = createFailureProcessedTim(rawTim.getValidatorResults(), rawTim.getFailedMessage());
-        RsuIntersectionKey key = createRsuIntersectionKey(ERROR_RSU_ID);
+        RsuTimKey key = createRsuTimKey(ERROR_RSU_ID);
         return KeyValue.pair(key, processedTim);
     }
 
@@ -126,23 +138,31 @@ public class TimProcessedJsonConverter
      *
      * @return Key-value pair with error key and null value
      */
-    private KeyValue<RsuIntersectionKey, ProcessedTim> createErrorKeyValuePair() {
-        RsuIntersectionKey key = createRsuIntersectionKey(ERROR_RSU_ID);
+    private KeyValue<RsuTimKey, ProcessedTim> createErrorKeyValuePair() {
+        RsuTimKey key = createRsuTimKey(ERROR_RSU_ID);
         return KeyValue.pair(key, null);
     }
 
     /**
-     * Create an RSU intersection key.
+     * Create an RSU TIM key.
      *
      * @param rsuId The RSU ID
-     * @return Configured RSU intersection key
+     * @return Configured RSU TIM key
      */
-    private RsuIntersectionKey createRsuIntersectionKey(String rsuId) {
-        RsuIntersectionKey key = new RsuIntersectionKey();
-        key.setRsuId(rsuId);
-        // For TIM, we'll use a default intersection ID since TIM doesn't have intersection concept
-        key.setIntersectionReferenceID(null);
-        return key;
+    private RsuTimKey createRsuTimKey(String rsuId) {
+        return new RsuTimKey(rsuId);
+    }
+
+    /**
+     * Create an RSU TIM key with TIM-specific data.
+     *
+     * @param rsuId The RSU ID
+     * @param packetId The packet ID
+     * @param msgCnt The message count
+     * @return Configured RSU TIM key
+     */
+    private RsuTimKey createRsuTimKey(String rsuId, String packetId, Integer msgCnt) {
+        return new RsuTimKey(rsuId, packetId, msgCnt);
     }
 
     @Override

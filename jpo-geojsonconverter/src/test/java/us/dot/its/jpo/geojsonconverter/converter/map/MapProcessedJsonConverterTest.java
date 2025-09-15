@@ -101,16 +101,6 @@ public class MapProcessedJsonConverterTest {
         assertNull(mapFeatureCollection.value);
     }
 
-    // @Test
-    // public void testGenerateUTCTimestampMOY() {
-    // ZonedDateTime odeReceivedAt = Instant.parse("2022-01-01T00:00:00Z").atZone(ZoneId.of("UTC"));
-    // MinuteOfTheYear moy = new MinuteOfTheYear(500000);
-    // ZonedDateTime moyTime = mapProcessedJsonConverter.generateUTCTimestamp(moy, odeReceivedAt);
-
-    // assertNotNull(moyTime);
-    // assertEquals("DECEMBER", moyTime.getMonth().toString());
-    // }
-
     @Test
     public void testClose() {
         // Should do nothing, but required override

@@ -3,6 +3,7 @@ package us.dot.its.jpo.geojsonconverter.serialization;
 import us.dot.its.jpo.geojsonconverter.partitioner.RsuIntersectionKey;
 import us.dot.its.jpo.geojsonconverter.partitioner.RsuLogKey;
 import us.dot.its.jpo.geojsonconverter.partitioner.RsuStationIdKey;
+import us.dot.its.jpo.geojsonconverter.partitioner.RsuTimKey;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.bsm.ProcessedBsm;
 import us.dot.its.jpo.geojsonconverter.partitioner.RsuPsmIdKey;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.rtcm.ProcessedRTCM;
@@ -53,6 +54,10 @@ public class JsonSerdes {
     public static Serde<RsuIntersectionKey> RsuIntersectionKey() {
         return Serdes.serdeFrom(new JsonSerializer<RsuIntersectionKey>(),
                 new JsonDeserializer<>(RsuIntersectionKey.class));
+    }
+
+    public static Serde<RsuTimKey> RsuTimKey() {
+        return Serdes.serdeFrom(new JsonSerializer<RsuTimKey>(), new JsonDeserializer<>(RsuTimKey.class));
     }
 
     public static Serde<RsuLogKey> RsuLogKey() {

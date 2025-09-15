@@ -10,8 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.kafka.streams.kstream.KStream;
 
-import us.dot.its.jpo.geojsonconverter.partitioner.IntersectionIdPartitioner;
-import us.dot.its.jpo.geojsonconverter.partitioner.RsuIntersectionKey;
+import us.dot.its.jpo.geojsonconverter.partitioner.RsuTimKey;
+import us.dot.its.jpo.geojsonconverter.partitioner.RsuTimPartitioner;
 import us.dot.its.jpo.geojsonconverter.pojos.tim.DeserializedRawTim;
 import us.dot.its.jpo.geojsonconverter.pojos.tim.ProcessedTim;
 import us.dot.its.jpo.geojsonconverter.pojos.ProcessedValidationMessage;
@@ -79,13 +79,13 @@ public class TimTopology {
         });
 
         // Convert ODE TIM to ProcessedTim which is not GeoJSON
-        KStream<RsuIntersectionKey, ProcessedTim> processedJsonTimStream =
+        KStream<RsuTimKey, ProcessedTim> processedJsonTimStream =
                 validatedOdeTimStream.transform(() -> new TimProcessedJsonConverter());
 
         processedJsonTimStream.to(
-                // Push the ProcessedTim to the output topic partioned by RsuIntersectionKey
-                timProcessedJsonTopic, Produced.with(JsonSerdes.RsuIntersectionKey(), JsonSerdes.ProcessedTim(),
-                        new IntersectionIdPartitioner<RsuIntersectionKey, ProcessedTim>()));
+                // Push the ProcessedTim to the output topic partitioned by RsuTimKey
+                timProcessedJsonTopic, Produced.with(JsonSerdes.RsuTimKey(), JsonSerdes.ProcessedTim(),
+                        new RsuTimPartitioner<RsuTimKey, ProcessedTim>()));
 
         return builder.build();
     }

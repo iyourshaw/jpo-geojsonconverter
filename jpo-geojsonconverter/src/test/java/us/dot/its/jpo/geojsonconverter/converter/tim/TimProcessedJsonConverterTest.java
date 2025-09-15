@@ -17,7 +17,7 @@ import org.junit.Test;
 
 import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.*;
 import us.dot.its.jpo.geojsonconverter.converter.FieldConversions;
-import us.dot.its.jpo.geojsonconverter.partitioner.RsuIntersectionKey;
+import us.dot.its.jpo.geojsonconverter.partitioner.RsuTimKey;
 import us.dot.its.jpo.geojsonconverter.pojos.ProcessedValidationMessage;
 import us.dot.its.jpo.geojsonconverter.pojos.tim.DeserializedRawTim;
 import us.dot.its.jpo.geojsonconverter.pojos.tim.ProcessedTim;
@@ -52,8 +52,7 @@ public class TimProcessedJsonConverterTest {
         deserializedRawTim.setValidationFailure(false);
         deserializedRawTim.setValidatorResults(new ArrayList<>());
 
-        KeyValue<RsuIntersectionKey, ProcessedTim> result =
-                timProcessedJsonConverter.transform(null, deserializedRawTim);
+        KeyValue<RsuTimKey, ProcessedTim> result = timProcessedJsonConverter.transform(null, deserializedRawTim);
 
         assertNotNull(result);
         assertNotNull(result.key);
@@ -113,8 +112,7 @@ public class TimProcessedJsonConverterTest {
         deserializedRawTim.setValidationFailure(false);
         deserializedRawTim.setValidatorResults(validationMessages);
 
-        KeyValue<RsuIntersectionKey, ProcessedTim> result =
-                timProcessedJsonConverter.transform(null, deserializedRawTim);
+        KeyValue<RsuTimKey, ProcessedTim> result = timProcessedJsonConverter.transform(null, deserializedRawTim);
 
         assertNotNull(result);
         assertNotNull(result.key);
@@ -142,8 +140,7 @@ public class TimProcessedJsonConverterTest {
         deserializedRawTim.setValidatorResults(validationMessages);
         deserializedRawTim.setFailedMessage("Invalid TIM message");
 
-        KeyValue<RsuIntersectionKey, ProcessedTim> result =
-                timProcessedJsonConverter.transform(null, deserializedRawTim);
+        KeyValue<RsuTimKey, ProcessedTim> result = timProcessedJsonConverter.transform(null, deserializedRawTim);
 
         assertNotNull(result);
         assertNotNull(result.key);
@@ -161,7 +158,7 @@ public class TimProcessedJsonConverterTest {
     @Test
     public void testTransformWithNullInput() {
         // Test error handling with null input
-        KeyValue<RsuIntersectionKey, ProcessedTim> result = timProcessedJsonConverter.transform(null, null);
+        KeyValue<RsuTimKey, ProcessedTim> result = timProcessedJsonConverter.transform(null, null);
         assertNotNull(result.key);
         assertEquals("ERROR", result.key.getRsuId());
         assertNull(result.value);
