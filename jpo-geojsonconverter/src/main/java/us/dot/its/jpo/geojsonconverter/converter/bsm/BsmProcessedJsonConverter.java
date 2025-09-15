@@ -126,8 +126,8 @@ public class BsmProcessedJsonConverter
         ZonedDateTime odeDate = Instant.parse(metadata.getOdeReceivedAt()).atZone(ZoneId.of("UTC"));
 
         processedBsm.getProperties().setValidationMessages(processedBsmValidationMessages);
-        processedBsm.getProperties().setTimeStamp(J2735DateTimeConverter.generateOffsetUTCTimestampForTimeMark(odeDate,
-                (int) bsmMessageFrame.getValue().getCoreData().getSecMark().getValue()));
+        processedBsm.getProperties().setTimeStamp(J2735DateTimeConverter.generateOffsetUTCTimestampForSecMark(odeDate,
+                bsmMessageFrame.getValue().getCoreData().getSecMark()));
 
         return processedBsm;
     }

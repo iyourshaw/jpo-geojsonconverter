@@ -118,7 +118,7 @@ public class PsmProcessedJsonConverter
 
         ZonedDateTime odeDate = Instant.parse(metadata.getOdeReceivedAt()).atZone(ZoneId.of("UTC"));
         processedPsm.getProperties().setTimeStamp(J2735DateTimeConverter.generateOffsetUTCTimestampForSecMark(odeDate,
-                (int) psmMessageFrame.getValue().getSecMark().getValue()));
+                psmMessageFrame.getValue().getSecMark()));
 
         return processedPsm;
     }

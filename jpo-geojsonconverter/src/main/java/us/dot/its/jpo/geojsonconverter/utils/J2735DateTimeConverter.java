@@ -6,6 +6,9 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
 import lombok.extern.slf4j.Slf4j;
+import us.dot.its.jpo.asn.j2735.r2024.Common.DSecond;
+import us.dot.its.jpo.asn.j2735.r2024.Common.MinuteOfTheYear;
+import us.dot.its.jpo.asn.j2735.r2024.SPAT.TimeMark;
 
 @Slf4j
 public class J2735DateTimeConverter {
@@ -18,7 +21,7 @@ public class J2735DateTimeConverter {
      * @param odeTimestamp ODE received timestamp as fallback
      * @return ZonedDateTime in UTC
      */
-    public static ZonedDateTime generateUTCTimestamp(Integer moy, Integer dSecond, ZonedDateTime odeDate,
+    public static ZonedDateTime generateUTCTimestamp(MinuteOfTheYear moy, DSecond dSecond, ZonedDateTime odeDate,
             Integer year) {
         ZonedDateTime date = null;
         try {
@@ -28,8 +31,8 @@ public class J2735DateTimeConverter {
             String dateString;
             long milliseconds;
             if (moy != null) {
-                long minutes = moy;
-                milliseconds = dSecond != null ? (long) dSecond : 0; // milliseconds in current minute
+                long minutes = moy.getValue();
+                milliseconds = dSecond != null ? (long) dSecond.getValue() : 0; // milliseconds in current minute
                 dateString = String.format("%d-01-01T00:00:00.00Z", year);
                 date = Instant.parse(dateString).atZone(ZoneId.of("UTC"));
                 date = date.plusMinutes(minutes);
@@ -37,7 +40,7 @@ public class J2735DateTimeConverter {
             } else {
                 date = odeDate;
                 if (dSecond != null) {
-                    milliseconds = dSecond; // milliseconds from beginning of minute
+                    milliseconds = dSecond.getValue();
                     date = date.withSecond(0);
                     date = date.withNano(0);
                     date = date.plus(milliseconds, ChronoUnit.MILLIS);
@@ -60,7 +63,7 @@ public class J2735DateTimeConverter {
      * @param odeTimestamp ODE received timestamp as fallback
      * @return ZonedDateTime in UTC
      */
-    public static ZonedDateTime generateUTCTimestamp(Integer moy, Integer dSecond, ZonedDateTime odeDate) {
+    public static ZonedDateTime generateUTCTimestamp(MinuteOfTheYear moy, DSecond dSecond, ZonedDateTime odeDate) {
         Integer year = odeDate.getYear();
         return generateUTCTimestamp(moy, dSecond, odeDate, year);
     }
@@ -72,7 +75,7 @@ public class J2735DateTimeConverter {
      * @param odeTimestamp ODE received timestamp as fallback
      * @return ZonedDateTime in UTC
      */
-    public static ZonedDateTime generateUTCTimestamp(Integer moy, ZonedDateTime odeDate) {
+    public static ZonedDateTime generateUTCTimestamp(MinuteOfTheYear moy, ZonedDateTime odeDate) {
         if (moy == null) {
             return odeDate;
         }
@@ -88,12 +91,14 @@ public class J2735DateTimeConverter {
      * @param timeMark Time mark in centiseconds (1/100 second)
      * @return ZonedDateTime in UTC
      */
-    public static ZonedDateTime generateOffsetUTCTimestampForTimeMark(ZonedDateTime originTimestamp, Integer timeMark) {
+    public static ZonedDateTime generateOffsetUTCTimestampForTimeMark(ZonedDateTime originTimestamp,
+            TimeMark timeMark) {
         try {
             if (timeMark != null) {
-                long millis = Long.valueOf(timeMark) * 100;
+                long timeMarkValue = timeMark.getValue();
+                long millis = timeMarkValue * 100;
                 ZonedDateTime date = originTimestamp;
-                if (timeMark == 36011 || timeMark == 36001) {
+                if (timeMarkValue == 36011 || timeMarkValue == 36001) {
                     // Return UTC time zero if the Zoned Date time is marked as unknown, UTC time zero chosen so that a
                     // null value can represent an empty field in the SPaT. But 36011, can represent an intentionally
                     // unidentified field.
@@ -104,7 +109,7 @@ public class J2735DateTimeConverter {
                     // means that the time is rolling over.
                     // In this case, add an hour to the UTC timestamp so that it appears in the future instead of in the
                     // past.
-                    if (originTimestamp.getMinute() > 50 && timeMark < 6000) {
+                    if (originTimestamp.getMinute() > 50 && timeMarkValue < 6000) {
                         date = date.plusHours(1);
                     }
 
@@ -132,13 +137,14 @@ public class J2735DateTimeConverter {
      * @param secMark Second mark (milliseconds from beginning of minute)
      * @return ZonedDateTime in UTC
      */
-    public static ZonedDateTime generateOffsetUTCTimestampForSecMark(ZonedDateTime odeReceivedAt, Integer secMark) {
+    public static ZonedDateTime generateOffsetUTCTimestampForSecMark(ZonedDateTime odeReceivedAt, DSecond secMark) {
         try {
             if (secMark != null) {
-                int millis = (int) (secMark % 1000);
-                int seconds = (int) (secMark / 1000);
+                long secMarkValue = secMark.getValue();
+                int millis = (int) (secMarkValue % 1000);
+                int seconds = (int) (secMarkValue / 1000);
                 ZonedDateTime date = odeReceivedAt;
-                if (secMark == 65535) {
+                if (secMarkValue == 65535) {
                     // Return UTC time zero if the Zoned Date time is marked as unknown, UTC time zero chosen so that a
                     // null value can represent an empty field in the BSM/PSM. But 65535, can represent an intentionally
                     // unidentified field.
@@ -149,7 +155,7 @@ public class J2735DateTimeConverter {
                     // means that the time rolled over before reception.
                     // In this case, subtract a minute from the odeReceivedAt so that the true time represents the
                     // minute in the past.
-                    if (odeReceivedAt.getSecond() < 10 && secMark > 50000) {
+                    if (odeReceivedAt.getSecond() < 10 && secMarkValue > 50000) {
                         date = date.minusMinutes(1);
                     }
 

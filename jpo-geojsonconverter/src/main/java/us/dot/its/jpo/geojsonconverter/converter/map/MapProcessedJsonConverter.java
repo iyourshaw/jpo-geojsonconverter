@@ -148,8 +148,7 @@ public class MapProcessedJsonConverter
                 intersection.getLaneWidth() != null ? (int) intersection.getLaneWidth().getValue() : null);
         sharedProps.setSpeedLimits(convertSpeedLimitList(intersection.getSpeedLimits()));
         sharedProps.setMapSource(metadata.getSource());
-        sharedProps.setTimeStamp(
-                J2735DateTimeConverter.generateUTCTimestamp((int) mapData.getTimeStamp().getValue(), null, odeDate));
+        sharedProps.setTimeStamp(J2735DateTimeConverter.generateUTCTimestamp(mapData.getTimeStamp(), null, odeDate));
         // Setting validation fields
         sharedProps.setValidationMessages(processedSpatValidationMessages);
         sharedProps.setCti4501Conformant(sharedProps.getValidationMessages().size() == 0);

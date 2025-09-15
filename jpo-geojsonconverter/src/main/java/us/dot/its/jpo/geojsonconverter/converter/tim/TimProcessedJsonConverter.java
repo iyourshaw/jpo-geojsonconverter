@@ -191,7 +191,7 @@ public class TimProcessedJsonConverter
         processedTim.setAsn1(metadata.getAsn1());
 
         ZonedDateTime creationTimestamp =
-                J2735DateTimeConverter.generateUTCTimestamp((int) travelerInfo.getTimeStamp().getValue(), odeDate);
+                J2735DateTimeConverter.generateUTCTimestamp(travelerInfo.getTimeStamp(), odeDate);
         processedTim.setTimeStamp(creationTimestamp);
 
         return processedTim;
@@ -824,7 +824,7 @@ public class TimProcessedJsonConverter
 
         if (dataFrame.getStartYear() != null && dataFrame.getStartTime() != null) {
             int startYear = (int) dataFrame.getStartYear().getValue();
-            int startTimeMoy = (int) dataFrame.getStartTime().getValue();
+            MinuteOfTheYear startTimeMoy = dataFrame.getStartTime();
             startDateTime = J2735DateTimeConverter.generateUTCTimestamp(startTimeMoy, null, odeDate, startYear);
             validityPeriod.setStartTime(startDateTime);
         }

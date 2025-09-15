@@ -1,6 +1,8 @@
 package us.dot.its.jpo.geojsonconverter.converter.spat;
 
+import us.dot.its.jpo.asn.j2735.r2024.Common.DSecond;
 import us.dot.its.jpo.asn.j2735.r2024.Common.IntersectionReferenceID;
+import us.dot.its.jpo.asn.j2735.r2024.Common.MinuteOfTheYear;
 import us.dot.its.jpo.asn.j2735.r2024.Common.SpeedConfidence;
 import us.dot.its.jpo.asn.j2735.r2024.SPAT.*;
 import us.dot.its.jpo.geojsonconverter.partitioner.RsuIntersectionKey;
@@ -145,16 +147,16 @@ public class SpatProcessedJsonConverter
         processedSpat.setEnabledLanes(enabledLanes);
 
         // Retrieve all relevant timestamp-based fields to calculate the UTC timestamp
-        Integer spatMoy = spat.getTimeStamp() != null ? (int) spat.getTimeStamp().getValue() : null;
-        Integer intersectionMoy =
-                intersectionState.getMoy() != null ? (int) intersectionState.getMoy().getValue() : null;
-        Integer intersectionDSecond =
-                intersectionState.getTimeStamp() != null ? (int) intersectionState.getTimeStamp().getValue() : null;
+        MinuteOfTheYear spatMoy = spat.getTimeStamp() != null ? spat.getTimeStamp() : null;
+        MinuteOfTheYear intersectionMoy = intersectionState.getMoy() != null ? intersectionState.getMoy() : null;
+        DSecond intersectionDSecond =
+                intersectionState.getTimeStamp() != null ? intersectionState.getTimeStamp() : null;
 
         String odeTimestamp = metadata.getOdeReceivedAt();
         ZonedDateTime odeDate = Instant.parse(odeTimestamp).atZone(ZoneId.of("UTC"));
         // Generate the UTC timestamp based on the moy that isn't null and let the function handle the rest
-        // If both are null or intersectionDSecond is null, the function will still use the ODE received timestamp to
+        // If both are null or intersectionDSecond is null, the function will still use the ODE received
+        // timestamp to
         // fill in the blanks
         ZonedDateTime utcTimestamp = intersectionMoy != null
                 ? J2735DateTimeConverter.generateUTCTimestamp(intersectionMoy, intersectionDSecond, odeDate)
@@ -182,23 +184,14 @@ public class SpatProcessedJsonConverter
                     }
 
 
-                    // Calculate the UTC timestamps for the movement event states and account for null values
+                    // Calculate the UTC timestamps for the movement event states and account for
+                    // null values
                     TimingChangeDetails spatTimingDetails = new TimingChangeDetails();
-                    Integer startTime = incomingMovementEvent.getTiming().getStartTime() != null
-                            ? (int) incomingMovementEvent.getTiming().getStartTime().getValue()
-                            : null;
-                    Integer minEndTime = incomingMovementEvent.getTiming().getMinEndTime() != null
-                            ? (int) incomingMovementEvent.getTiming().getMinEndTime().getValue()
-                            : null;
-                    Integer maxEndTime = incomingMovementEvent.getTiming().getMaxEndTime() != null
-                            ? (int) incomingMovementEvent.getTiming().getMaxEndTime().getValue()
-                            : null;
-                    Integer likelyTime = incomingMovementEvent.getTiming().getLikelyTime() != null
-                            ? (int) incomingMovementEvent.getTiming().getLikelyTime().getValue()
-                            : null;
-                    Integer nextTime = incomingMovementEvent.getTiming().getNextTime() != null
-                            ? (int) incomingMovementEvent.getTiming().getNextTime().getValue()
-                            : null;
+                    TimeMark startTime = incomingMovementEvent.getTiming().getStartTime();
+                    TimeMark minEndTime = incomingMovementEvent.getTiming().getMinEndTime();
+                    TimeMark maxEndTime = incomingMovementEvent.getTiming().getMaxEndTime();
+                    TimeMark likelyTime = incomingMovementEvent.getTiming().getLikelyTime();
+                    TimeMark nextTime = incomingMovementEvent.getTiming().getNextTime();
                     spatTimingDetails.setStartTime(
                             J2735DateTimeConverter.generateOffsetUTCTimestampForTimeMark(utcTimestamp, startTime));
                     spatTimingDetails.setMinEndTime(

@@ -8,6 +8,9 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import org.junit.Test;
+import us.dot.its.jpo.asn.j2735.r2024.Common.DSecond;
+import us.dot.its.jpo.asn.j2735.r2024.Common.MinuteOfTheYear;
+import us.dot.its.jpo.asn.j2735.r2024.SPAT.TimeMark;
 
 public class J2735DateTimeConverterTest {
 
@@ -20,8 +23,8 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateUTCTimestampWithMoyAndDSecond() {
         // Test basic MOY and DSecond conversion
-        Integer moy = 1000; // 1000 minutes from start of year
-        Integer dSecond = 5000; // 5 seconds (5000 milliseconds)
+        MinuteOfTheYear moy = new MinuteOfTheYear(1000); // 1000 minutes from start of year
+        DSecond dSecond = new DSecond(5000); // 5 seconds (5000 milliseconds)
         Integer year = 2024;
 
         ZonedDateTime result = J2735DateTimeConverter.generateUTCTimestamp(moy, dSecond, TEST_ODE_DATE, year);
@@ -39,7 +42,7 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateUTCTimestampWithMoyOnly() {
         // Test MOY only (no DSecond)
-        Integer moy = 1440; // 1440 minutes = 24 hours = 1 day
+        MinuteOfTheYear moy = new MinuteOfTheYear(1440); // 1440 minutes = 24 hours = 1 day
         Integer year = 2024;
 
         ZonedDateTime result = J2735DateTimeConverter.generateUTCTimestamp(moy, null, TEST_ODE_DATE, year);
@@ -56,7 +59,7 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateUTCTimestampWithNullMoy() {
         // Test with null MOY - should use ODE date
-        Integer dSecond = 2000; // 2 seconds
+        DSecond dSecond = new DSecond(2000); // 2 seconds
 
         ZonedDateTime result = J2735DateTimeConverter.generateUTCTimestamp(null, dSecond, TEST_ODE_DATE, 2024);
 
@@ -72,8 +75,8 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateUTCTimestampWithNullYear() {
         // Test with null year - should use ODE date year
-        Integer moy = 100;
-        Integer dSecond = 1000;
+        MinuteOfTheYear moy = new MinuteOfTheYear(100);
+        DSecond dSecond = new DSecond(1000);
 
         ZonedDateTime result = J2735DateTimeConverter.generateUTCTimestamp(moy, dSecond, TEST_ODE_DATE, null);
 
@@ -84,8 +87,8 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateUTCTimestampThreeParameterOverload() {
         // Test the 3-parameter overload
-        Integer moy = 2000;
-        Integer dSecond = 3000;
+        MinuteOfTheYear moy = new MinuteOfTheYear(2000);
+        DSecond dSecond = new DSecond(3000);
 
         ZonedDateTime result = J2735DateTimeConverter.generateUTCTimestamp(moy, dSecond, TEST_ODE_DATE);
 
@@ -96,7 +99,7 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateUTCTimestampTwoParameterOverload() {
         // Test the 2-parameter overload with MOY
-        Integer moy = 500;
+        MinuteOfTheYear moy = new MinuteOfTheYear(500);
 
         ZonedDateTime result = J2735DateTimeConverter.generateUTCTimestamp(moy, TEST_ODE_DATE);
 
@@ -118,7 +121,7 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateOffsetUTCTimestampForTimeMarkBasic() {
         // Test basic time mark conversion
-        Integer timeMark = 5000; // 50 seconds (5000 centiseconds = 500000 milliseconds)
+        TimeMark timeMark = new TimeMark(5000); // 50 seconds (5000 centiseconds = 500000 milliseconds)
 
         ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForTimeMark(TEST_BASE_DATE, timeMark);
 
@@ -132,7 +135,7 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateOffsetUTCTimestampForTimeMarkUnknown36011() {
         // Test special time mark 36011 (unknown)
-        Integer timeMark = 36011;
+        TimeMark timeMark = new TimeMark(36011);
 
         ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForTimeMark(TEST_BASE_DATE, timeMark);
 
@@ -143,7 +146,7 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateOffsetUTCTimestampForTimeMarkUnknown36001() {
         // Test special time mark 36001 (unknown)
-        Integer timeMark = 36001;
+        TimeMark timeMark = new TimeMark(36001);
 
         ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForTimeMark(TEST_BASE_DATE, timeMark);
 
@@ -156,7 +159,7 @@ public class J2735DateTimeConverterTest {
         // Test rollover logic - within 10 minutes of next hour with small time mark
         ZonedDateTime nearHourEnd = ZonedDateTime.of(2024, 1, 1, 15, 55, 0, 0, ZoneId.of("UTC")); // 5 minutes before 4
                                                                                                   // PM
-        Integer timeMark = 1000; // 10 seconds (1000 centiseconds = 100000 milliseconds)
+        TimeMark timeMark = new TimeMark(1000); // 10 seconds (1000 centiseconds = 100000 milliseconds)
 
         ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForTimeMark(nearHourEnd, timeMark);
 
@@ -170,7 +173,7 @@ public class J2735DateTimeConverterTest {
     public void testGenerateOffsetUTCTimestampForTimeMarkNoRollover() {
         // Test no rollover - not within 10 minutes of next hour
         ZonedDateTime normalTime = ZonedDateTime.of(2024, 1, 1, 15, 30, 0, 0, ZoneId.of("UTC")); // 30 minutes past hour
-        Integer timeMark = 1000; // 10 seconds (1000 centiseconds = 100000 milliseconds)
+        TimeMark timeMark = new TimeMark(1000); // 10 seconds (1000 centiseconds = 100000 milliseconds)
 
         ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForTimeMark(normalTime, timeMark);
 
@@ -191,7 +194,7 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateOffsetUTCTimestampForSecMarkBasic() {
         // Test basic sec mark conversion
-        Integer secMark = 5000; // 5 seconds (5000 milliseconds)
+        DSecond secMark = new DSecond(5000); // 5 seconds (5000 milliseconds)
 
         ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForSecMark(TEST_BASE_DATE, secMark);
 
@@ -205,7 +208,7 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateOffsetUTCTimestampForSecMarkWithMilliseconds() {
         // Test sec mark with milliseconds
-        Integer secMark = 5234; // 5 seconds 234 milliseconds
+        DSecond secMark = new DSecond(5234); // 5 seconds 234 milliseconds
 
         ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForSecMark(TEST_BASE_DATE, secMark);
 
@@ -217,7 +220,7 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateOffsetUTCTimestampForSecMarkUnknown65535() {
         // Test special sec mark 65535 (unknown)
-        Integer secMark = 65535;
+        DSecond secMark = new DSecond(65535);
 
         ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForSecMark(TEST_BASE_DATE, secMark);
 
@@ -230,7 +233,7 @@ public class J2735DateTimeConverterTest {
         // Test rollover logic - within 10 seconds of next minute with large sec mark
         ZonedDateTime nearMinuteEnd = ZonedDateTime.of(2024, 1, 1, 15, 30, 5, 0, ZoneId.of("UTC")); // 5 seconds past
                                                                                                     // minute
-        Integer secMark = 55000; // 55 seconds
+        DSecond secMark = new DSecond(55000); // 55 seconds
 
         ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForSecMark(nearMinuteEnd, secMark);
 
@@ -244,7 +247,7 @@ public class J2735DateTimeConverterTest {
         // Test no rollover - not within 10 seconds of next minute
         ZonedDateTime normalTime = ZonedDateTime.of(2024, 1, 1, 15, 30, 30, 0, ZoneId.of("UTC")); // 30 seconds past
                                                                                                   // minute
-        Integer secMark = 55000; // 55 seconds
+        DSecond secMark = new DSecond(55000); // 55 seconds
 
         ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForSecMark(normalTime, secMark);
 
@@ -264,8 +267,8 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateUTCTimestampEdgeCaseZeroMoy() {
         // Test with zero MOY
-        Integer moy = 0;
-        Integer dSecond = 1000;
+        MinuteOfTheYear moy = new MinuteOfTheYear(0);
+        DSecond dSecond = new DSecond(1000);
 
         ZonedDateTime result = J2735DateTimeConverter.generateUTCTimestamp(moy, dSecond, TEST_ODE_DATE, 2024);
 
@@ -280,8 +283,8 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateUTCTimestampEdgeCaseLargeMoy() {
         // Test with large MOY (near end of year)
-        Integer moy = 525600; // 525600 minutes = 365 days = 1 year
-        Integer dSecond = 0;
+        MinuteOfTheYear moy = new MinuteOfTheYear(525600); // 525600 minutes = 365 days = 1 year
+        DSecond dSecond = new DSecond(0);
 
         ZonedDateTime result = J2735DateTimeConverter.generateUTCTimestamp(moy, dSecond, TEST_ODE_DATE, 2024);
 
@@ -295,8 +298,8 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateUTCTimestampEdgeCaseLargeDSecond() {
         // Test with large DSecond (near end of minute)
-        Integer moy = 100;
-        Integer dSecond = 59000; // 59 seconds
+        MinuteOfTheYear moy = new MinuteOfTheYear(100);
+        DSecond dSecond = new DSecond(59000); // 59 seconds
 
         ZonedDateTime result = J2735DateTimeConverter.generateUTCTimestamp(moy, dSecond, TEST_ODE_DATE, 2024);
 
@@ -307,7 +310,7 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateOffsetUTCTimestampForTimeMarkEdgeCaseLargeTimeMark() {
         // Test with large time mark (near end of hour)
-        Integer timeMark = 359900; // 59 minutes 59 seconds (359900 centiseconds = 35990000 milliseconds)
+        TimeMark timeMark = new TimeMark(359900); // 59 minutes 59 seconds (359900 centiseconds = 35990000 milliseconds)
 
         ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForTimeMark(TEST_BASE_DATE, timeMark);
 
@@ -319,7 +322,7 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateOffsetUTCTimestampForSecMarkEdgeCaseLargeSecMark() {
         // Test with large sec mark (near end of minute)
-        Integer secMark = 59999; // 59 seconds 999 milliseconds
+        DSecond secMark = new DSecond(59999); // 59 seconds 999 milliseconds
 
         ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForSecMark(TEST_BASE_DATE, secMark);
 
@@ -331,8 +334,8 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateUTCTimestampWithNegativeValues() {
         // Test with negative values (should handle gracefully)
-        Integer moy = -100;
-        Integer dSecond = -1000;
+        MinuteOfTheYear moy = new MinuteOfTheYear(-100);
+        DSecond dSecond = new DSecond(-1000);
 
         ZonedDateTime result = J2735DateTimeConverter.generateUTCTimestamp(moy, dSecond, TEST_ODE_DATE, 2024);
 
@@ -343,7 +346,7 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateOffsetUTCTimestampForTimeMarkWithNegativeTimeMark() {
         // Test with negative time mark
-        Integer timeMark = -1000;
+        TimeMark timeMark = new TimeMark(-1000);
 
         ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForTimeMark(TEST_BASE_DATE, timeMark);
 
@@ -354,8 +357,8 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateUTCTimestampWithLeapYear() {
         // Test with leap year
-        Integer moy = 1440; // 1 day
-        Integer dSecond = 0;
+        MinuteOfTheYear moy = new MinuteOfTheYear(1440); // 1 day
+        DSecond dSecond = new DSecond(0);
         Integer leapYear = 2024; // 2024 is a leap year
 
         ZonedDateTime result = J2735DateTimeConverter.generateUTCTimestamp(moy, dSecond, TEST_ODE_DATE, leapYear);
@@ -367,8 +370,8 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateUTCTimestampWithNonLeapYear() {
         // Test with non-leap year
-        Integer moy = 1440; // 1 day
-        Integer dSecond = 0;
+        MinuteOfTheYear moy = new MinuteOfTheYear(1440);
+        DSecond dSecond = new DSecond(0);
         Integer nonLeapYear = 2023; // 2023 is not a leap year
 
         ZonedDateTime result = J2735DateTimeConverter.generateUTCTimestamp(moy, dSecond, TEST_ODE_DATE, nonLeapYear);
@@ -380,8 +383,8 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateUTCTimestampConsistency() {
         // Test that different overloads produce consistent results
-        Integer moy = 1000;
-        Integer dSecond = 5000;
+        MinuteOfTheYear moy = new MinuteOfTheYear(1000);
+        DSecond dSecond = new DSecond(5000);
         Integer year = 2024;
 
         ZonedDateTime result1 = J2735DateTimeConverter.generateUTCTimestamp(moy, dSecond, TEST_ODE_DATE, year);
@@ -390,5 +393,100 @@ public class J2735DateTimeConverterTest {
         assertNotNull("Result 1 should not be null", result1);
         assertNotNull("Result 2 should not be null", result2);
         assertEquals("Results should be consistent", result1, result2);
+    }
+
+    @Test
+    public void testGenerateUTCTimestampWithNullMoyAndNullDSecond() {
+        // Test with both MOY and DSecond null - should return ODE date unchanged
+        ZonedDateTime result = J2735DateTimeConverter.generateUTCTimestamp(null, null, TEST_ODE_DATE, 2024);
+
+        assertNotNull("Result should not be null", result);
+        assertEquals("Should return ODE date unchanged", TEST_ODE_DATE, result);
+    }
+
+    @Test
+    public void testGenerateUTCTimestampWithNullMoyAndValidDSecond() {
+        // Test with null MOY but valid DSecond - should use ODE date and apply DSecond
+        DSecond dSecond = new DSecond(3000); // 3 seconds
+
+        ZonedDateTime result = J2735DateTimeConverter.generateUTCTimestamp(null, dSecond, TEST_ODE_DATE, 2024);
+
+        assertNotNull("Result should not be null", result);
+        assertEquals("Should use ODE date as base", TEST_ODE_DATE.getYear(), result.getYear());
+        assertEquals("Should use ODE date as base", TEST_ODE_DATE.getMonthValue(), result.getMonthValue());
+        assertEquals("Should use ODE date as base", TEST_ODE_DATE.getDayOfMonth(), result.getDayOfMonth());
+        assertEquals("Should use ODE date as base", TEST_ODE_DATE.getHour(), result.getHour());
+        assertEquals("Should use ODE date as base", TEST_ODE_DATE.getMinute(), result.getMinute());
+        assertEquals("Second should be 3 (from DSecond)", 3, result.getSecond());
+        assertEquals("Millisecond should be 0", 0, result.getNano() / 1_000_000);
+    }
+
+    @Test
+    public void testGenerateUTCTimestampWithNullMoyAndLargeDSecond() {
+        // Test with null MOY but large DSecond (near end of minute)
+        DSecond dSecond = new DSecond(59000); // 59 seconds
+
+        ZonedDateTime result = J2735DateTimeConverter.generateUTCTimestamp(null, dSecond, TEST_ODE_DATE, 2024);
+
+        assertNotNull("Result should not be null", result);
+        assertEquals("Should use ODE date as base", TEST_ODE_DATE.getYear(), result.getYear());
+        assertEquals("Should use ODE date as base", TEST_ODE_DATE.getMonthValue(), result.getMonthValue());
+        assertEquals("Should use ODE date as base", TEST_ODE_DATE.getDayOfMonth(), result.getDayOfMonth());
+        assertEquals("Should use ODE date as base", TEST_ODE_DATE.getHour(), result.getHour());
+        assertEquals("Should use ODE date as base", TEST_ODE_DATE.getMinute(), result.getMinute());
+        assertEquals("Second should be 59 (from DSecond)", 59, result.getSecond());
+    }
+
+    @Test
+    public void testGenerateUTCTimestampWithNullMoyAndZeroDSecond() {
+        // Test with null MOY and zero DSecond - should return ODE date with seconds set to 0
+        DSecond dSecond = new DSecond(0);
+
+        ZonedDateTime result = J2735DateTimeConverter.generateUTCTimestamp(null, dSecond, TEST_ODE_DATE, 2024);
+
+        assertNotNull("Result should not be null", result);
+        assertEquals("Should use ODE date as base", TEST_ODE_DATE.getYear(), result.getYear());
+        assertEquals("Should use ODE date as base", TEST_ODE_DATE.getMonthValue(), result.getMonthValue());
+        assertEquals("Should use ODE date as base", TEST_ODE_DATE.getDayOfMonth(), result.getDayOfMonth());
+        assertEquals("Should use ODE date as base", TEST_ODE_DATE.getHour(), result.getHour());
+        assertEquals("Should use ODE date as base", TEST_ODE_DATE.getMinute(), result.getMinute());
+        assertEquals("Second should be 0 (from DSecond)", 0, result.getSecond());
+        assertEquals("Millisecond should be 0", 0, result.getNano() / 1_000_000);
+    }
+
+    @Test
+    public void testGenerateUTCTimestampWithNullMoyAndNegativeDSecond() {
+        // Test with null MOY and negative DSecond - should handle gracefully
+        DSecond dSecond = new DSecond(-1000); // -1 second
+
+        ZonedDateTime result = J2735DateTimeConverter.generateUTCTimestamp(null, dSecond, TEST_ODE_DATE, 2024);
+
+        // The method should handle negative values gracefully
+        assertNotNull("Result should not be null even with negative DSecond", result);
+    }
+
+    @Test
+    public void testGenerateUTCTimestampTwoParameterOverloadWithNullMoyAndNullYear() {
+        // Test the 2-parameter overload with null MOY and null year
+        ZonedDateTime result = J2735DateTimeConverter.generateUTCTimestamp(null, TEST_ODE_DATE);
+
+        assertNotNull("Result should not be null", result);
+        assertEquals("Should return ODE date unchanged", TEST_ODE_DATE, result);
+    }
+
+    @Test
+    public void testGenerateUTCTimestampThreeParameterOverloadWithNullMoy() {
+        // Test the 3-parameter overload with null MOY
+        DSecond dSecond = new DSecond(1000);
+
+        ZonedDateTime result = J2735DateTimeConverter.generateUTCTimestamp(null, dSecond, TEST_ODE_DATE);
+
+        assertNotNull("Result should not be null", result);
+        assertEquals("Should use ODE date as base", TEST_ODE_DATE.getYear(), result.getYear());
+        assertEquals("Should use ODE date as base", TEST_ODE_DATE.getMonthValue(), result.getMonthValue());
+        assertEquals("Should use ODE date as base", TEST_ODE_DATE.getDayOfMonth(), result.getDayOfMonth());
+        assertEquals("Should use ODE date as base", TEST_ODE_DATE.getHour(), result.getHour());
+        assertEquals("Should use ODE date as base", TEST_ODE_DATE.getMinute(), result.getMinute());
+        assertEquals("Second should be 1 (from DSecond)", 1, result.getSecond());
     }
 }
