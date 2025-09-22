@@ -41,7 +41,11 @@ public class TimProcessedJsonConverterTest {
                 new JsonDeserializer<>(OdeMessageFrameData.class)) {
             timMF = odeTimDeserializer.deserialize("test-topic", timJsonString.getBytes());
         }
-        timProcessedJsonConverter = new TimProcessedJsonConverter();
+
+        // Create TimConverter with TimGeometryProcessor dependency
+        TimGeometryProcessor geometryProcessor = new TimGeometryProcessor();
+        TimConverter timConverter = new TimConverter(geometryProcessor);
+        timProcessedJsonConverter = new TimProcessedJsonConverter(timConverter);
     }
 
     @Test

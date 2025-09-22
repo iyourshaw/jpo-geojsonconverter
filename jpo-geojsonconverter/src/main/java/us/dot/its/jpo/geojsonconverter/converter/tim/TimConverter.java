@@ -1,0 +1,574 @@
+package us.dot.its.jpo.geojsonconverter.converter.tim;
+
+import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.*;
+import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.TravelerDataFrame.ContentChoice;
+import us.dot.its.jpo.asn.j2735.r2024.Common.*;
+import us.dot.its.jpo.asn.j2735.r2024.ITIS.*;
+import us.dot.its.jpo.geojsonconverter.pojos.ProcessedValidationMessage;
+import us.dot.its.jpo.geojsonconverter.pojos.tim.*;
+import us.dot.its.jpo.geojsonconverter.pojos.geojson.tim.*;
+import us.dot.its.jpo.geojsonconverter.pojos.geojson.*;
+import us.dot.its.jpo.geojsonconverter.utils.*;
+import us.dot.its.jpo.geojsonconverter.converter.FieldConversions;
+import us.dot.its.jpo.ode.model.OdeMessageFrameMetadata;
+import org.locationtech.jts.geom.Point;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * Converts ASN.1 TravelerInformation to ProcessedTim objects. This class contains the core conversion logic separated
+ * from Kafka Streams specific code.
+ */
+@Slf4j
+@Component
+public class TimConverter {
+
+    // Constants
+    private static final String UTC_ZONE_ID = "UTC";
+    private static final int INFINITE_DURATION_VALUE = 32000;
+    private static final ZonedDateTime INFINITE_VALIDITY_PERIOD =
+            ZonedDateTime.of(9999, 12, 31, 23, 59, 59, 0, ZoneId.of(UTC_ZONE_ID));
+
+    private final TimGeometryProcessor geometryProcessor;
+
+    public TimConverter(TimGeometryProcessor geometryProcessor) {
+        this.geometryProcessor = geometryProcessor;
+    }
+
+    /**
+     * Create a processed TIM object from ASN.1 data.
+     *
+     * @param travelerInfo The ASN.1 TravelerInformation object
+     * @param metadata The ODE message frame metadata
+     * @param validationMessages List of validation messages
+     * @return Processed TIM object
+     */
+    public ProcessedTim createProcessedTim(TravelerInformation travelerInfo, OdeMessageFrameMetadata metadata,
+            List<ProcessedValidationMessage> validationMessages) {
+        ZonedDateTime odeDate = Instant.parse(metadata.getOdeReceivedAt()).atZone(ZoneId.of(UTC_ZONE_ID));
+        ProcessedTim processedTim = initializeProcessedTim(metadata, travelerInfo, odeDate);
+
+        setComplianceInformation(processedTim, validationMessages);
+        setBasicTimProperties(processedTim, travelerInfo);
+        setFeatureCollection(processedTim, travelerInfo, odeDate);
+        setLocation(processedTim, travelerInfo);
+
+        return processedTim;
+    }
+
+    /**
+     * Create a failure ProcessedTim object for validation failures.
+     *
+     * @param validatorResults List of validation messages
+     * @param message The failure message
+     * @return ProcessedTim object indicating failure
+     */
+    public ProcessedTim createFailureProcessedTim(List<ProcessedValidationMessage> validatorResults, String message) {
+        ProcessedTim processedTim = new ProcessedTim();
+
+        setFailureCompliance(processedTim, validatorResults);
+        processedTim.setTimeStamp(ZonedDateTime.now(ZoneOffset.UTC));
+
+        return processedTim;
+    }
+
+    /**
+     * Initialize the basic ProcessedTim object with metadata and timestamp.
+     */
+    private ProcessedTim initializeProcessedTim(OdeMessageFrameMetadata metadata, TravelerInformation travelerInfo,
+            ZonedDateTime odeDate) {
+        ProcessedTim processedTim = new ProcessedTim();
+        processedTim.setOdeReceivedAt(metadata.getOdeReceivedAt());
+        processedTim.setOriginIp(metadata.getOriginIp());
+        processedTim.setAsn1(metadata.getAsn1());
+
+        ZonedDateTime creationTimestamp =
+                J2735DateTimeConverter.generateUTCTimestamp(travelerInfo.getTimeStamp(), odeDate);
+        processedTim.setTimeStamp(creationTimestamp);
+
+        return processedTim;
+    }
+
+    /**
+     * Set compliance information for the processed TIM.
+     */
+    private void setComplianceInformation(ProcessedTim processedTim,
+            List<ProcessedValidationMessage> validationMessages) {
+        List<ProcessedCompliance> complianceList = new ArrayList<>();
+        ProcessedCompliance compliance = new ProcessedCompliance();
+        compliance.setStandard(ProcessedCompliance.Standard.ITWG);
+        compliance.setCompliant(validationMessages.isEmpty());
+        compliance.setValidationMessages(validationMessages);
+        complianceList.add(compliance);
+        processedTim.setCompliance(complianceList);
+    }
+
+    /**
+     * Set basic TIM properties from ASN.1 object.
+     */
+    private void setBasicTimProperties(ProcessedTim processedTim, TravelerInformation travelerInfo) {
+        if (travelerInfo.getMsgCnt() != null) {
+            processedTim.setMsgCnt((int) travelerInfo.getMsgCnt().getValue());
+        }
+
+        if (travelerInfo.getPacketID() != null) {
+            String packetId = travelerInfo.getPacketID().getValue();
+            processedTim.setPacketId(packetId);
+
+            // GNIS code is the first 3 bytes of the packet ID converted from hex to decimal
+            byte[] packetBytes = travelerInfo.getPacketID().getOctets();
+            if (packetBytes.length >= 3) {
+                int gnisId = ((packetBytes[0] & 0xFF) << 16) | ((packetBytes[1] & 0xFF) << 8) | (packetBytes[2] & 0xFF);
+                processedTim.setGnisRegionId(gnisId);
+            }
+        }
+    }
+
+    /**
+     * Set the feature collection for the processed TIM.
+     */
+    private void setFeatureCollection(ProcessedTim processedTim, TravelerInformation travelerInfo,
+            ZonedDateTime odeDate) {
+        try {
+            ProcessedTimFeatureCollection featureCollection = new ProcessedTimFeatureCollection();
+            List<ProcessedTimFeature<?>> features = processDataFrames(travelerInfo, odeDate);
+            featureCollection.setFeatures(features);
+            processedTim.setRegionFeatureCollection(featureCollection);
+        } catch (Exception e) {
+            log.error("Error processing TIM ASN.1 data: {}", e.getMessage(), e);
+            // Create empty feature collection if processing fails
+            ProcessedTimFeatureCollection featureCollection = new ProcessedTimFeatureCollection();
+            featureCollection.setFeatures(new ArrayList<>());
+            processedTim.setRegionFeatureCollection(featureCollection);
+        }
+    }
+
+    /**
+     * Set the location field for MongoDB 2D sphere indexing.
+     */
+    private void setLocation(ProcessedTim processedTim, TravelerInformation travelerInfo) {
+        try {
+            Point jtsPoint = geometryProcessor.calculateCenterLocationFromRegions(travelerInfo);
+            if (jtsPoint != null) {
+                // Convert JTS Point to GeoJSON Point
+                us.dot.its.jpo.geojsonconverter.pojos.geojson.Point geoJsonPoint =
+                        new us.dot.its.jpo.geojsonconverter.pojos.geojson.Point(jtsPoint.getX(), jtsPoint.getY());
+                processedTim.setLocation(geoJsonPoint);
+            }
+        } catch (Exception e) {
+            log.error("Error calculating center location: {}", e.getMessage(), e);
+            // Location will remain null if calculation fails
+        }
+    }
+
+    /**
+     * Set compliance information for failure cases.
+     */
+    private void setFailureCompliance(ProcessedTim processedTim, List<ProcessedValidationMessage> validatorResults) {
+        List<ProcessedCompliance> complianceList = new ArrayList<>();
+        ProcessedCompliance compliance = new ProcessedCompliance();
+        compliance.setStandard(ProcessedCompliance.Standard.ITWG);
+        compliance.setCompliant(false);
+        compliance.setValidationMessages(validatorResults);
+        complianceList.add(compliance);
+        processedTim.setCompliance(complianceList);
+    }
+
+    /**
+     * Process data frames from the traveler information.
+     */
+    private List<ProcessedTimFeature<?>> processDataFrames(TravelerInformation travelerInfo, ZonedDateTime odeDate) {
+        List<ProcessedTimFeature<?>> features = new ArrayList<>();
+
+        if (travelerInfo.getDataFrames() != null) {
+            for (int i = 0; i < travelerInfo.getDataFrames().size(); i++) {
+                TravelerDataFrame dataFrame = travelerInfo.getDataFrames().get(i);
+                ProcessedTimFeature<?> feature = createProcessedTimFeatureFromAsnData(odeDate, dataFrame, i);
+                if (feature != null) {
+                    features.add(feature);
+                }
+            }
+        }
+
+        return features;
+    }
+
+    /**
+     * Create a processed TIM feature from ASN.1 data.
+     */
+    private ProcessedTimFeature<?> createProcessedTimFeatureFromAsnData(ZonedDateTime odeDate,
+            TravelerDataFrame dataFrame, int featureId) {
+        try {
+            ProcessedTimProperties properties = createProcessedTimProperties(dataFrame, odeDate);
+            Geometry geometry = geometryProcessor.createGeometryFromDataFrame(dataFrame);
+
+            return new ProcessedTimFeature<>(featureId, geometry, properties);
+        } catch (Exception e) {
+            log.error("Error creating TIM feature from ASN.1 data: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Create processed TIM properties from ASN.1 data.
+     */
+    private ProcessedTimProperties createProcessedTimProperties(TravelerDataFrame dataFrame, ZonedDateTime odeDate) {
+        ProcessedTimProperties properties = new ProcessedTimProperties();
+
+        setDeploymentAgency(properties, dataFrame);
+        setValidityPeriod(properties, dataFrame, odeDate);
+        setPriority(properties, dataFrame);
+        setRegionAndDirectionInfo(properties, dataFrame);
+        setContent(properties, dataFrame);
+
+        return properties;
+    }
+
+    /**
+     * Set deployment agency based on frame type.
+     */
+    private void setDeploymentAgency(ProcessedTimProperties properties, TravelerDataFrame dataFrame) {
+        if (dataFrame.getFrameType() != null) {
+            TravelerInfoType frameType = dataFrame.getFrameType();
+            ProcessedDeploymentAgency agency = ProcessedDeploymentAgency.fromValue(frameType);
+            properties.setDeploymentAgencyType(agency);
+        }
+    }
+
+    /**
+     * Set validity period for the TIM feature.
+     */
+    private void setValidityPeriod(ProcessedTimProperties properties, TravelerDataFrame dataFrame,
+            ZonedDateTime odeDate) {
+        ProcessedValidityPeriod validityPeriod = new ProcessedValidityPeriod();
+        ZonedDateTime startDateTime = odeDate;
+
+        if (dataFrame.getStartYear() != null && dataFrame.getStartTime() != null) {
+            int startYear = (int) dataFrame.getStartYear().getValue();
+            MinuteOfTheYear startTimeMoy = dataFrame.getStartTime();
+            startDateTime = J2735DateTimeConverter.generateUTCTimestamp(startTimeMoy, null, odeDate, startYear);
+            validityPeriod.setStartTime(startDateTime);
+        }
+
+        if (dataFrame.getDurationTime() != null) {
+            int duration = (int) dataFrame.getDurationTime().getValue();
+
+            if (duration != INFINITE_DURATION_VALUE) {
+                validityPeriod.setInfinite(false);
+                validityPeriod.setEndTime(startDateTime.plusMinutes(duration));
+            } else {
+                validityPeriod.setInfinite(true);
+                validityPeriod.setEndTime(INFINITE_VALIDITY_PERIOD);
+            }
+        } else {
+            validityPeriod.setInfinite(true);
+        }
+
+        properties.setValidityPeriod(validityPeriod);
+    }
+
+    /**
+     * Set priority from data frame.
+     */
+    private void setPriority(ProcessedTimProperties properties, TravelerDataFrame dataFrame) {
+        if (dataFrame.getPriority() != null) {
+            properties.setPriority((int) dataFrame.getPriority().getValue());
+        }
+    }
+
+    /**
+     * Set region and direction information.
+     */
+    private void setRegionAndDirectionInfo(ProcessedTimProperties properties, TravelerDataFrame dataFrame) {
+        if (dataFrame.getRegions() != null && !dataFrame.getRegions().isEmpty()) {
+            List<ProcessedRegionInfoBase> regionInfoList = new ArrayList<>();
+
+            // Create one region info object for each region
+            for (GeographicalPath region : dataFrame.getRegions()) {
+                ProcessedRegionInfoBase regionInfo = createProcessedRegionInfoFromAsnData(region);
+                regionInfoList.add(regionInfo);
+            }
+
+            properties.setRegionInfoList(regionInfoList);
+        }
+    }
+
+    /**
+     * Set content information.
+     */
+    private void setContent(ProcessedTimProperties properties, TravelerDataFrame dataFrame) {
+        if (dataFrame.getContent() != null) {
+            ProcessedTimContent content = createProcessedTimContentFromAsnData(dataFrame.getContent());
+            properties.setContent(content);
+        }
+    }
+
+    /**
+     * Create processed region info from ASN.1 data.
+     */
+    private ProcessedRegionInfoBase createProcessedRegionInfoFromAsnData(GeographicalPath region) {
+        ProcessedRegionType regionType = determineRegionType(region);
+        ProcessedElevationProfile elevationProfile = new ProcessedElevationProfile();
+
+        // Set anchor point and elevation from anchor
+        setAnchorPointAndElevation(region, elevationProfile);
+
+        // Create the appropriate region info object based on type
+        ProcessedRegionInfoBase regionInfo = createRegionInfoByType(regionType, region, elevationProfile);
+
+        // Set direction info for this specific region
+        ProcessedDirectionInfoBase directionInfo = createProcessedDirectionInfoFromAsnData(region, regionType);
+        regionInfo.setDirectionInfo(directionInfo);
+
+        return regionInfo;
+    }
+
+    /**
+     * Create processed TIM content from ASN.1 data.
+     */
+    private ProcessedTimContent createProcessedTimContentFromAsnData(ContentChoice content) {
+        ProcessedTimContent timContent = new ProcessedTimContent();
+        List<ProcessedTimContentItem> contentItems = new ArrayList<>();
+
+        if (content != null) {
+            if (content.getAdvisory() != null) {
+                timContent.setType(ProcessedContentType.ADVISORY);
+                processAdvisoryContent(content.getAdvisory(), contentItems);
+            } else if (content.getSpeedLimit() != null) {
+                timContent.setType(ProcessedContentType.ROAD_SIGNAGE);
+                processSpeedLimitContent(content.getSpeedLimit(), contentItems);
+            } else if (content.getWorkZone() != null) {
+                timContent.setType(ProcessedContentType.COMMERCIAL_SIGNAGE);
+                processWorkZoneContent(content.getWorkZone(), contentItems);
+            }
+        }
+
+        // Set the ordered content items
+        timContent.setContentItems(contentItems);
+
+        // Create combined message from content items in order
+        String combinedMessage = contentItems.stream().map(ProcessedTimContentItem::getItisPhrase)
+                .filter(text -> text != null && !text.trim().isEmpty()).collect(Collectors.joining(" "));
+        timContent.setSentence(combinedMessage);
+
+        return timContent;
+    }
+
+    private ProcessedRegionType determineRegionType(GeographicalPath region) {
+        if (region.getDescription() == null) {
+            return ProcessedRegionType.UNKNOWN;
+        }
+
+        boolean isClosedPath = region.getClosedPath() != null && region.getClosedPath().getValue();
+        boolean isCircle = region.getDescription().getGeometry() != null
+                && region.getDescription().getGeometry().getCircle() != null;
+        boolean hasPath = region.getDescription().getPath() != null;
+
+        if (isCircle) {
+            return ProcessedRegionType.CIRCLE;
+        } else if (isClosedPath) {
+            return ProcessedRegionType.POLYGON;
+        } else if (hasPath) {
+            return ProcessedRegionType.PATH;
+        } else {
+            return ProcessedRegionType.UNKNOWN;
+        }
+    }
+
+    private ProcessedAnchorPoint setAnchorPointAndElevation(GeographicalPath region,
+            ProcessedElevationProfile elevationProfile) {
+        if (region.getAnchor() == null) {
+            return null;
+        }
+
+        Position3D anchor = region.getAnchor();
+        ProcessedAnchorPoint anchorPoint = new ProcessedAnchorPoint();
+
+        // Set latitude and longitude
+        if (anchor.getLat() != null) {
+            anchorPoint.setLatitude(FieldConversions.convertLat(anchor.getLat().getValue()));
+        }
+        if (anchor.getLong_() != null) {
+            anchorPoint.setLongitude(FieldConversions.convertLong(anchor.getLong_().getValue()));
+        }
+        if (anchor.getElevation() != null) {
+            anchorPoint.setElevationMeters(FieldConversions.convertElevation(anchor.getElevation().getValue()));
+        }
+
+        // Set default elevation from anchor point
+        if (anchor.getElevation() != null) {
+            elevationProfile
+                    .setDefaultElevationMeters(FieldConversions.convertElevation(anchor.getElevation().getValue()));
+        }
+
+        return anchorPoint;
+    }
+
+    private ProcessedRegionInfoBase createRegionInfoByType(ProcessedRegionType regionType, GeographicalPath region,
+            ProcessedElevationProfile elevationProfile) {
+        ProcessedRegionInfoBase regionInfo;
+
+        switch (regionType) {
+            case PATH:
+                regionInfo = new ProcessedPathRegionInfo();
+                // Set lane width profile for path regions
+                if (region.getLaneWidth() != null) {
+                    ProcessedLaneWidthProfile laneWidthProfile = new ProcessedLaneWidthProfile();
+                    laneWidthProfile
+                            .setDefaultWidthMeters(FieldConversions.convertLaneWidth(region.getLaneWidth().getValue()));
+                    ((ProcessedPathRegionInfo) regionInfo).setLaneWidthProfile(laneWidthProfile);
+                }
+                break;
+            case CIRCLE:
+                regionInfo = new ProcessedCircleRegionInfo();
+                // Set radius for circle regions
+                if (region.getDescription() != null && region.getDescription().getGeometry() != null
+                        && region.getDescription().getGeometry().getCircle() != null) {
+                    Integer radius = (int) region.getDescription().getGeometry().getCircle().getRadius().getValue();
+                    ((ProcessedCircleRegionInfo) regionInfo).setRadius(radius);
+                }
+                break;
+            case POLYGON:
+                regionInfo = new ProcessedPolygonRegionInfo();
+                break;
+            case UNKNOWN:
+            default:
+                regionInfo = new ProcessedUnknownRegionInfo();
+                break;
+        }
+
+        // Set common properties
+        regionInfo.setRegionType(regionType);
+        regionInfo.setElevationProfile(elevationProfile);
+
+        return regionInfo;
+    }
+
+    private ProcessedDirectionInfoBase createProcessedDirectionInfoFromAsnData(GeographicalPath region,
+            ProcessedRegionType regionType) {
+        // Check if we have directionality information first (simpler case)
+        if (region.getDirectionality() != null) {
+            ProcessedDirectionalityDirectionInfo directionalityInfo = new ProcessedDirectionalityDirectionInfo();
+            directionalityInfo.setDirectionType(ProcessedDirectionType.DIRECTIONALITY);
+
+            // Convert ASN.1 directionality to processed directionality
+            String directionalityValue = region.getDirectionality().toString();
+            try {
+                ProcessedDirectionality directionality =
+                        ProcessedDirectionality.fromValue(directionalityValue.toLowerCase());
+                directionalityInfo.setDirectionality(directionality);
+            } catch (IllegalArgumentException e) {
+                log.warn("Unknown directionality value: {}, using UNKNOWN", directionalityValue);
+                directionalityInfo.setDirectionality(ProcessedDirectionality.UNKNOWN);
+            }
+
+            return directionalityInfo;
+        }
+
+        // Check if we have direction information (hex string)
+        if (region.getDirection() != null) {
+            ProcessedHeadingDirectionInfo headingInfo = new ProcessedHeadingDirectionInfo();
+            headingInfo.setDirectionType(ProcessedDirectionType.HEADING);
+
+            // Extract direction value and parse heading sectors
+            String directionValue = FieldConversions.extractDirectionValue(region.getDirection());
+            if (directionValue != null) {
+                int[] activeSectors = FieldConversions.parseHeadingSectors(directionValue);
+                List<ProcessedHeading> headingList = new ArrayList<>();
+
+                for (int sectorBit : activeSectors) {
+                    ProcessedHeading processedHeading = new ProcessedHeading();
+                    processedHeading.setHeading(FieldConversions.sectorBitToHeading(sectorBit));
+                    processedHeading.setRange(FieldConversions.getHeadingSectorRange());
+                    headingList.add(processedHeading);
+                }
+
+                headingInfo.setHeadingList(headingList);
+                return headingInfo;
+            }
+        }
+
+        return null;
+    }
+
+    private void processAdvisoryContent(List<ITIScodesAndTextSequence> advisoryList,
+            List<ProcessedTimContentItem> contentItems) {
+        if (advisoryList == null || advisoryList.isEmpty()) {
+            return;
+        }
+
+        for (ITIScodesAndTextSequence advisory : advisoryList) {
+            // Process ITIS codes - check for item field first
+            if (advisory.getItem() != null && advisory.getItem().getItis() != null) {
+                Long itisCode = advisory.getItem().getItis().getValue();
+                String itisPhrase = ItisCodeLookup.lookupItisCode(itisCode);
+                contentItems.add(new ProcessedTimContentItem(itisCode, itisPhrase));
+            }
+
+            // Process text content if available
+            if (advisory.getItem() != null && advisory.getItem().getText() != null) {
+                String text = advisory.getItem().getText().getValue();
+                if (text != null && !text.trim().isEmpty()) {
+                    contentItems.add(ProcessedTimContentItem.createPlainTextItem(text.trim()));
+                }
+            }
+        }
+    }
+
+    private void processSpeedLimitContent(List<SpeedLimitSequence> speedLimitList,
+            List<ProcessedTimContentItem> contentItems) {
+        if (speedLimitList == null || speedLimitList.isEmpty()) {
+            return;
+        }
+
+        for (SpeedLimitSequence speedLimit : speedLimitList) {
+            // Process ITIS codes - check for item field first
+            if (speedLimit.getItem() != null && speedLimit.getItem().getItis() != null) {
+                Long itisCode = speedLimit.getItem().getItis().getValue();
+                String itisPhrase = ItisCodeLookup.lookupItisCode(itisCode);
+                contentItems.add(new ProcessedTimContentItem(itisCode, itisPhrase));
+            }
+
+            // Process text content if available
+            if (speedLimit.getItem() != null && speedLimit.getItem().getText() != null) {
+                String text = speedLimit.getItem().getText().getValue();
+                if (text != null && !text.trim().isEmpty()) {
+                    contentItems.add(ProcessedTimContentItem.createPlainTextItem(text.trim()));
+                }
+            }
+        }
+    }
+
+    private void processWorkZoneContent(List<WorkZoneSequence> workZoneList,
+            List<ProcessedTimContentItem> contentItems) {
+        if (workZoneList == null || workZoneList.isEmpty()) {
+            return;
+        }
+
+        for (WorkZoneSequence workZone : workZoneList) {
+            // Process ITIS codes - check for item field first
+            if (workZone.getItem() != null && workZone.getItem().getItis() != null) {
+                Long itisCode = workZone.getItem().getItis().getValue();
+                String itisPhrase = ItisCodeLookup.lookupItisCode(itisCode);
+                contentItems.add(new ProcessedTimContentItem(itisCode, itisPhrase));
+            }
+
+            // Process text content if available
+            if (workZone.getItem() != null && workZone.getItem().getText() != null) {
+                String text = workZone.getItem().getText().getValue();
+                if (text != null && !text.trim().isEmpty()) {
+                    contentItems.add(ProcessedTimContentItem.createPlainTextItem(text.trim()));
+                }
+            }
+        }
+    }
+}
