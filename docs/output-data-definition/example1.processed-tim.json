@@ -1,132 +1,137 @@
 {
-    "properties": {
-        "schemaVersion": 1,
-        "messageType": "TIM",
-        "odeReceivedAt": "2025-08-29T21:42:35.74Z",
-        "originIp": "172.22.0.1",
-        "asn1": "001282887824cc000302060c66c1820a68132064c1820ae192200a6cfbd17945dc18d22f4016e1a2c02141a0002000045b3728c5b7ef7fc0262ef0390243600008b00c50680004000156cabf88239c4cac9fe95ee32110086a0242500014b0045068000a400116d0d5896dfa1fef098b7c0fa290e80002489920060802110d000000ad99694047b0381e000802910d000000ad99539047b0381e0016039a0d00010000029322352bfdf1fce8244a00010b018d068000a4000554991d823d847fbcb041489c0002241490038b020d0680004000053ed91d8239c47fa46660486a00038804a10d000000267f24603f42d9605aa0d000100004227c6ab1860e05a434920b02abe7c0140241200018b0315068000400015140c030239c3136c0716060802821a80912400012c0a541a00029000844eca7230bbc0b4869ac16c557c980221482c000324249004040358868000001143cb3001081440398868000001146d6b8010818b041d06800080001135aed29202ed1e4b005158a40909800082c11741a0001000015011b3c08e732015d1e811ce0482200019607ba0d000048002a54edab047b0901768dc58028ac580487120090809410d000000a94bdc704738101f9820270434000002aa1771c11ce0401e6060a8034c000200005592a81a086a01f5540090bbc2914800cc48b40067060b8034c000200005484461a086a0160870119d602916800ce48c40068060c8034c000200005469376c086a021da2016145a2918800d048d40065060d8034c00020000557eb98e086a027e67c0e0b34291a800ca48a40066000a0034410000158b973408d309fa4394005801a2080000ab44357046984267022003000d104000051d2a230234c280bf2c001a00688200002923f16c11a61777c0b8",
-        "msgCnt": 0,
-        "timeStamp": "2022-10-31T15:40:26.687292Z - Message TIMESTAMP",
-        "packetId": "1A05652359A6EA9DCE",
-        "gnisRegionId": "EXTRACT FROM PACKETID",
-        "compliance": [
-            {
-                "standard": "ITWG",
-                "compliant": false,
-                "validationMessages": [
-                    {
-                        "message": "ITWG OR CTW conformance issue: The laneSet 'connectsTo' DF_ConnectsToList is missing"
-                    }
-                ]
-            }
+    "schemaVersion": 1,
+    "messageType": "TIM",
+    "odeReceivedAt": "2025-10-06T20:52:01.837Z",
+    "originIp": "172.27.0.1",
+    "asn1": "001F606015120C16D30800002B8ACCEF28080000FD2A2419F4010007A5270F4454E3EBF36000002EE2000022D02890237A6C0011020086C910100001FA525E83B102000F4A4E1E88A9C7D7E6C000005DC4000045A0512046F4D80064010C188C888400",
+    "msgCnt": 1,
+    "timeStamp": "2025-08-19T18:20:00Z",
+    "packetId": "16D30800002B8ACCEF",
+    "gnisRegionId": 1495816,
+    "location": {
+        "type": "Point",
+        "coordinates": [
+            -84.4027175,
+            33.7569813
         ]
     },
+    "compliance": [
+        {
+            "standard": "ITWG",
+            "compliant": true,
+            "validationMessages": []
+        }
+    ],
     "regionFeatureCollection": {
-        "type": "FeatureCollection",
         "features": [
             {
                 "type": "Feature",
                 "id": 0,
+                "geometry": {
+                    "type": "LineString",
+                    "coordinates": [
+                        [
+                            -84.4027175,
+                            33.7569813
+                        ]
+                    ]
+                },
                 "properties": {
-                    "deploymentAgency": "ENUM: frameType - roadSignage = local/state, commercialSignage = commercial entity",
+                    "deploymentAgencyType": "STATE_OR_LOCAL",
                     "validityPeriod": {
-                        "startTime": "2022-10-31T15:40:00Z",
-                        "endTime": "2022-10-31T15:40:00Z",
-                        "isInfinite": true
+                        "startTime": "2025-08-19T18:20:00Z",
+                        "endTime": "9999-12-31T23:59:59Z",
+                        "infinite": true
                     },
-                    "priority": 0,
-                    "regionInfo": [
+                    "priority": 2,
+                    "regionInfoList": [
                         {
-                            "regionType": "ENUM: PATH, POLYGON, CIRC",
-                            "laneWidthProfile": {
-                                "defaultWidth": 20,
-                                "segments": [
-                                    {
-                                        "offset": 0.0,
-                                        "segmentWidth": 20
-                                    },
-                                    {
-                                        "offset": 0.3,
-                                        "segmentWidth": 18
-                                    },
-                                    {
-                                        "offset": 0.7,
-                                        "segmentWidth": 22
-                                    }
-                                ]
-                            },
-                            "elevationProfile": {
-                                "defaultElevation": 20,
-                                "segments": [
-                                    {
-                                        "offset": 0.0,
-                                        "segmentElevation": 25
-                                    },
-                                    {
-                                        "offset": 0.3,
-                                        "segmentElevation": 18
-                                    },
-                                    {
-                                        "offset": 0.7,
-                                        "segmentElevation": 22
-                                    }
-                                ]
-                            },
-                            "radius": 100,
-                            "anchorPoint": {
-                                "latitude": 40.229713499999995,
-                                "longitude": -111.6622565,
-                                "elevationMeters": 25
-                            },
+                            "regionType": "PATH",
+                            "elevationProfile": {},
                             "directionInfo": {
-                                "type": "ENUM: directionality, direction",
-                                "directionality": "ENUM: forward, reverse, both, unknown",
-                                "headingList": [
-                                    {
-                                        "heading": 180,
-                                        "range": 30
-                                    },
-                                    {
-                                        "heading": 0,
-                                        "range": 30
-                                    }
-                                ]
+                                "directionType": "DIRECTIONALITY",
+                                "directionality": "forward"
+                            },
+                            "laneWidthProfile": {
+                                "defaultWidthMeters": 15.0
                             }
                         }
                     ],
                     "content": {
-                        "type": "ENUM: advisory, roadSignage, commercialSignage",
-                        "itisCodeList": [
-                            13585,
-                            13586,
-                            13587
+                        "type": "COMMERCIAL_SIGNAGE",
+                        "contentItems": [
+                            {
+                                "type": "ITIS_CODE",
+                                "itisCode": 1025,
+                                "itisPhrase": "road-construction"
+                            },
+                            {
+                                "type": "ITIS_CODE",
+                                "itisCode": 6948,
+                                "itisPhrase": "fines-doubled"
+                            }
                         ],
-                        "itisPhraseList": [
-                            "ROAD",
-                            "WORK",
-                            "AHEAD"
-                        ],
-                        "itisSentance": "ROAD WORK AHEAD"
+                        "sentence": "road-construction fines-doubled"
                     }
-                },
+                }
+            },
+            {
+                "type": "Feature",
+                "id": 1,
                 "geometry": {
-                    "type": "LineString/Polygon/MultiPolygon",
+                    "type": "LineString",
                     "coordinates": [
                         [
-                            -111.66208733602625,
-                            40.22974284002934
-                        ],
-                        [
-                            -111.66039934997083,
-                            40.229737080023575
-                        ],
-                        [
-                            -111.65987228907188,
-                            40.22974734003383
+                            -84.4027175,
+                            33.7569813
                         ]
                     ]
+                },
+                "properties": {
+                    "deploymentAgencyType": "STATE_OR_LOCAL",
+                    "validityPeriod": {
+                        "startTime": "2025-07-29T00:00:00Z",
+                        "endTime": "2025-08-19T00:00:00Z",
+                        "infinite": false
+                    },
+                    "priority": 2,
+                    "regionInfoList": [
+                        {
+                            "regionType": "PATH",
+                            "elevationProfile": {},
+                            "directionInfo": {
+                                "directionType": "DIRECTIONALITY",
+                                "directionality": "forward"
+                            },
+                            "laneWidthProfile": {
+                                "defaultWidthMeters": 15.0
+                            }
+                        }
+                    ],
+                    "content": {
+                        "type": "ROAD_SIGNAGE",
+                        "contentItems": [
+                            {
+                                "type": "ITIS_CODE",
+                                "itisCode": 268,
+                                "itisPhrase": "speed-limit"
+                            },
+                            {
+                                "type": "ITIS_CODE",
+                                "itisCode": 12569,
+                                "itisPhrase": "n25"
+                            },
+                            {
+                                "type": "ITIS_CODE",
+                                "itisCode": 8720,
+                                "itisPhrase": "mPH"
+                            }
+                        ],
+                        "sentence": "speed-limit n25 mPH"
+                    }
                 }
             }
-        ]
+        ],
+        "type": "FeatureCollection"
     }
 }

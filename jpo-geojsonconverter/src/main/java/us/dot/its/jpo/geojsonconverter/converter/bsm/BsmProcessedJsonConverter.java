@@ -189,8 +189,9 @@ public class BsmProcessedJsonConverter
     }
 
     private ProcessedBrakeSystemStatus convertBrakeSystemStatus(BrakeSystemStatus bss) {
-        if (bss == null)
+        if (bss == null) {
             return null;
+        }
 
         ProcessedBrakeSystemStatus pbss = new ProcessedBrakeSystemStatus();
 
