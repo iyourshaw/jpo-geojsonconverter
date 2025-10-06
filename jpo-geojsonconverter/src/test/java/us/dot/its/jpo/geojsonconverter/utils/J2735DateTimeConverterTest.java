@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 import org.junit.Test;
@@ -15,10 +15,10 @@ import us.dot.its.jpo.asn.j2735.r2024.SPAT.TimeMark;
 public class J2735DateTimeConverterTest {
 
     // Test data - January 1, 2024 12:00:00 UTC
-    private static final ZonedDateTime TEST_BASE_DATE = ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneId.of("UTC"));
+    private static final ZonedDateTime TEST_BASE_DATE = ZonedDateTime.of(2024, 1, 1, 12, 0, 0, 0, ZoneOffset.UTC);
 
     // Test data - June 15, 2024 15:30:45 UTC
-    private static final ZonedDateTime TEST_ODE_DATE = ZonedDateTime.of(2024, 6, 15, 15, 30, 45, 0, ZoneId.of("UTC"));
+    private static final ZonedDateTime TEST_ODE_DATE = ZonedDateTime.of(2024, 6, 15, 15, 30, 45, 0, ZoneOffset.UTC);
 
     @Test
     public void testGenerateUTCTimestampWithMoyAndDSecond() {
@@ -36,7 +36,7 @@ public class J2735DateTimeConverterTest {
         assertEquals("Hour should be 16 (1000 minutes = 16 hours 40 minutes)", 16, result.getHour());
         assertEquals("Minute should be 40", 40, result.getMinute());
         assertEquals("Second should be 5", 5, result.getSecond());
-        assertEquals("Zone should be UTC", ZoneId.of("UTC"), result.getZone());
+        assertEquals("Zone should be UTC", ZoneOffset.UTC, result.getOffset());
     }
 
     @Test
@@ -129,7 +129,7 @@ public class J2735DateTimeConverterTest {
         assertEquals("Hour should be same as base", TEST_BASE_DATE.getHour(), result.getHour());
         assertEquals("Minute should be 8 (500000ms = 8min 20s)", 8, result.getMinute());
         assertEquals("Second should be 20", 20, result.getSecond());
-        assertEquals("Zone should be UTC", ZoneId.of("UTC"), result.getZone());
+        assertEquals("Zone should be UTC", ZoneOffset.UTC, result.getOffset());
     }
 
     @Test
@@ -157,8 +157,8 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateOffsetUTCTimestampForTimeMarkRollover() {
         // Test rollover logic - within 10 minutes of next hour with small time mark
-        ZonedDateTime nearHourEnd = ZonedDateTime.of(2024, 1, 1, 15, 55, 0, 0, ZoneId.of("UTC")); // 5 minutes before 4
-                                                                                                  // PM
+        ZonedDateTime nearHourEnd = ZonedDateTime.of(2024, 1, 1, 15, 55, 0, 0, ZoneOffset.UTC); // 5 minutes before 4
+                                                                                                // PM
         TimeMark timeMark = new TimeMark(1000); // 10 seconds (1000 centiseconds = 100000 milliseconds)
 
         ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForTimeMark(nearHourEnd, timeMark);
@@ -172,7 +172,7 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateOffsetUTCTimestampForTimeMarkNoRollover() {
         // Test no rollover - not within 10 minutes of next hour
-        ZonedDateTime normalTime = ZonedDateTime.of(2024, 1, 1, 15, 30, 0, 0, ZoneId.of("UTC")); // 30 minutes past hour
+        ZonedDateTime normalTime = ZonedDateTime.of(2024, 1, 1, 15, 30, 0, 0, ZoneOffset.UTC); // 30 minutes past hour
         TimeMark timeMark = new TimeMark(1000); // 10 seconds (1000 centiseconds = 100000 milliseconds)
 
         ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForTimeMark(normalTime, timeMark);
@@ -231,8 +231,8 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateOffsetUTCTimestampForSecMarkRollover() {
         // Test rollover logic - within 10 seconds of next minute with large sec mark
-        ZonedDateTime nearMinuteEnd = ZonedDateTime.of(2024, 1, 1, 15, 30, 5, 0, ZoneId.of("UTC")); // 5 seconds past
-                                                                                                    // minute
+        ZonedDateTime nearMinuteEnd = ZonedDateTime.of(2024, 1, 1, 15, 30, 5, 0, ZoneOffset.UTC); // 5 seconds past
+                                                                                                  // minute
         DSecond secMark = new DSecond(55000); // 55 seconds
 
         ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForSecMark(nearMinuteEnd, secMark);
@@ -245,8 +245,8 @@ public class J2735DateTimeConverterTest {
     @Test
     public void testGenerateOffsetUTCTimestampForSecMarkNoRollover() {
         // Test no rollover - not within 10 seconds of next minute
-        ZonedDateTime normalTime = ZonedDateTime.of(2024, 1, 1, 15, 30, 30, 0, ZoneId.of("UTC")); // 30 seconds past
-                                                                                                  // minute
+        ZonedDateTime normalTime = ZonedDateTime.of(2024, 1, 1, 15, 30, 30, 0, ZoneOffset.UTC); // 30 seconds past
+                                                                                                // minute
         DSecond secMark = new DSecond(55000); // 55 seconds
 
         ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForSecMark(normalTime, secMark);

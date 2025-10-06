@@ -48,8 +48,7 @@ public class J2735DateTimeConverter {
             }
 
         } catch (Exception e) {
-            String errMsg = String.format("Failed to generate UTC Timestamp. Message: %s", e.getMessage());
-            log.error(errMsg, e);
+            log.error("Failed to generate UTC Timestamp. Message: {}", e.getMessage(), e);
         }
 
         return date;
@@ -124,8 +123,7 @@ public class J2735DateTimeConverter {
                 return null;
             }
         } catch (Exception e) {
-            String errMsg = String.format("Failed to generateOffsetUTCTimestamp. Message: %s", e.getMessage());
-            log.error(errMsg, e);
+            log.error("Failed to generateOffsetUTCTimestamp. Message: {}", e.getMessage(), e);
             return null;
         }
     }
@@ -169,8 +167,7 @@ public class J2735DateTimeConverter {
                 return null;
             }
         } catch (Exception e) {
-            String errMsg = String.format("Failed to generateOffsetUTCTimestamp. Message: %s", e.getMessage());
-            log.error(errMsg, e);
+            log.error("Failed to generateOffsetUTCTimestamp. Message: {}", e.getMessage(), e);
             return null;
         }
     }
