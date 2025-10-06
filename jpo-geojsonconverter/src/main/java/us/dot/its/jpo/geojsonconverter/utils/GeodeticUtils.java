@@ -38,67 +38,93 @@ public class GeodeticUtils {
 
     /**
      * Convert meter offsets to latitude/longitude coordinates using proper geodetic calculations. This method accounts
-     * for the Earth's curvature and provides more accurate results than simple linear approximations.
+     * for the Earth's curvature and provides accurate results using ellipsoidal calculations.
      * 
-     * @param longitude The reference longitude in decimal degrees
-     * @param latitude The reference latitude in decimal degrees
+     * @param longitude The reference longitude in decimal degrees (must be finite and valid)
+     * @param latitude The reference latitude in decimal degrees (must be finite and valid)
      * @param offsetXMeters The offset in meters along the X-axis (East-West, positive = East)
      * @param offsetYMeters The offset in meters along the Y-axis (North-South, positive = North)
      * @return A Coordinate object with the new longitude and latitude
+     * @throws IllegalArgumentException if input parameters are invalid (NaN, infinite, or out of valid ranges)
      */
     public static Coordinate offsetCoordinate(double longitude, double latitude, double offsetXMeters,
             double offsetYMeters) {
-        try {
-            // Convert to radians
-            double latRad = Math.toRadians(latitude);
-            double lonRad = Math.toRadians(longitude);
+        // Validate input parameters
+        validateCoordinate(longitude, latitude);
+        validateOffset(offsetXMeters, offsetYMeters);
 
-            // Calculate the radius of curvature in the meridian (North-South direction)
-            double radiusMeridian = calculateRadiusOfCurvatureMeridian(latRad);
+        // Convert to radians
+        double latRad = Math.toRadians(latitude);
+        double lonRad = Math.toRadians(longitude);
 
-            // Calculate the radius of curvature in the prime vertical (East-West direction)
-            double radiusPrimeVertical = calculateRadiusOfCurvaturePrimeVertical(latRad);
+        // Calculate the radius of curvature in the meridian (North-South direction)
+        double radiusMeridian = calculateRadiusOfCurvatureMeridian(latRad);
 
-            // Convert meter offsets to angular offsets
-            double latOffsetRad = offsetYMeters / radiusMeridian;
-            double lonOffsetRad = offsetXMeters / (radiusPrimeVertical * Math.cos(latRad));
+        // Calculate the radius of curvature in the prime vertical (East-West direction)
+        double radiusPrimeVertical = calculateRadiusOfCurvaturePrimeVertical(latRad);
 
-            // Calculate new coordinates
-            double newLatRad = latRad + latOffsetRad;
-            double newLonRad = lonRad + lonOffsetRad;
+        // Convert meter offsets to angular offsets
+        double latOffsetRad = offsetYMeters / radiusMeridian;
+        double lonOffsetRad = offsetXMeters / (radiusPrimeVertical * Math.cos(latRad));
 
-            // Convert back to degrees
-            double newLatitude = Math.toDegrees(newLatRad);
-            double newLongitude = Math.toDegrees(newLonRad);
+        // Calculate new coordinates
+        double newLatRad = latRad + latOffsetRad;
+        double newLonRad = lonRad + lonOffsetRad;
 
-            // Normalize longitude to [-180, 180]
-            newLongitude = normalizeLongitude(newLongitude);
-
-            return new Coordinate(newLongitude, newLatitude);
-
-        } catch (Exception e) {
-            log.warn("Error in geodetic calculation, falling back to simple approximation: {}", e.getMessage());
-            return offsetCoordinateSimple(longitude, latitude, offsetXMeters, offsetYMeters);
-        }
-    }
-
-    /**
-     * Simple approximation method as fallback when geodetic calculations fail. Uses constant Earth radius
-     * approximation.
-     */
-    private static Coordinate offsetCoordinateSimple(double longitude, double latitude, double offsetXMeters,
-            double offsetYMeters) {
-        // Simple approximation using constant Earth radius
-        double latOffset = offsetYMeters / EARTH_RADIUS_METERS;
-        double lonOffset = offsetXMeters / (EARTH_RADIUS_METERS * Math.cos(Math.toRadians(latitude)));
-
-        double newLatitude = latitude + Math.toDegrees(latOffset);
-        double newLongitude = longitude + Math.toDegrees(lonOffset);
+        // Convert back to degrees
+        double newLatitude = Math.toDegrees(newLatRad);
+        double newLongitude = Math.toDegrees(newLonRad);
 
         // Normalize longitude to [-180, 180]
         newLongitude = normalizeLongitude(newLongitude);
 
         return new Coordinate(newLongitude, newLatitude);
+    }
+
+    /**
+     * Validate coordinate parameters for validity and reasonable ranges.
+     * 
+     * @param longitude The longitude in decimal degrees
+     * @param latitude The latitude in decimal degrees
+     * @throws IllegalArgumentException if coordinates are invalid
+     */
+    private static void validateCoordinate(double longitude, double latitude) {
+        if (!Double.isFinite(longitude) || !Double.isFinite(latitude)) {
+            throw new IllegalArgumentException("Longitude and latitude must be finite numbers");
+        }
+
+        if (longitude < -180.0 || longitude > 180.0) {
+            throw new IllegalArgumentException("Longitude must be between -180 and 180 degrees");
+        }
+
+        if (latitude < -90.0 || latitude > 90.0) {
+            throw new IllegalArgumentException("Latitude must be between -90 and 90 degrees");
+        }
+
+        // Check for extreme latitudes that could cause numerical issues
+        if (Math.abs(latitude) > 89.0) {
+            throw new IllegalArgumentException(
+                    "Latitude too close to poles (|latitude| > 89°), may cause numerical instability");
+        }
+    }
+
+    /**
+     * Validate offset parameters for validity and reasonable ranges.
+     * 
+     * @param offsetXMeters The X offset in meters
+     * @param offsetYMeters The Y offset in meters
+     * @throws IllegalArgumentException if offsets are invalid
+     */
+    private static void validateOffset(double offsetXMeters, double offsetYMeters) {
+        if (!Double.isFinite(offsetXMeters) || !Double.isFinite(offsetYMeters)) {
+            throw new IllegalArgumentException("Offset values must be finite numbers");
+        }
+
+        // Check for unreasonably large offsets that could cause numerical issues
+        double maxOffset = 1000000.0; // 1000 km
+        if (Math.abs(offsetXMeters) > maxOffset || Math.abs(offsetYMeters) > maxOffset) {
+            throw new IllegalArgumentException("Offset values too large (>1000km), may cause numerical instability");
+        }
     }
 
     /**

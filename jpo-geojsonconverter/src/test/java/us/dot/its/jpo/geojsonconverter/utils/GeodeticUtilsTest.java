@@ -2,6 +2,7 @@ package us.dot.its.jpo.geojsonconverter.utils;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -79,5 +80,117 @@ public class GeodeticUtilsTest {
         // Test with a longitude that would normally be > 180
         Coordinate result2 = GeodeticUtils.calculateDestination(179.0, 0, 90.0, 100000);
         assertEquals("Longitude should be normalized", true, result2.x >= -180 && result2.x <= 180);
+    }
+
+    // Validation tests for input parameters
+
+    @Test
+    public void testOffsetCoordinateWithValidInputs() {
+        // Test with valid inputs - should not throw exception
+        Coordinate result = GeodeticUtils.offsetCoordinate(-104.9903, 39.7392, 1000.0, 1000.0);
+        assertNotNull("Should return valid coordinate", result);
+    }
+
+    @Test
+    public void testOffsetCoordinateWithNaNLongitude() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            GeodeticUtils.offsetCoordinate(Double.NaN, 39.7392, 1000.0, 1000.0);
+        });
+        assertEquals("Longitude and latitude must be finite numbers", exception.getMessage());
+    }
+
+    @Test
+    public void testOffsetCoordinateWithNaNLatitude() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            GeodeticUtils.offsetCoordinate(-104.9903, Double.NaN, 1000.0, 1000.0);
+        });
+        assertEquals("Longitude and latitude must be finite numbers", exception.getMessage());
+    }
+
+    @Test
+    public void testOffsetCoordinateWithInfiniteLongitude() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            GeodeticUtils.offsetCoordinate(Double.POSITIVE_INFINITY, 39.7392, 1000.0, 1000.0);
+        });
+        assertEquals("Longitude and latitude must be finite numbers", exception.getMessage());
+    }
+
+    @Test
+    public void testOffsetCoordinateWithInfiniteLatitude() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            GeodeticUtils.offsetCoordinate(-104.9903, Double.NEGATIVE_INFINITY, 1000.0, 1000.0);
+        });
+        assertEquals("Longitude and latitude must be finite numbers", exception.getMessage());
+    }
+
+    @Test
+    public void testOffsetCoordinateWithInvalidLongitude() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            GeodeticUtils.offsetCoordinate(200.0, 39.7392, 1000.0, 1000.0);
+        });
+        assertEquals("Longitude must be between -180 and 180 degrees", exception.getMessage());
+    }
+
+    @Test
+    public void testOffsetCoordinateWithInvalidLatitude() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            GeodeticUtils.offsetCoordinate(-104.9903, 95.0, 1000.0, 1000.0);
+        });
+        assertEquals("Latitude must be between -90 and 90 degrees", exception.getMessage());
+    }
+
+    @Test
+    public void testOffsetCoordinateWithExtremeLatitude() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            GeodeticUtils.offsetCoordinate(-104.9903, 89.5, 1000.0, 1000.0);
+        });
+        assertEquals("Latitude too close to poles (|latitude| > 89°), may cause numerical instability",
+                exception.getMessage());
+    }
+
+    @Test
+    public void testOffsetCoordinateWithNaNOffset() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            GeodeticUtils.offsetCoordinate(-104.9903, 39.7392, Double.NaN, 1000.0);
+        });
+        assertEquals("Offset values must be finite numbers", exception.getMessage());
+    }
+
+    @Test
+    public void testOffsetCoordinateWithInfiniteOffset() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            GeodeticUtils.offsetCoordinate(-104.9903, 39.7392, Double.POSITIVE_INFINITY, 1000.0);
+        });
+        assertEquals("Offset values must be finite numbers", exception.getMessage());
+    }
+
+    @Test
+    public void testOffsetCoordinateWithLargeOffset() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            GeodeticUtils.offsetCoordinate(-104.9903, 39.7392, 2000000.0, 1000.0);
+        });
+        assertEquals("Offset values too large (>1000km), may cause numerical instability", exception.getMessage());
+    }
+
+    @Test
+    public void testOffsetCoordinateWithBoundaryValues() {
+        // Test boundary values that should be valid
+        Coordinate result1 = GeodeticUtils.offsetCoordinate(180.0, 89.0, 1000.0, 1000.0);
+        assertNotNull("Should accept longitude 180", result1);
+
+        Coordinate result2 = GeodeticUtils.offsetCoordinate(-180.0, -89.0, 1000.0, 1000.0);
+        assertNotNull("Should accept longitude -180", result2);
+
+        Coordinate result3 = GeodeticUtils.offsetCoordinate(0.0, 0.0, 1000000.0, 1000000.0);
+        assertNotNull("Should accept large but valid offsets", result3);
+    }
+
+    @Test
+    public void testOffsetCoordinateWithZeroOffsets() {
+        // Test with zero offsets - should return the same coordinate
+        Coordinate result = GeodeticUtils.offsetCoordinate(-104.9903, 39.7392, 0.0, 0.0);
+        assertNotNull("Should return valid coordinate", result);
+        assertEquals("Longitude should be unchanged", -104.9903, result.x, 0.0001);
+        assertEquals("Latitude should be unchanged", 39.7392, result.y, 0.0001);
     }
 }
