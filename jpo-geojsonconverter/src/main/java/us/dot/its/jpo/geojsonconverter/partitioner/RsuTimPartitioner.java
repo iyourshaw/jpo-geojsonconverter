@@ -9,7 +9,7 @@ import us.dot.its.jpo.geojsonconverter.serialization.serializers.JsonSerializer;
 public class RsuTimPartitioner<K, V> implements StreamPartitioner<K, V> {
     @Override
     public Integer partition(String topic, K key, V value, int numPartitions) {
-        byte[] partitionBytes;
+        byte[] partitionBytes = null;
 
         if (key instanceof RsuTimKey) {
             // If the key is a TIM key, partition on RSU ID first, then packet ID for better distribution
@@ -20,12 +20,11 @@ public class RsuTimPartitioner<K, V> implements StreamPartitioner<K, V> {
             } else if (rsuTimKey.getPacketId() != null && !rsuTimKey.getPacketId().isEmpty()) {
                 // Fallback to packet ID if RSU ID is not available
                 partitionBytes = serializeString(topic, rsuTimKey.getPacketId());
-            } else {
-                // Last resort: partition on the full key object
-                partitionBytes = serializeObj(topic, key);
             }
-        } else {
-            // If the key does not have an RSU ID, partition on the hashed key as usual.
+        }
+
+        // If the key is not a TIM key or doesn't have valid RSU ID/packet ID, partition on the full key object
+        if (partitionBytes == null) {
             partitionBytes = serializeObj(topic, key);
         }
 

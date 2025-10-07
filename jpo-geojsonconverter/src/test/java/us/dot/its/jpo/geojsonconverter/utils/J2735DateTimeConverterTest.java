@@ -47,13 +47,15 @@ public class J2735DateTimeConverterTest {
 
         ZonedDateTime result = J2735DateTimeConverter.generateUTCTimestamp(moy, null, TEST_ODE_DATE, year);
 
+        int odeSecond = TEST_ODE_DATE.getSecond();
+
         assertNotNull("Result should not be null", result);
         assertEquals("Year should be correct", 2024, result.getYear());
         assertEquals("Month should be January", 1, result.getMonthValue());
         assertEquals("Day should be 2 (1440 minutes = 24 hours)", 2, result.getDayOfMonth());
         assertEquals("Hour should be 0", 0, result.getHour());
         assertEquals("Minute should be 0", 0, result.getMinute());
-        assertEquals("Second should be 0", 0, result.getSecond());
+        assertEquals("Second should be " + odeSecond, odeSecond, result.getSecond());
     }
 
     @Test

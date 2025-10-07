@@ -21,6 +21,8 @@ import us.dot.its.jpo.geojsonconverter.validator.TimJsonValidator;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.networknt.schema.ValidationMessage;
+
 /**
  * Kafka Streams Topology builder for processing TIM messages from ODE TIM JSON -> TIM GeoJSON
  */
@@ -47,7 +49,7 @@ public class TimTopology {
                         JsonSerdes.OdeMessageFrame().deserializer().deserialize(timOdeJsonTopic, value.get()));
                 // Convert ValidationMessage to ProcessedValidationMessage
                 List<ProcessedValidationMessage> processedValidationMessages = new ArrayList<>();
-                for (com.networknt.schema.ValidationMessage vm : validationResults.getValidationMessages()) {
+                for (ValidationMessage vm : validationResults.getValidationMessages()) {
                     ProcessedValidationMessage pvm = new ProcessedValidationMessage();
                     pvm.setMessage(vm.getMessage());
                     pvm.setSchemaPath(vm.getSchemaPath());
@@ -63,7 +65,7 @@ public class TimTopology {
                 deserializedRawTim.setValidationFailure(true);
                 // Convert ValidationMessage to ProcessedValidationMessage for exceptions
                 List<ProcessedValidationMessage> processedValidationMessages = new ArrayList<>();
-                for (com.networknt.schema.ValidationMessage vm : validatorResult.getValidationMessages()) {
+                for (ValidationMessage vm : validatorResult.getValidationMessages()) {
                     ProcessedValidationMessage pvm = new ProcessedValidationMessage();
                     pvm.setMessage(vm.getMessage());
                     pvm.setSchemaPath(vm.getSchemaPath());

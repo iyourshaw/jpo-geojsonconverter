@@ -124,6 +124,50 @@
 											}
 										}
 									}
+								},
+								{
+									"anchor": {
+										"lat": 412531501,
+										"long": -1040471010
+									},
+									"laneWidth": 5000,
+									"directionality": "both",
+									"closedPath": false,
+									"description": {
+										"path": {
+											"scale": 0,
+											"offset": {
+												"ll": {
+													"nodes": [
+														{
+															"delta": {
+																"node-LL2": {
+																	"lon": -5853,
+																	"lat": 2057
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-LL3": {
+																	"lon": -8454,
+																	"lat": 1861
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-LL3": {
+																	"lon": -9494,
+																	"lat": 1469
+																}
+															}
+														}
+													]
+												}
+											}
+										}
+									}
 								}
 							],
 							"doNotUse3": 0,

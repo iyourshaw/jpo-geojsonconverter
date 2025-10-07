@@ -13,9 +13,11 @@ import org.junit.Test;
 import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.*;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.Geometry;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.LineString;
+import us.dot.its.jpo.geojsonconverter.pojos.geojson.MultiLineString;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.Polygon;
 import us.dot.its.jpo.geojsonconverter.serialization.deserializers.JsonDeserializer;
-import us.dot.its.jpo.geojsonconverter.utils.GeodeticUtils;
+import org.geotools.referencing.GeodeticCalculator;
+import org.geotools.referencing.crs.DefaultGeographicCRS;
 import us.dot.its.jpo.ode.model.OdeMessageFrameData;
 import org.locationtech.jts.geom.Point;
 
@@ -47,17 +49,21 @@ public class TimGeometryProcessorTest {
 
         // Verify geometry creation
         assertNotNull(geometry);
-        assertTrue(geometry instanceof LineString);
+        assertTrue(geometry instanceof MultiLineString);
 
-        LineString lineString = (LineString) geometry;
-        assertNotNull(lineString.getCoordinates());
-        assertTrue(lineString.getCoordinates().length > 0);
+        MultiLineString multiLineString = (MultiLineString) geometry;
+        assertNotNull(multiLineString.getCoordinates());
+        assertTrue(multiLineString.getCoordinates().length > 0);
+        assertTrue(multiLineString.getCoordinates().length == 2);
 
-        // Verify coordinates are valid
-        for (double[] coord : lineString.getCoordinates()) {
-            assertTrue(coord[0] >= -180.0 && coord[0] <= 180.0, "Invalid longitude: " + coord[0]);
-            assertTrue(coord[1] >= -90.0 && coord[1] <= 90.0, "Invalid latitude: " + coord[1]);
+        // verify that both linestrings in the multilinestring are valid
+        for (double[][] lineString : multiLineString.getCoordinates()) {
+            for (double[] coord : lineString) {
+                assertTrue(coord[0] >= -180.0 && coord[0] <= 180.0, "Invalid longitude: " + coord[0]);
+                assertTrue(coord[1] >= -90.0 && coord[1] <= 90.0, "Invalid latitude: " + coord[1]);
+            }
         }
+
     }
 
     @Test
@@ -174,8 +180,10 @@ public class TimGeometryProcessorTest {
         assertTrue(coords.length > 0, "Polygon should have at least one ring");
         assertTrue(coords[0].length > 0, "Polygon ring should have coordinates");
 
-        // Verify we have enough points for a good circle approximation (should be 64 points)
-        assertTrue(coords[0].length >= 64, "Circle should have at least 64 approximation points for accuracy");
+        // Verify we have enough points for a good circle approximation (adaptive based on diameter)
+        // For a 250m radius circle (500m diameter), we expect around 26 points (optimal balance)
+        assertTrue(coords[0].length >= 12, "Circle should have at least 12 approximation points for visual quality");
+        assertTrue(coords[0].length <= 64, "Circle should not exceed 64 points to prevent excessive storage");
 
         for (double[][] ring : coords) {
             for (double[] coord : ring) {
@@ -200,7 +208,11 @@ public class TimGeometryProcessorTest {
 
         if (coords.length > 0 && coords[0].length > 1) {
             double[] firstPoint = coords[0][0];
-            double distance = GeodeticUtils.calculateDistance(centerLon, centerLat, firstPoint[0], firstPoint[1]);
+            // Calculate distance using Geotools GeodeticCalculator
+            GeodeticCalculator calculator = new GeodeticCalculator(DefaultGeographicCRS.WGS84);
+            calculator.setStartingGeographicPoint(centerLon, centerLat);
+            calculator.setDestinationGeographicPoint(firstPoint[0], firstPoint[1]);
+            double distance = calculator.getOrthodromicDistance();
 
             // Allow some tolerance for approximation (within 10% of expected radius)
             double tolerance = expectedRadius * 0.1;

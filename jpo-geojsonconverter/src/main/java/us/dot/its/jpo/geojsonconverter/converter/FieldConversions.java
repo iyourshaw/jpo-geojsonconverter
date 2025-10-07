@@ -362,7 +362,7 @@ public class FieldConversions {
     /**
      * Converts a J2735 LaneWidth value to meters. Providing a range of 0 to + 327.67 m meters.
      *
-     * @param j2735Elev J2735 lane width value.
+     * @param j2735LaneWidth J2735 lane width value.
      * @return Lane width in meters, or null if unavailable.
      */
     public static Double convertLaneWidth(LaneWidth laneWidth) {

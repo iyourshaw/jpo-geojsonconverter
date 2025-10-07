@@ -32,7 +32,12 @@ public class J2735DateTimeConverter {
             long milliseconds;
             if (moy != null) {
                 long minutes = moy.getValue();
-                milliseconds = dSecond != null ? (long) dSecond.getValue() : 0; // milliseconds in current minute
+                if (dSecond != null) {
+                    milliseconds = dSecond.getValue();
+                } else {
+                    // Use seconds and milliseconds from odeDate when dSecond is null
+                    milliseconds = odeDate.getSecond() * 1000 + odeDate.getNano() / 1_000_000;
+                }
                 dateString = String.format("%d-01-01T00:00:00.00Z", year);
                 date = Instant.parse(dateString).atZone(ZoneId.of("UTC"));
                 date = date.plusMinutes(minutes);

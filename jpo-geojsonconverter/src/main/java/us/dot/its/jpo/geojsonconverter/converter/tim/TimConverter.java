@@ -103,6 +103,7 @@ public class TimConverter {
      */
     private void setComplianceInformation(ProcessedTim processedTim,
             List<ProcessedValidationMessage> validationMessages) {
+        // TODO: Add CTW compliance information
         List<ProcessedCompliance> complianceList = new ArrayList<>();
         ProcessedCompliance compliance = new ProcessedCompliance();
         compliance.setStandard(ProcessedCompliance.Standard.ITWG);
@@ -147,13 +148,13 @@ public class TimConverter {
             log.error("Error processing TIM ASN.1 data: {}", e.getMessage(), e);
             // Create empty feature collection if processing fails
             ProcessedTimFeatureCollection featureCollection = new ProcessedTimFeatureCollection();
-            featureCollection.setFeatures(new ArrayList<>());
+            featureCollection.setFeatures(new ArrayList<ProcessedTimFeature<?>>());
             processedTim.setRegionFeatureCollection(featureCollection);
         }
     }
 
     /**
-     * Set the location field for MongoDB 2D sphere indexing.
+     * Set the location field for MongoDB 2D sphere indexing. Using a calculated center location from the regions.
      */
     private void setLocation(ProcessedTim processedTim, TravelerInformation travelerInfo) {
         try {

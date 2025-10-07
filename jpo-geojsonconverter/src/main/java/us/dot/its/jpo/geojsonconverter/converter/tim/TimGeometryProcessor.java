@@ -32,13 +32,38 @@ import java.util.List;
 public class TimGeometryProcessor {
 
     // Constants
-    private static final int CIRCLE_APPROXIMATION_POINTS = 64; // Increased for better accuracy
     private static final double DEFAULT_PADDING_DEGREES = 0.005;
-    // Maximum reasonable circle radius in meters (100 km)
-    private static final double MAX_CIRCLE_RADIUS_METERS = 100000.0;
-    // Minimum reasonable circle radius in meters (1 meter)
-    private static final double MIN_CIRCLE_RADIUS_METERS = 1.0;
+    // Adaptive circle point calculation constants
+    private static final int MIN_CIRCLE_POINTS = 12;
+    private static final int MAX_CIRCLE_POINTS = 64;
+    private static final double POINTS_PER_METER = 0.05; // Circle points per meter base calculation: 1 point per 20
+                                                         // meters
 
+    /**
+     * Calculate the optimal number of points for circle approximation based on diameter. Uses adaptive scaling to
+     * balance accuracy with performance.
+     * 
+     * @param diameterMeters Diameter of the circle in meters
+     * @return Number of points to use for circle approximation
+     */
+    private int calculateAdaptiveCirclePoints(double diameterMeters) {
+        // Calculate base number of points based on diameter
+        // Larger circles need more points to maintain visual smoothness
+        int calculatedPoints = (int) Math.ceil(diameterMeters * POINTS_PER_METER);
+
+        // Apply minimum and maximum bounds
+        int adaptivePoints = Math.max(MIN_CIRCLE_POINTS, Math.min(MAX_CIRCLE_POINTS, calculatedPoints));
+
+        // Ensure we have an even number of points for better symmetry
+        if (adaptivePoints % 2 != 0) {
+            adaptivePoints++;
+        }
+
+        log.debug("Adaptive circle points calculation: diameter={}m, calculated={}, final={}", diameterMeters,
+                calculatedPoints, adaptivePoints);
+
+        return adaptivePoints;
+    }
 
     /**
      * Convert TIM region to appropriate GeoJSON geometry based on region type.
@@ -136,8 +161,22 @@ public class TimGeometryProcessor {
             }
         }
 
-        // Use GeodeticUtils to calculate center location
-        return GeodeticUtils.calculateCenterLocation(coordinates);
+        // Calculate center location using Geotools GeodeticCalculator
+        if (coordinates.isEmpty()) {
+            return null;
+        }
+
+        // Calculate center point (simple average)
+        double centerLat = coordinates.stream().filter(coord -> coord != null && coord.size() >= 2)
+                .mapToDouble(coord -> coord.get(1)) // latitude
+                .average().orElse(0.0);
+
+        double centerLon = coordinates.stream().filter(coord -> coord != null && coord.size() >= 2)
+                .mapToDouble(coord -> coord.get(0)) // longitude
+                .average().orElse(0.0);
+
+        // Create Point geometry using JTS GeometryFactory
+        return new GeometryFactory().createPoint(new Coordinate(centerLon, centerLat));
     }
 
     /**
@@ -530,10 +569,6 @@ public class TimGeometryProcessor {
             return new ArrayList<>();
         }
 
-        Position3D anchor = region.getAnchor();
-        double anchorLat = FieldConversions.convertLat(anchor.getLat().getValue());
-        double anchorLon = FieldConversions.convertLong(anchor.getLong_().getValue());
-
         List<List<Double>> coordinates = new ArrayList<>();
 
         // Handle circle geometry
@@ -574,13 +609,6 @@ public class TimGeometryProcessor {
     private List<List<Double>> createCirclePoints(double centerLon, double centerLat, int radiusMeters) {
         List<List<Double>> coordinates = new ArrayList<>();
 
-        // Validate radius
-        if (radiusMeters < MIN_CIRCLE_RADIUS_METERS || radiusMeters > MAX_CIRCLE_RADIUS_METERS) {
-            log.warn("Circle radius {} meters is outside reasonable range [{}, {}], using default radius", radiusMeters,
-                    MIN_CIRCLE_RADIUS_METERS, MAX_CIRCLE_RADIUS_METERS);
-            radiusMeters = 100; // Default to 100 meters
-        }
-
         // Validate center coordinates
         if (centerLon < -180.0 || centerLon > 180.0 || centerLat < -90.0 || centerLat > 90.0) {
             log.error("Invalid circle center coordinates: lon={}, lat={}", centerLon, centerLat);
@@ -605,11 +633,15 @@ public class TimGeometryProcessor {
             ProjCoordinate centerUTM =
                     ProjectionUtils.transformCoordinate("EPSG:4326", utmCrsCode, centerLon, centerLat);
 
+            // Calculate adaptive number of points based on diameter
+            double diameterMeters = radiusMeters * 2.0;
+            int adaptivePoints = calculateAdaptiveCirclePoints(diameterMeters);
+
             // Create circle in UTM using JTS GeometricShapeFactory
             GeometricShapeFactory shapeFactory = new GeometricShapeFactory(new GeometryFactory());
             shapeFactory.setCentre(new Coordinate(centerUTM.x, centerUTM.y));
-            shapeFactory.setSize(radiusMeters * 2.0); // diameter
-            shapeFactory.setNumPoints(CIRCLE_APPROXIMATION_POINTS);
+            shapeFactory.setSize(diameterMeters);
+            shapeFactory.setNumPoints(adaptivePoints);
 
             org.locationtech.jts.geom.Polygon circleUTM = shapeFactory.createCircle();
             Coordinate[] circleCoordsUTM = circleUTM.getExteriorRing().getCoordinates();
@@ -621,8 +653,8 @@ public class TimGeometryProcessor {
                 coordinates.add(Arrays.asList(coordWGS84.x, coordWGS84.y));
             }
 
-            log.debug("Created UTM-based circle with {} points, center=({}, {}), radius={}m, UTM zone={}",
-                    CIRCLE_APPROXIMATION_POINTS, centerLon, centerLat, radiusMeters, utmZone);
+            log.debug("Created UTM-based circle with {} points, center=({}, {}), radius={}m, diameter={}m, UTM zone={}",
+                    adaptivePoints, centerLon, centerLat, radiusMeters, diameterMeters, utmZone);
 
         } catch (Exception e) {
             log.error("Error creating UTM-based circle: {}", e.getMessage(), e);
