@@ -3,10 +3,12 @@ package us.dot.its.jpo.geojsonconverter.converter;
 
 import us.dot.its.jpo.asn.j2735.r2024.Common.*;
 import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.DistanceUnits;
+import us.dot.its.jpo.asn.runtime.types.Asn1Bitstring;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.ArrayList;
 
 public class FieldConversions {
 
@@ -14,7 +16,6 @@ public class FieldConversions {
     private static final double HEADING_SECTOR_DEGREES = 22.5;
     private static final double HEADING_SECTOR_RANGE = 22.5;
     private static final int MAX_HEADING_SECTORS = 16;
-    private static final int HEX_STRING_MIN_LENGTH = 4;
     private static final double CENTIMETERS_PER_DEGREE_LATITUDE = 11111100.0;
     private static final double J2735_DECIMAL_CONVERSION_FACTOR = 10000000.0;
 
@@ -398,121 +399,85 @@ public class FieldConversions {
     }
 
     /**
-     * Converts a binary string to hexadecimal string.
+     * Parse heading sectors directly from Asn1Bitstring. Each bit represents a 22.5-degree sector starting from North
+     * (0°) and moving clockwise.
      *
-     * @param binary The binary string
-     * @return Hexadecimal representation
-     */
-    public static String binaryToHex(String binary) {
-        if (binary == null || binary.isEmpty()) {
-            return null;
-        }
-
-        try {
-            // Pad the binary string to ensure it's a multiple of 4 bits
-            while (binary.length() % 4 != 0) {
-                binary = "0" + binary;
-            }
-
-            // Convert binary to hex
-            int decimal = Integer.parseInt(binary, 2);
-            String hex = Integer.toHexString(decimal).toUpperCase();
-
-            // Pad with leading zeros if needed to maintain 4-character hex format
-            while (hex.length() < 4) {
-                hex = "0" + hex;
-            }
-
-            return hex;
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    /**
-     * Check if a string represents a binary value.
-     *
-     * @param value The string to check
-     * @return True if the string contains only 0s and 1s
-     */
-    public static boolean isBinaryString(String value) {
-        if (value == null || value.isEmpty()) {
-            return false;
-        }
-        return value.matches("[01]+");
-    }
-
-    /**
-     * Extract direction value from ASN.1 direction field using reflection.
-     *
-     * @param direction The direction field object
-     * @return Direction value as string or null if extraction fails
-     */
-    public static String extractDirectionValue(Object direction) {
-        if (direction == null) {
-            return null;
-        }
-
-        try {
-            // Try to get the value using reflection to handle different ASN.1 types
-            Object value = direction.getClass().getMethod("getValue").invoke(direction);
-            if (value != null) {
-                String stringValue = value.toString();
-
-                // Check if it's a binary string and convert to hex
-                if (isBinaryString(stringValue)) {
-                    return binaryToHex(stringValue);
-                }
-
-                return stringValue;
-            }
-        } catch (Exception e) {
-            // Try toString() as fallback
-            try {
-                String stringValue = direction.toString();
-                if (stringValue != null && !stringValue.isEmpty()) {
-                    // Check if it's a binary string and convert to hex
-                    if (isBinaryString(stringValue)) {
-                        return binaryToHex(stringValue);
-                    }
-
-                    return stringValue;
-                }
-            } catch (Exception ex) {
-                // Both methods failed
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Parse heading sectors from hex-encoded direction bitmap. Each bit represents a 22.5-degree sector starting from
-     * North (0°) and moving clockwise.
-     *
-     * @param directionHex The hex-encoded direction string (e.g., "E0E0")
+     * @param directionBitstring The Asn1Bitstring direction field
      * @return Array of active sector bit positions
      */
-    public static int[] parseHeadingSectors(String directionHex) {
-        if (directionHex == null || directionHex.length() < HEX_STRING_MIN_LENGTH) {
+    public static int[] parseHeadingSectorsFromBitstring(Asn1Bitstring directionBitstring) {
+        if (directionBitstring == null) {
             return new int[0];
         }
 
-        try {
-            int directionValue = Integer.parseInt(directionHex, 16);
-            java.util.List<Integer> activeSectors = new java.util.ArrayList<>();
+        List<Integer> activeSectors = new ArrayList<>();
 
-            for (int bit = 0; bit < MAX_HEADING_SECTORS; bit++) {
-                if ((directionValue & (1 << bit)) != 0) {
-                    activeSectors.add(bit);
-                }
+        // Check each bit up to the maximum number of heading sectors or the bitstring size
+        int bitstringSize = directionBitstring.size();
+        int maxBits = Math.min(MAX_HEADING_SECTORS, bitstringSize);
+
+        for (int bit = 0; bit < maxBits; bit++) {
+            if (directionBitstring.get(bit)) {
+                activeSectors.add(bit);
             }
-
-            return activeSectors.stream().mapToInt(Integer::intValue).toArray();
-        } catch (NumberFormatException e) {
-            return new int[0];
         }
+
+        return activeSectors.stream().mapToInt(Integer::intValue).toArray();
     }
+
+    /**
+     * Parse heading sectors as ranges from Asn1Bitstring, merging adjacent sectors into continuous ranges. Each bit
+     * represents a 22.5-degree sector starting from North (0°) and moving clockwise.
+     *
+     * @param directionBitstring The Asn1Bitstring direction field
+     * @return Array of heading ranges, where each range is represented as [startBit, endBit] (inclusive)
+     */
+    public static int[][] parseHeadingSectorsAsRanges(Asn1Bitstring directionBitstring) {
+        if (directionBitstring == null) {
+            return new int[0][];
+        }
+
+        List<Integer> activeSectors = new ArrayList<>();
+
+        // Check each bit up to the maximum number of heading sectors or the bitstring size
+        int bitstringSize = directionBitstring.size();
+        int maxBits = Math.min(MAX_HEADING_SECTORS, bitstringSize);
+
+        for (int bit = 0; bit < maxBits; bit++) {
+            if (directionBitstring.get(bit)) {
+                activeSectors.add(bit);
+            }
+        }
+
+        if (activeSectors.isEmpty()) {
+            return new int[0][];
+        }
+
+        // Group adjacent sectors into ranges
+        List<int[]> ranges = new ArrayList<>();
+        int rangeStart = activeSectors.get(0);
+        int rangeEnd = rangeStart;
+
+        for (int i = 1; i < activeSectors.size(); i++) {
+            int currentBit = activeSectors.get(i);
+
+            if (currentBit == rangeEnd + 1) {
+                // Adjacent sector, extend the current range
+                rangeEnd = currentBit;
+            } else {
+                // Non-adjacent sector, save the current range and start a new one
+                ranges.add(new int[] {rangeStart, rangeEnd});
+                rangeStart = currentBit;
+                rangeEnd = currentBit;
+            }
+        }
+
+        // Add the last range
+        ranges.add(new int[] {rangeStart, rangeEnd});
+
+        return ranges.toArray(new int[0][]);
+    }
+
 
     /**
      * Convert sector bit position to heading degrees.
@@ -522,6 +487,27 @@ public class FieldConversions {
      */
     public static double sectorBitToHeading(int sectorBit) {
         return sectorBit * HEADING_SECTOR_DEGREES;
+    }
+
+    /**
+     * Convert a range of sector bits to heading degrees and range.
+     *
+     * @param startBit The starting sector bit position (0-15)
+     * @param endBit The ending sector bit position (0-15, inclusive)
+     * @return Array containing [heading, range] in degrees
+     */
+    public static double[] sectorRangeToHeadingAndRange(int startBit, int endBit) {
+        double startHeading = sectorBitToHeading(startBit);
+        double endHeading = sectorBitToHeading(endBit);
+
+        // Calculate the center heading of the range
+        double centerHeading = (startHeading + endHeading) / 2.0;
+
+        // Calculate the total range (number of sectors * 22.5 degrees)
+        int numberOfSectors = endBit - startBit + 1;
+        double totalRange = numberOfSectors * HEADING_SECTOR_DEGREES;
+
+        return new double[] {centerHeading, totalRange};
     }
 
     /**

@@ -546,21 +546,21 @@ public class TimConverter {
             return directionalityInfo;
         }
 
-        // Check if we have direction information (hex string)
+        // Check if we have direction information (bitstring)
         if (region.getDirection() != null) {
             ProcessedHeadingDirectionInfo headingInfo = new ProcessedHeadingDirectionInfo();
             headingInfo.setDirectionType(ProcessedDirectionType.HEADING);
 
-            // Extract direction value and parse heading sectors
-            String directionValue = FieldConversions.extractDirectionValue(region.getDirection());
-            if (directionValue != null) {
-                int[] activeSectors = FieldConversions.parseHeadingSectors(directionValue);
+            // Parse heading sectors as ranges, merging adjacent sectors
+            int[][] sectorRanges = FieldConversions.parseHeadingSectorsAsRanges(region.getDirection());
+            if (sectorRanges.length > 0) {
                 List<ProcessedHeading> headingList = new ArrayList<>();
 
-                for (int sectorBit : activeSectors) {
+                for (int[] range : sectorRanges) {
                     ProcessedHeading processedHeading = new ProcessedHeading();
-                    processedHeading.setHeading(FieldConversions.sectorBitToHeading(sectorBit));
-                    processedHeading.setRange(FieldConversions.getHeadingSectorRange());
+                    double[] headingAndRange = FieldConversions.sectorRangeToHeadingAndRange(range[0], range[1]);
+                    processedHeading.setHeading(headingAndRange[0]);
+                    processedHeading.setRange(headingAndRange[1]);
                     headingList.add(processedHeading);
                 }
 
