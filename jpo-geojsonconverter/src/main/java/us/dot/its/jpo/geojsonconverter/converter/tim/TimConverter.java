@@ -491,8 +491,7 @@ public class TimConverter {
                 // Set lane width profile for path regions
                 if (region.getLaneWidth() != null) {
                     ProcessedLaneWidthProfile laneWidthProfile = new ProcessedLaneWidthProfile();
-                    laneWidthProfile
-                            .setDefaultWidthMeters(FieldConversions.convertLaneWidth(region.getLaneWidth().getValue()));
+                    laneWidthProfile.setDefaultWidthMeters(FieldConversions.convertLaneWidth(region.getLaneWidth()));
 
                     // Populate lane width profile with offset-calculated values
                     populateLaneWidthProfileWithOffsets(region, laneWidthProfile);

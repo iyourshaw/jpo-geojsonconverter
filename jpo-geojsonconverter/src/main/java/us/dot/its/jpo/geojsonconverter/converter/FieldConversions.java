@@ -365,9 +365,11 @@ public class FieldConversions {
      * @param j2735Elev J2735 lane width value.
      * @return Lane width in meters, or null if unavailable.
      */
-    public static Double convertLaneWidth(long j2735LaneWidth) {
-        Double returnValue = j2735LaneWidth * 1e-2;
-        return returnValue;
+    public static Double convertLaneWidth(LaneWidth laneWidth) {
+        if (laneWidth == null) {
+            return null;
+        }
+        return laneWidth.getValue() * 1e-2d;
     }
 
     /**
