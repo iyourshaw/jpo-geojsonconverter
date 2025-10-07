@@ -4,6 +4,8 @@ import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.*;
 import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.GeographicalPath.DescriptionChoice;
 import us.dot.its.jpo.asn.j2735.r2024.Common.*;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.tim.*;
+import us.dot.its.jpo.geojsonconverter.pojos.tim.OffsetInformation;
+import us.dot.its.jpo.geojsonconverter.pojos.tim.PathNodeData;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.*;
 import us.dot.its.jpo.geojsonconverter.converter.FieldConversions;
 import us.dot.its.jpo.geojsonconverter.utils.*;
