@@ -2,6 +2,7 @@ package us.dot.its.jpo.geojsonconverter.converter;
 
 
 import us.dot.its.jpo.asn.j2735.r2024.Common.*;
+import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.DistanceUnits;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -530,5 +531,40 @@ public class FieldConversions {
      */
     public static double getHeadingSectorRange() {
         return HEADING_SECTOR_RANGE; // Each sector is exactly 22.5° wide
+    }
+
+    /**
+     * Convert a radius value from the specified distance units to meters.
+     * 
+     * @param radius The radius value in the specified units
+     * @param units The distance units enum value
+     * @return Radius converted to meters, or null if units is null
+     */
+    public static Double convertRadiusToMeters(long radius, DistanceUnits units) {
+        if (units == null) {
+            return null;
+        }
+
+        switch (units) {
+            case CENTIMETER:
+                return radius * 0.01; // 1 cm = 0.01 m
+            case CM2_5:
+                return radius * 0.025; // 1 cm2-5 = 0.025 m (2.5 cm)
+            case DECIMETER:
+                return radius * 0.1; // 1 dm = 0.1 m
+            case METER:
+                return (double) radius; // 1 m = 1 m
+            case KILOMETER:
+                return radius * 1000.0; // 1 km = 1000 m
+            case FOOT:
+                return radius * 0.3048; // 1 ft = 0.3048 m
+            case YARD:
+                return radius * 0.9144; // 1 yd = 0.9144 m
+            case MILE:
+                return radius * 1609.344; // 1 mi = 1609.344 m
+            default:
+                // Default to meters if unknown unit
+                return (double) radius;
+        }
     }
 }

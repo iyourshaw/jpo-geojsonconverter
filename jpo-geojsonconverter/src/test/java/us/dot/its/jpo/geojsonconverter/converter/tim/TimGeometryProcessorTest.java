@@ -15,6 +15,7 @@ import us.dot.its.jpo.geojsonconverter.pojos.geojson.Geometry;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.LineString;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.Polygon;
 import us.dot.its.jpo.geojsonconverter.serialization.deserializers.JsonDeserializer;
+import us.dot.its.jpo.geojsonconverter.utils.GeodeticUtils;
 import us.dot.its.jpo.ode.model.OdeMessageFrameData;
 import org.locationtech.jts.geom.Point;
 
@@ -173,11 +174,40 @@ public class TimGeometryProcessorTest {
         assertTrue(coords.length > 0, "Polygon should have at least one ring");
         assertTrue(coords[0].length > 0, "Polygon ring should have coordinates");
 
+        // Verify we have enough points for a good circle approximation (should be 64 points)
+        assertTrue(coords[0].length >= 64, "Circle should have at least 64 approximation points for accuracy");
+
         for (double[][] ring : coords) {
             for (double[] coord : ring) {
                 assertTrue(coord[0] >= -180.0 && coord[0] <= 180.0, "Invalid longitude: " + coord[0]);
                 assertTrue(coord[1] >= -90.0 && coord[1] <= 90.0, "Invalid latitude: " + coord[1]);
             }
+        }
+
+        // Verify polygon is closed (first and last coordinates should be the same)
+        if (coords.length > 0 && coords[0].length > 1) {
+            double[] first = coords[0][0];
+            double[] last = coords[0][coords[0].length - 1];
+            assertTrue(Math.abs(first[0] - last[0]) < 0.000001, "Circle polygon should be closed (longitude)");
+            assertTrue(Math.abs(first[1] - last[1]) < 0.000001, "Circle polygon should be closed (latitude)");
+        }
+
+        // Verify circle has reasonable radius by checking distance from center to edge points
+        // The circle in the test data has radius 250 meters
+        double centerLon = -104.6636836; // From anchor point in test data
+        double centerLat = 41.1501408; // From anchor point in test data
+        double expectedRadius = 250.0; // From circle radius in test data
+
+        if (coords.length > 0 && coords[0].length > 1) {
+            double[] firstPoint = coords[0][0];
+            double distance = GeodeticUtils.calculateDistance(centerLon, centerLat, firstPoint[0], firstPoint[1]);
+
+            // Allow some tolerance for approximation (within 10% of expected radius)
+            double tolerance = expectedRadius * 0.1;
+            assertTrue(Math.abs(distance - expectedRadius) <= tolerance,
+                    String.format(
+                            "Circle radius should be approximately %f meters, but calculated distance is %f meters",
+                            expectedRadius, distance));
         }
     }
 }

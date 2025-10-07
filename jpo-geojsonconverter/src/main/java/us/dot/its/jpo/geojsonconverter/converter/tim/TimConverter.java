@@ -322,6 +322,9 @@ public class TimConverter {
         // Set anchor point and elevation from anchor
         setAnchorPointAndElevation(region, elevationProfile);
 
+        // Extract and apply offset information for elevation and lane width profiles
+        populateProfilesWithOffsets(region, elevationProfile);
+
         // Create the appropriate region info object based on type
         ProcessedRegionInfoBase regionInfo = createRegionInfoByType(regionType, region, elevationProfile);
 
@@ -330,6 +333,71 @@ public class TimConverter {
         regionInfo.setDirectionInfo(directionInfo);
 
         return regionInfo;
+    }
+
+    /**
+     * Populate elevation and lane width profiles with offset-calculated values.
+     */
+    private void populateProfilesWithOffsets(GeographicalPath region, ProcessedElevationProfile elevationProfile) {
+        // Extract offset information from the region's path
+        OffsetInformation offsetInfo = geometryProcessor.extractOffsetInformation(region);
+        if (offsetInfo == null) {
+            return;
+        }
+
+        List<Long> elevationOffsets = offsetInfo.getElevationOffsets();
+
+        // Populate elevation profile with offset-calculated values
+        if (elevationOffsets != null && !elevationOffsets.isEmpty()) {
+            List<Double> nodeElevationMeters = new ArrayList<>();
+            Double defaultElevation = elevationProfile.getDefaultElevationMeters();
+
+            for (Long offset : elevationOffsets) {
+                if (defaultElevation != null) {
+                    Double calculatedElevation = FieldConversions.calculateElevationOffset(defaultElevation, offset);
+                    if (calculatedElevation != null) {
+                        nodeElevationMeters.add(calculatedElevation);
+                    }
+                }
+            }
+
+            if (!nodeElevationMeters.isEmpty()) {
+                elevationProfile.setNodeElevationMeters(nodeElevationMeters);
+            }
+        }
+    }
+
+    /**
+     * Populate lane width profile with offset-calculated values.
+     */
+    private void populateLaneWidthProfileWithOffsets(GeographicalPath region,
+            ProcessedLaneWidthProfile laneWidthProfile) {
+        // Extract offset information from the region's path
+        OffsetInformation offsetInfo = geometryProcessor.extractOffsetInformation(region);
+        if (offsetInfo == null) {
+            return;
+        }
+
+        List<Long> laneWidthOffsets = offsetInfo.getLaneWidthOffsets();
+
+        // Populate lane width profile with offset-calculated values
+        if (laneWidthOffsets != null && !laneWidthOffsets.isEmpty()) {
+            List<Double> nodeLaneWidthMeters = new ArrayList<>();
+            Double defaultWidth = laneWidthProfile.getDefaultWidthMeters();
+
+            for (Long offset : laneWidthOffsets) {
+                if (defaultWidth != null) {
+                    Double calculatedWidth = FieldConversions.calculateLaneWidthOffset(defaultWidth, offset);
+                    if (calculatedWidth != null) {
+                        nodeLaneWidthMeters.add(calculatedWidth);
+                    }
+                }
+            }
+
+            if (!nodeLaneWidthMeters.isEmpty()) {
+                laneWidthProfile.setNodeLaneWidthMeters(nodeLaneWidthMeters);
+            }
+        }
     }
 
     /**
@@ -425,6 +493,10 @@ public class TimConverter {
                     ProcessedLaneWidthProfile laneWidthProfile = new ProcessedLaneWidthProfile();
                     laneWidthProfile
                             .setDefaultWidthMeters(FieldConversions.convertLaneWidth(region.getLaneWidth().getValue()));
+
+                    // Populate lane width profile with offset-calculated values
+                    populateLaneWidthProfileWithOffsets(region, laneWidthProfile);
+
                     ((ProcessedPathRegionInfo) regionInfo).setLaneWidthProfile(laneWidthProfile);
                 }
                 break;

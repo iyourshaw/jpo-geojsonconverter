@@ -1,49 +1,30 @@
 {
 	"metadata": {
+		"logFileName": "",
+		"recordType": "timMsg",
+		"securityResultCode": "success",
+		"receivedMessageDetails": {
+			"rxSource": "NA"
+		},
 		"payloadType": "us.dot.its.jpo.ode.model.OdeMessageFramePayload",
 		"serialId": {
-			"streamId": "3060f60c-8d7c-4c9b-9a25-4229684e56ae",
+			"streamId": "2285f011-91fe-44ab-b106-06ce49a57cab",
 			"bundleSize": 1,
-			"bundleId": 11,
+			"bundleId": 0,
 			"recordId": 0,
-			"serialNumber": 11
+			"serialNumber": 0
 		},
-		"odeReceivedAt": "2025-09-11T22:32:01.969Z",
+		"odeReceivedAt": "2025-10-07T18:18:07.247Z",
 		"schemaVersion": 9,
-		"maxDurationTime": 8640,
-		"recordGeneratedAt": "2024-09-25T10:00:00.000Z",
-		"recordGeneratedBy": "TMC",
+		"maxDurationTime": 0,
+		"recordGeneratedAt": "",
+		"recordGeneratedBy": "RSU",
 		"sanitized": false,
-		"odePacketID": "8D442EF003FC6B1B04",
-		"odeTimStartDateTime": "2024-09-25T10:00:00.000Z",
-		"request": {
-			"ode": {
-				"version": 3,
-				"verb": "POST"
-			},
-			"rsus": [
-				{
-					"rsuTarget": "10.145.2.100",
-					"rsuUsername": "rwUser",
-					"rsuPassword": "*",
-					"rsuRetries": 3,
-					"rsuTimeout": 5000,
-					"rsuIndex": 31,
-					"snmpProtocol": "NTCIP1218"
-				}
-			],
-			"snmp": {
-				"rsuid": "83",
-				"msgid": 31,
-				"mode": 1,
-				"channel": 183,
-				"interval": 1000,
-				"deliverystart": "2024-09-25T10:00:00.0Z",
-				"deliverystop": "2024-09-30T10:00:00.0Z",
-				"enable": 1,
-				"status": 4
-			}
-		},
+		"odePacketID": "",
+		"odeTimStartDateTime": "",
+		"asn1": "001F816C7015E5D88D442EF003FC6B1B040F775D9B1B01C27160D9416752CA37FFF93F42F2EC21C0A007F98A7C32E5C9334EDD3D10356A820F2C7A32F24145A2E6500000000138B187B4B3A7C2749C46000F108509247404897BEA1D144B5D50B7A251C5849712BADC0F50438D83102185C000003200860C4DC44207BBAECD8C0709C58365059D4B28DFFFE4FD0BCBB08702801FE629F0CB9724CD3B74F440D5AA083CB1E8CBC905168B994000000004E2C61ED2CE9F09D27118003C7E142491D01225EFA874512D7542DE894716125C4AEB703D410E360C408617000000C80218313711081EEEBB36301C26E8EC181F543DA3FFFF93F48990C7080A007299A7BB7F74107963D197920A9CB0E6CDA71A087269439916000000002715F6301673B46D887FFFA9C57D8C059CED1B6AE801F4C0000026087BBAECD88080000FD2C6C7802D08006E538AFFE64B3A2CC8479D00B740F000045BC6D7B2629DD33FBF96038D52F8B88350348000021B040A0580",
+		"source": "RSU",
+		"originIp": "172.27.0.1",
 		"isCertPresent": false
 	},
 	"payload": {
@@ -332,19 +313,17 @@
 										"id": 0
 									},
 									"anchor": {
-										"lat": 405598000,
-										"long": -748771000
+										"lat": 411501408,
+										"long": -1046636836
 									},
-									"directionality": "both",
 									"closedPath": false,
-									"direction": "FFFF",
 									"description": {
 										"geometry": {
 											"direction": "FFFF",
 											"circle": {
 												"center": {
-													"lat": 405598000,
-													"long": -748771000,
+													"lat": 411501408,
+													"long": -1046636836,
 													"elevation": 18240
 												},
 												"radius": 250,
@@ -381,8 +360,8 @@
 							"regions": [
 								{
 									"anchor": {
-										"lat": 422434867,
-										"long": -835568080,
+										"lat": 411506329,
+										"long": -1046552286,
 										"elevation": 3700
 									},
 									"laneWidth": 366,

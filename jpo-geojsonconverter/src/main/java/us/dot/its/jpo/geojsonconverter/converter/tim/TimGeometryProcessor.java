@@ -11,8 +11,11 @@ import us.dot.its.jpo.geojsonconverter.utils.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.util.GeometricShapeFactory;
+import org.locationtech.proj4j.CoordinateTransform;
+import org.locationtech.proj4j.ProjCoordinate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,12 +30,12 @@ import java.util.List;
 public class TimGeometryProcessor {
 
     // Constants
-    private static final int CIRCLE_APPROXIMATION_POINTS = 16;
+    private static final int CIRCLE_APPROXIMATION_POINTS = 64; // Increased for better accuracy
     private static final double DEFAULT_PADDING_DEGREES = 0.005;
-    // https://en.wikipedia.org/wiki/Geographic_coordinate_system
-    // 1 degree of latitude is ranges from 110.6 to 111.6 km
-    // 1 degree of longitude is 111.3 km
-    private static final double METERS_PER_DEGREE_APPROXIMATION = 111000.0;
+    // Maximum reasonable circle radius in meters (100 km)
+    private static final double MAX_CIRCLE_RADIUS_METERS = 100000.0;
+    // Minimum reasonable circle radius in meters (1 meter)
+    private static final double MIN_CIRCLE_RADIUS_METERS = 1.0;
 
 
     /**
@@ -73,6 +76,38 @@ public class TimGeometryProcessor {
         } else {
             return createMultiGeometryFromRegions(dataFrame.getRegions());
         }
+    }
+
+    /**
+     * Extract elevation and lane width offset information from a region's path.
+     *
+     * @param region The geographical path region
+     * @return OffsetInformation containing elevation and lane width offsets, or null if no path
+     */
+    public OffsetInformation extractOffsetInformation(GeographicalPath region) {
+        if (region.getDescription() == null || region.getDescription().getPath() == null) {
+            return null;
+        }
+
+        List<PathNodeData> pathData = processOffsetPathWithOffsets(region, region.getDescription().getPath());
+        if (pathData.isEmpty()) {
+            return null;
+        }
+
+        List<Long> elevationOffsets = new ArrayList<>();
+        List<Long> laneWidthOffsets = new ArrayList<>();
+
+        for (PathNodeData nodeData : pathData) {
+            if (nodeData.getDelevationOffset() != null) {
+                elevationOffsets.add(nodeData.getDelevationOffset());
+            }
+            if (nodeData.getDwithOffset() != null) {
+                laneWidthOffsets.add(nodeData.getDwithOffset());
+            }
+        }
+
+        return new OffsetInformation(elevationOffsets.isEmpty() ? null : elevationOffsets,
+                laneWidthOffsets.isEmpty() ? null : laneWidthOffsets);
     }
 
     /**
@@ -219,6 +254,52 @@ public class TimGeometryProcessor {
     }
 
     /**
+     * Extract dwith and delevation offsets from node attributes.
+     * 
+     * @param node The node to extract offsets from
+     * @return Array containing [dwithOffset, delevationOffset] or null if no attributes
+     */
+    private long[] extractNodeOffsets(NodeLL node) {
+        if (node.getAttributes() != null) {
+            long dwithOffset = 0;
+            long delevationOffset = 0;
+
+            if (node.getAttributes().getDWidth() != null) {
+                dwithOffset = node.getAttributes().getDWidth().getValue();
+            }
+            if (node.getAttributes().getDElevation() != null) {
+                delevationOffset = node.getAttributes().getDElevation().getValue();
+            }
+
+            return new long[] {dwithOffset, delevationOffset};
+        }
+        return null;
+    }
+
+    /**
+     * Extract dwith and delevation offsets from node attributes.
+     * 
+     * @param node The node to extract offsets from
+     * @return Array containing [dwithOffset, delevationOffset] or null if no attributes
+     */
+    private long[] extractNodeOffsets(NodeXY node) {
+        if (node.getAttributes() != null) {
+            long dwithOffset = 0;
+            long delevationOffset = 0;
+
+            if (node.getAttributes().getDWidth() != null) {
+                dwithOffset = node.getAttributes().getDWidth().getValue();
+            }
+            if (node.getAttributes().getDElevation() != null) {
+                delevationOffset = node.getAttributes().getDElevation().getValue();
+            }
+
+            return new long[] {dwithOffset, delevationOffset};
+        }
+        return null;
+    }
+
+    /**
      * Process LL (Latitude/Longitude) node and update current coordinates.
      * 
      * @param node The node to process
@@ -349,6 +430,61 @@ public class TimGeometryProcessor {
         currentCoords[1] = currentLat;
     }
 
+    /**
+     * Process offset path and return both coordinates and offset information.
+     * 
+     * @param region The geographical path region
+     * @param path The offset system path
+     * @return List of PathNodeData containing coordinates and offset information
+     */
+    private List<PathNodeData> processOffsetPathWithOffsets(GeographicalPath region, OffsetSystem path) {
+        if (path == null || region.getAnchor() == null) {
+            return new ArrayList<>();
+        }
+
+        Position3D anchor = region.getAnchor();
+        double anchorLat = FieldConversions.convertLat(anchor.getLat().getValue());
+        double anchorLon = FieldConversions.convertLong(anchor.getLong_().getValue());
+
+        List<PathNodeData> pathData = new ArrayList<>();
+        // Add anchor point with no offsets
+        pathData.add(new PathNodeData(Arrays.asList(anchorLon, anchorLat), null, null));
+
+        if (path.getOffset() != null) {
+            double[] currentCoords = {anchorLon, anchorLat};
+            double zoomFactor = calculateZoomFactor(path);
+
+            // Handle LL (Latitude/Longitude) coordinates
+            if (path.getOffset().getLl() != null && path.getOffset().getLl().getNodes() != null) {
+                for (var node : path.getOffset().getLl().getNodes()) {
+                    if (node.getDelta() != null) {
+                        processLLNode(node.getDelta(), zoomFactor, currentCoords);
+                        long[] offsets = extractNodeOffsets(node);
+                        Long dwithOffset = offsets != null ? offsets[0] : null;
+                        Long delevationOffset = offsets != null ? offsets[1] : null;
+                        pathData.add(new PathNodeData(Arrays.asList(currentCoords[0], currentCoords[1]), dwithOffset,
+                                delevationOffset));
+                    }
+                }
+            }
+            // Handle XY (Cartesian) coordinates
+            else if (path.getOffset().getXy() != null && path.getOffset().getXy().getNodes() != null) {
+                for (var node : path.getOffset().getXy().getNodes()) {
+                    if (node.getDelta() != null) {
+                        processXYNode(node.getDelta(), zoomFactor, currentCoords);
+                        long[] offsets = extractNodeOffsets(node);
+                        Long dwithOffset = offsets != null ? offsets[0] : null;
+                        Long delevationOffset = offsets != null ? offsets[1] : null;
+                        pathData.add(new PathNodeData(Arrays.asList(currentCoords[0], currentCoords[1]), dwithOffset,
+                                delevationOffset));
+                    }
+                }
+            }
+        }
+
+        return pathData;
+    }
+
     private List<List<Double>> processOffsetPath(GeographicalPath region, OffsetSystem path) {
         if (path == null || region.getAnchor() == null) {
             return new ArrayList<>();
@@ -359,7 +495,6 @@ public class TimGeometryProcessor {
         double anchorLon = FieldConversions.convertLong(anchor.getLong_().getValue());
 
         List<List<Double>> coordinates = new ArrayList<>();
-        coordinates.add(Arrays.asList(anchorLon, anchorLat));
 
         if (path.getOffset() != null) {
             double[] currentCoords = {anchorLon, anchorLat};
@@ -402,11 +537,23 @@ public class TimGeometryProcessor {
         // Handle circle geometry
         if (geometry.getCircle() != null) {
             Circle circle = geometry.getCircle();
-            if (circle.getRadius() != null) {
-                int radius = (int) circle.getRadius().getValue();
+            if (circle.getRadius() != null && circle.getCenter() != null) {
+                long radius = circle.getRadius().getValue();
+                DistanceUnits units = circle.getUnits();
+                Double radiusMeters = FieldConversions.convertRadiusToMeters(radius, units);
 
-                // Create circle points using accurate geodetic calculations
-                coordinates.addAll(createCirclePoints(anchorLon, anchorLat, radius));
+                // Use circle's center coordinates, not the anchor point
+                double centerLat = FieldConversions.convertLat(circle.getCenter().getLat().getValue());
+                double centerLon = FieldConversions.convertLong(circle.getCenter().getLong_().getValue());
+
+                if (radiusMeters != null) {
+                    // Create circle points using accurate geodetic calculations
+                    coordinates.addAll(createCirclePoints(centerLon, centerLat, radiusMeters.intValue()));
+                } else {
+                    log.error("Invalid circle radius: {}", radius);
+                }
+            } else {
+                log.warn("Circle geometry missing radius or center field");
             }
         }
 
@@ -414,7 +561,8 @@ public class TimGeometryProcessor {
     }
 
     /**
-     * Create circle points using JTS GeometricShapeFactory.
+     * Create circle points using UTM coordinates for accurate geodetic calculations. Circle is generated in UTM space
+     * and then converted back to WGS84 using ProjectionUtils for coordinate transformations.
      * 
      * @param centerLon Center longitude in degrees
      * @param centerLat Center latitude in degrees
@@ -424,20 +572,58 @@ public class TimGeometryProcessor {
     private List<List<Double>> createCirclePoints(double centerLon, double centerLat, int radiusMeters) {
         List<List<Double>> coordinates = new ArrayList<>();
 
-        // Convert radius from meters to degrees (approximate)
-        double radiusDegrees = radiusMeters / METERS_PER_DEGREE_APPROXIMATION;
+        // Validate radius
+        if (radiusMeters < MIN_CIRCLE_RADIUS_METERS || radiusMeters > MAX_CIRCLE_RADIUS_METERS) {
+            log.warn("Circle radius {} meters is outside reasonable range [{}, {}], using default radius", radiusMeters,
+                    MIN_CIRCLE_RADIUS_METERS, MAX_CIRCLE_RADIUS_METERS);
+            radiusMeters = 100; // Default to 100 meters
+        }
 
-        // Create circle using JTS GeometricShapeFactory
-        GeometricShapeFactory shapeFactory = new GeometricShapeFactory();
-        shapeFactory.setCentre(new Coordinate(centerLon, centerLat));
-        shapeFactory.setSize(radiusDegrees * 2); // diameter
-        shapeFactory.setNumPoints(CIRCLE_APPROXIMATION_POINTS);
+        // Validate center coordinates
+        if (centerLon < -180.0 || centerLon > 180.0 || centerLat < -90.0 || centerLat > 90.0) {
+            log.error("Invalid circle center coordinates: lon={}, lat={}", centerLon, centerLat);
+            return coordinates;
+        }
 
-        org.locationtech.jts.geom.Polygon circle = shapeFactory.createCircle();
-        Coordinate[] circleCoords = circle.getExteriorRing().getCoordinates();
+        try {
+            // Get UTM CRS code for the location
+            String utmCrsCode = ProjectionUtils.getUtmCrsCode(centerLon, centerLat);
+            int utmZone = ProjectionUtils.getUtmZone(centerLon);
 
-        for (Coordinate coord : circleCoords) {
-            coordinates.add(Arrays.asList(coord.x, coord.y));
+            // Create coordinate transforms using ProjectionUtils
+            CoordinateTransform wgsToUtm = ProjectionUtils.createTransform("EPSG:4326", utmCrsCode);
+            CoordinateTransform utmToWgs = ProjectionUtils.createTransform(utmCrsCode, "EPSG:4326");
+
+            if (wgsToUtm == null || utmToWgs == null) {
+                log.error("Failed to create coordinate transforms for UTM zone {}", utmZone);
+                return coordinates; // Return empty coordinates if transforms fail
+            }
+
+            // Transform center point to UTM using ProjectionUtils
+            ProjCoordinate centerUTM =
+                    ProjectionUtils.transformCoordinate("EPSG:4326", utmCrsCode, centerLon, centerLat);
+
+            // Create circle in UTM using JTS GeometricShapeFactory
+            GeometricShapeFactory shapeFactory = new GeometricShapeFactory(new GeometryFactory());
+            shapeFactory.setCentre(new Coordinate(centerUTM.x, centerUTM.y));
+            shapeFactory.setSize(radiusMeters * 2.0); // diameter
+            shapeFactory.setNumPoints(CIRCLE_APPROXIMATION_POINTS);
+
+            org.locationtech.jts.geom.Polygon circleUTM = shapeFactory.createCircle();
+            Coordinate[] circleCoordsUTM = circleUTM.getExteriorRing().getCoordinates();
+
+            // Transform circle coordinates from UTM back to WGS84 using ProjectionUtils
+            for (Coordinate coordUTM : circleCoordsUTM) {
+                ProjCoordinate coordWGS84 = new ProjCoordinate();
+                utmToWgs.transform(new ProjCoordinate(coordUTM.x, coordUTM.y), coordWGS84);
+                coordinates.add(Arrays.asList(coordWGS84.x, coordWGS84.y));
+            }
+
+            log.debug("Created UTM-based circle with {} points, center=({}, {}), radius={}m, UTM zone={}",
+                    CIRCLE_APPROXIMATION_POINTS, centerLon, centerLat, radiusMeters, utmZone);
+
+        } catch (Exception e) {
+            log.error("Error creating UTM-based circle: {}", e.getMessage(), e);
         }
 
         return coordinates;
