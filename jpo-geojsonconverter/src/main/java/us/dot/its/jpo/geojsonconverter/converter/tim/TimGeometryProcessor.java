@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.util.GeometricShapeFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +29,11 @@ public class TimGeometryProcessor {
     // Constants
     private static final int CIRCLE_APPROXIMATION_POINTS = 16;
     private static final double DEFAULT_PADDING_DEGREES = 0.005;
+    // https://en.wikipedia.org/wiki/Geographic_coordinate_system
+    // 1 degree of latitude is ranges from 110.6 to 111.6 km
+    // 1 degree of longitude is 111.3 km
+    private static final double METERS_PER_DEGREE_APPROXIMATION = 111000.0;
+
 
     /**
      * Convert TIM region to appropriate GeoJSON geometry based on region type.
@@ -197,6 +203,152 @@ public class TimGeometryProcessor {
         }
     }
 
+    /**
+     * Calculate zoom factor from path scale.
+     * 
+     * @param path The OffsetSystem path
+     * @return Zoom factor (2^zoom)
+     */
+    private double calculateZoomFactor(OffsetSystem path) {
+        if (path.getScale() != null) {
+            // Zoom is applied as 2^zoom for coordinate scaling
+            // A value of 0 is 1:1 zoom (no zoom), 1 is 2:1 zoom, 2 is 4:1 zoom, etc.
+            return Math.pow(2, path.getScale().getValue());
+        }
+        return 1.0;
+    }
+
+    /**
+     * Process LL (Latitude/Longitude) node and update current coordinates.
+     * 
+     * @param node The node to process
+     * @param zoomFactor Zoom scaling factor
+     * @param currentCoords Current coordinates [lon, lat] to update
+     */
+    private void processLLNode(NodeOffsetPointLL node, double zoomFactor, double[] currentCoords) {
+        double currentLon = currentCoords[0];
+        double currentLat = currentCoords[1];
+
+        // Process different LL node types
+        if (node.getNode_LL1() != null) {
+            var nodeLL1 = node.getNode_LL1();
+            Double lonOffset = FieldConversions.convertLongWithZoom(nodeLL1.getLon().getValue(), zoomFactor);
+            Double latOffset = FieldConversions.convertLatWithZoom(nodeLL1.getLat().getValue(), zoomFactor);
+            if (lonOffset != null)
+                currentLon += lonOffset;
+            if (latOffset != null)
+                currentLat += latOffset;
+        } else if (node.getNode_LL2() != null) {
+            var nodeLL2 = node.getNode_LL2();
+            Double lonOffset = FieldConversions.convertLongWithZoom(nodeLL2.getLon().getValue(), zoomFactor);
+            Double latOffset = FieldConversions.convertLatWithZoom(nodeLL2.getLat().getValue(), zoomFactor);
+            if (lonOffset != null)
+                currentLon += lonOffset;
+            if (latOffset != null)
+                currentLat += latOffset;
+        } else if (node.getNode_LL3() != null) {
+            var nodeLL3 = node.getNode_LL3();
+            Double lonOffset = FieldConversions.convertLongWithZoom(nodeLL3.getLon().getValue(), zoomFactor);
+            Double latOffset = FieldConversions.convertLatWithZoom(nodeLL3.getLat().getValue(), zoomFactor);
+            if (lonOffset != null)
+                currentLon += lonOffset;
+            if (latOffset != null)
+                currentLat += latOffset;
+        } else if (node.getNode_LL4() != null) {
+            var nodeLL4 = node.getNode_LL4();
+            Double lonOffset = FieldConversions.convertLongWithZoom(nodeLL4.getLon().getValue(), zoomFactor);
+            Double latOffset = FieldConversions.convertLatWithZoom(nodeLL4.getLat().getValue(), zoomFactor);
+            if (lonOffset != null)
+                currentLon += lonOffset;
+            if (latOffset != null)
+                currentLat += latOffset;
+        } else if (node.getNode_LL5() != null) {
+            var nodeLL5 = node.getNode_LL5();
+            Double lonOffset = FieldConversions.convertLongWithZoom(nodeLL5.getLon().getValue(), zoomFactor);
+            Double latOffset = FieldConversions.convertLatWithZoom(nodeLL5.getLat().getValue(), zoomFactor);
+            if (lonOffset != null)
+                currentLon += lonOffset;
+            if (latOffset != null)
+                currentLat += latOffset;
+        } else if (node.getNode_LL6() != null) {
+            var nodeLL6 = node.getNode_LL6();
+            Double lonOffset = FieldConversions.convertLongWithZoom(nodeLL6.getLon().getValue(), zoomFactor);
+            Double latOffset = FieldConversions.convertLatWithZoom(nodeLL6.getLat().getValue(), zoomFactor);
+            if (lonOffset != null)
+                currentLon += lonOffset;
+            if (latOffset != null)
+                currentLat += latOffset;
+        } else if (node.getNode_LatLon() != null) {
+            var nodeLatLon = node.getNode_LatLon();
+            // node_LatLon contains absolute coordinates, not offsets
+            Double absLon = FieldConversions.convertLong(nodeLatLon.getLon().getValue());
+            Double absLat = FieldConversions.convertLat(nodeLatLon.getLat().getValue());
+            if (absLon != null)
+                currentLon = absLon;
+            if (absLat != null)
+                currentLat = absLat;
+        }
+
+        // Update coordinates array
+        currentCoords[0] = currentLon;
+        currentCoords[1] = currentLat;
+    }
+
+    /**
+     * Process XY (Cartesian) node and update current coordinates.
+     * 
+     * @param node The node to process
+     * @param zoomFactor Zoom scaling factor
+     * @param currentCoords Current coordinates [lon, lat] to update
+     */
+    private void processXYNode(NodeOffsetPointXY node, double zoomFactor, double[] currentCoords) {
+        double currentLon = currentCoords[0];
+        double currentLat = currentCoords[1];
+
+        // Process different XY node types
+        if (node.getNode_XY1() != null) {
+            var nodeXY1 = node.getNode_XY1();
+            double[] offsets = FieldConversions.convertJ2735XY(nodeXY1.getX().getValue(), nodeXY1.getY().getValue(),
+                    currentLat, zoomFactor);
+            currentLon += offsets[0];
+            currentLat += offsets[1];
+        } else if (node.getNode_XY2() != null) {
+            var nodeXY2 = node.getNode_XY2();
+            double[] offsets = FieldConversions.convertJ2735XY(nodeXY2.getX().getValue(), nodeXY2.getY().getValue(),
+                    currentLat, zoomFactor);
+            currentLon += offsets[0];
+            currentLat += offsets[1];
+        } else if (node.getNode_XY3() != null) {
+            var nodeXY3 = node.getNode_XY3();
+            double[] offsets = FieldConversions.convertJ2735XY(nodeXY3.getX().getValue(), nodeXY3.getY().getValue(),
+                    currentLat, zoomFactor);
+            currentLon += offsets[0];
+            currentLat += offsets[1];
+        } else if (node.getNode_XY4() != null) {
+            var nodeXY4 = node.getNode_XY4();
+            double[] offsets = FieldConversions.convertJ2735XY(nodeXY4.getX().getValue(), nodeXY4.getY().getValue(),
+                    currentLat, zoomFactor);
+            currentLon += offsets[0];
+            currentLat += offsets[1];
+        } else if (node.getNode_XY5() != null) {
+            var nodeXY5 = node.getNode_XY5();
+            double[] offsets = FieldConversions.convertJ2735XY(nodeXY5.getX().getValue(), nodeXY5.getY().getValue(),
+                    currentLat, zoomFactor);
+            currentLon += offsets[0];
+            currentLat += offsets[1];
+        } else if (node.getNode_XY6() != null) {
+            var nodeXY6 = node.getNode_XY6();
+            double[] offsets = FieldConversions.convertJ2735XY(nodeXY6.getX().getValue(), nodeXY6.getY().getValue(),
+                    currentLat, zoomFactor);
+            currentLon += offsets[0];
+            currentLat += offsets[1];
+        }
+
+        // Update coordinates array
+        currentCoords[0] = currentLon;
+        currentCoords[1] = currentLat;
+    }
+
     private List<List<Double>> processOffsetPath(GeographicalPath region, OffsetSystem path) {
         if (path == null || region.getAnchor() == null) {
             return new ArrayList<>();
@@ -207,9 +359,31 @@ public class TimGeometryProcessor {
         double anchorLon = FieldConversions.convertLong(anchor.getLong_().getValue());
 
         List<List<Double>> coordinates = new ArrayList<>();
-
-        // Add anchor point as first coordinate
         coordinates.add(Arrays.asList(anchorLon, anchorLat));
+
+        if (path.getOffset() != null) {
+            double[] currentCoords = {anchorLon, anchorLat};
+            double zoomFactor = calculateZoomFactor(path);
+
+            // Handle LL (Latitude/Longitude) coordinates
+            if (path.getOffset().getLl() != null && path.getOffset().getLl().getNodes() != null) {
+                for (var node : path.getOffset().getLl().getNodes()) {
+                    if (node.getDelta() != null) {
+                        processLLNode(node.getDelta(), zoomFactor, currentCoords);
+                        coordinates.add(Arrays.asList(currentCoords[0], currentCoords[1]));
+                    }
+                }
+            }
+            // Handle XY (Cartesian) coordinates
+            else if (path.getOffset().getXy() != null && path.getOffset().getXy().getNodes() != null) {
+                for (var node : path.getOffset().getXy().getNodes()) {
+                    if (node.getDelta() != null) {
+                        processXYNode(node.getDelta(), zoomFactor, currentCoords);
+                        coordinates.add(Arrays.asList(currentCoords[0], currentCoords[1]));
+                    }
+                }
+            }
+        }
 
         return coordinates;
     }
@@ -240,7 +414,7 @@ public class TimGeometryProcessor {
     }
 
     /**
-     * Create circle points using accurate geodetic calculations.
+     * Create circle points using JTS GeometricShapeFactory.
      * 
      * @param centerLon Center longitude in degrees
      * @param centerLat Center latitude in degrees
@@ -250,13 +424,20 @@ public class TimGeometryProcessor {
     private List<List<Double>> createCirclePoints(double centerLon, double centerLat, int radiusMeters) {
         List<List<Double>> coordinates = new ArrayList<>();
 
-        // Create points around the circle using GeodeticUtils for accurate calculations
-        for (int i = 0; i < CIRCLE_APPROXIMATION_POINTS; i++) {
-            double bearing = (360.0 / CIRCLE_APPROXIMATION_POINTS) * i;
+        // Convert radius from meters to degrees (approximate)
+        double radiusDegrees = radiusMeters / METERS_PER_DEGREE_APPROXIMATION;
 
-            // Use GeodeticUtils to calculate the point at this bearing and distance
-            Coordinate point = GeodeticUtils.calculateDestination(centerLon, centerLat, bearing, radiusMeters);
-            coordinates.add(Arrays.asList(point.x, point.y));
+        // Create circle using JTS GeometricShapeFactory
+        GeometricShapeFactory shapeFactory = new GeometricShapeFactory();
+        shapeFactory.setCentre(new Coordinate(centerLon, centerLat));
+        shapeFactory.setSize(radiusDegrees * 2); // diameter
+        shapeFactory.setNumPoints(CIRCLE_APPROXIMATION_POINTS);
+
+        org.locationtech.jts.geom.Polygon circle = shapeFactory.createCircle();
+        Coordinate[] circleCoords = circle.getExteriorRing().getCoordinates();
+
+        for (Coordinate coord : circleCoords) {
+            coordinates.add(Arrays.asList(coord.x, coord.y));
         }
 
         return coordinates;
@@ -275,7 +456,7 @@ public class TimGeometryProcessor {
     }
 
     /**
-     * Create rectangle points using accurate geodetic calculations.
+     * Create rectangle points using JTS GeometricShapeFactory.
      * 
      * @param centerLon Center longitude in degrees
      * @param centerLat Center latitude in degrees
@@ -285,29 +466,18 @@ public class TimGeometryProcessor {
     private List<List<Double>> createRectanglePoints(double centerLon, double centerLat, double paddingDegrees) {
         List<List<Double>> coordinates = new ArrayList<>();
 
-        // Convert padding from degrees to approximate meters for GeodeticUtils
-        // This is a rough conversion for the default padding
-        double paddingMeters = paddingDegrees * 111000; // approximately 111km per degree
+        // Create rectangle using JTS GeometricShapeFactory
+        GeometricShapeFactory shapeFactory = new GeometricShapeFactory();
+        shapeFactory.setCentre(new Coordinate(centerLon, centerLat));
+        shapeFactory.setWidth(paddingDegrees * 2); // total width
+        shapeFactory.setHeight(paddingDegrees * 2); // total height
 
-        // Create rectangle corners using GeodeticUtils
-        // North-East corner
-        Coordinate ne = GeodeticUtils.offsetCoordinate(centerLon, centerLat, paddingMeters, paddingMeters);
-        coordinates.add(Arrays.asList(ne.x, ne.y));
+        org.locationtech.jts.geom.Polygon rectangle = shapeFactory.createRectangle();
+        Coordinate[] rectCoords = rectangle.getExteriorRing().getCoordinates();
 
-        // South-East corner
-        Coordinate se = GeodeticUtils.offsetCoordinate(centerLon, centerLat, paddingMeters, -paddingMeters);
-        coordinates.add(Arrays.asList(se.x, se.y));
-
-        // South-West corner
-        Coordinate sw = GeodeticUtils.offsetCoordinate(centerLon, centerLat, -paddingMeters, -paddingMeters);
-        coordinates.add(Arrays.asList(sw.x, sw.y));
-
-        // North-West corner
-        Coordinate nw = GeodeticUtils.offsetCoordinate(centerLon, centerLat, -paddingMeters, paddingMeters);
-        coordinates.add(Arrays.asList(nw.x, nw.y));
-
-        // Close the rectangle by adding the first point again
-        coordinates.add(Arrays.asList(ne.x, ne.y));
+        for (Coordinate coord : rectCoords) {
+            coordinates.add(Arrays.asList(coord.x, coord.y));
+        }
 
         return coordinates;
     }

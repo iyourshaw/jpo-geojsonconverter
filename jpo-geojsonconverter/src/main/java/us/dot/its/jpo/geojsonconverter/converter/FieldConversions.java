@@ -11,9 +11,11 @@ public class FieldConversions {
 
     // Heading sector constants
     private static final double HEADING_SECTOR_DEGREES = 22.5;
-    private static final double HEADING_SECTOR_RANGE = 22.5; // Keep exact decimal value
+    private static final double HEADING_SECTOR_RANGE = 22.5;
     private static final int MAX_HEADING_SECTORS = 16;
     private static final int HEX_STRING_MIN_LENGTH = 4;
+    private static final double CENTIMETERS_PER_DEGREE_LATITUDE = 11111100.0;
+    private static final double J2735_DECIMAL_CONVERSION_FACTOR = 10000000.0;
 
     public static Double convertLong(long j2735Long) {
         // Longitude ::= INTEGER (-1799999999..1800000001)
@@ -21,7 +23,7 @@ public class FieldConversions {
         // -- Providing a range of plus-minus 180 degrees
         Double returnValue = null;
         if (j2735Long != 1800000001) {
-            returnValue = j2735Long * 1e-7;
+            returnValue = j2735Long / J2735_DECIMAL_CONVERSION_FACTOR;
         }
         return returnValue;
     }
@@ -32,9 +34,55 @@ public class FieldConversions {
         // -- Providing a range of plus-minus 90 degrees
         Double returnValue = null;
         if (j2735Lat != 900000001) {
-            returnValue = j2735Lat * 1e-7;
+            returnValue = j2735Lat / J2735_DECIMAL_CONVERSION_FACTOR;
         }
         return returnValue;
+    }
+
+    /**
+     * Convert J2735 longitude value to decimal degrees with zoom scaling.
+     * 
+     * @param j2735Long J2735 longitude value
+     * @param zoomFactor Zoom scaling factor (2^zoom)
+     * @return Longitude in decimal degrees
+     */
+    public static Double convertLongWithZoom(long j2735Long, double zoomFactor) {
+        Double baseValue = convertLong(j2735Long);
+        if (baseValue != null) {
+            return baseValue / zoomFactor;
+        }
+        return null;
+    }
+
+    /**
+     * Convert J2735 latitude value to decimal degrees with zoom scaling.
+     * 
+     * @param j2735Lat J2735 latitude value
+     * @param zoomFactor Zoom scaling factor (2^zoom)
+     * @return Latitude in decimal degrees
+     */
+    public static Double convertLatWithZoom(long j2735Lat, double zoomFactor) {
+        Double baseValue = convertLat(j2735Lat);
+        if (baseValue != null) {
+            return baseValue / zoomFactor;
+        }
+        return null;
+    }
+
+    /**
+     * Convert J2735 XY coordinate to decimal degrees with zoom scaling.
+     * 
+     * @param j2735X J2735 X coordinate value (centimeters)
+     * @param j2735Y J2735 Y coordinate value (centimeters)
+     * @param currentLat Current latitude for longitude scaling
+     * @param zoomFactor Zoom scaling factor (2^zoom)
+     * @return Array with [longitude_offset, latitude_offset] in decimal degrees
+     */
+    public static double[] convertJ2735XY(long j2735X, long j2735Y, double currentLat, double zoomFactor) {
+        double latOffset = (j2735Y / CENTIMETERS_PER_DEGREE_LATITUDE) / zoomFactor;
+        double lonOffset =
+                (j2735X / (CENTIMETERS_PER_DEGREE_LATITUDE * Math.cos(Math.toRadians(currentLat)))) / zoomFactor;
+        return new double[] {lonOffset, latOffset};
     }
 
     /**

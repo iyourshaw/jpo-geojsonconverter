@@ -13,6 +13,7 @@ import org.junit.Test;
 import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.*;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.Geometry;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.LineString;
+import us.dot.its.jpo.geojsonconverter.pojos.geojson.Polygon;
 import us.dot.its.jpo.geojsonconverter.serialization.deserializers.JsonDeserializer;
 import us.dot.its.jpo.ode.model.OdeMessageFrameData;
 import org.locationtech.jts.geom.Point;
@@ -108,5 +109,75 @@ public class TimGeometryProcessorTest {
         // Verify that PATH regions create LineString geometries
         assertNotNull(geometry);
         assertTrue(geometry instanceof LineString);
+    }
+
+    @Test
+    public void testClosedPathPolygonGeometry() {
+        // Extract ASN.1 data - test the 4th dataframe which contains a closed path
+        TravelerInformationMessageFrame messageFrame = (TravelerInformationMessageFrame) timMF.getPayload().getData();
+        TravelerDataFrame dataFrame = messageFrame.getValue().getDataFrames().get(3); // 4th dataframe (index 3)
+        GeographicalPath region = dataFrame.getRegions().get(0);
+
+        // Test geometry creation from closed path region
+        Geometry geometry = geometryProcessor.createGeometryFromRegion(region);
+
+        // Verify geometry creation
+        assertNotNull(geometry);
+        assertTrue(geometry instanceof Polygon);
+
+        Polygon polygon = (Polygon) geometry;
+        assertNotNull(polygon.getCoordinates());
+        assertTrue(polygon.getCoordinates().length > 0);
+
+        // Verify coordinates are valid - Polygon has double[][][] structure
+        double[][][] coords = polygon.getCoordinates();
+        assertTrue(coords.length > 0, "Polygon should have at least one ring");
+        assertTrue(coords[0].length > 0, "Polygon ring should have coordinates");
+
+        for (double[][] ring : coords) {
+            for (double[] coord : ring) {
+                assertTrue(coord[0] >= -180.0 && coord[0] <= 180.0, "Invalid longitude: " + coord[0]);
+                assertTrue(coord[1] >= -90.0 && coord[1] <= 90.0, "Invalid latitude: " + coord[1]);
+            }
+        }
+
+        // Verify polygon is closed (first and last coordinates should be the same)
+        if (coords.length > 0 && coords[0].length > 1) {
+            double[] first = coords[0][0];
+            double[] last = coords[0][coords[0].length - 1];
+            assertTrue(Math.abs(first[0] - last[0]) < 0.000001, "Polygon should be closed (longitude)");
+            assertTrue(Math.abs(first[1] - last[1]) < 0.000001, "Polygon should be closed (latitude)");
+        }
+    }
+
+    @Test
+    public void testCircleGeometry() {
+        // Extract ASN.1 data - test the 3rd dataframe which contains a circle
+        TravelerInformationMessageFrame messageFrame = (TravelerInformationMessageFrame) timMF.getPayload().getData();
+        TravelerDataFrame dataFrame = messageFrame.getValue().getDataFrames().get(2); // 3rd dataframe (index 2)
+        GeographicalPath region = dataFrame.getRegions().get(0);
+
+        // Test geometry creation from circle region
+        Geometry geometry = geometryProcessor.createGeometryFromRegion(region);
+
+        // Verify geometry creation
+        assertNotNull(geometry);
+        assertTrue(geometry instanceof Polygon);
+
+        Polygon polygon = (Polygon) geometry;
+        assertNotNull(polygon.getCoordinates());
+        assertTrue(polygon.getCoordinates().length > 0);
+
+        // Verify coordinates are valid - Polygon has double[][][] structure
+        double[][][] coords = polygon.getCoordinates();
+        assertTrue(coords.length > 0, "Polygon should have at least one ring");
+        assertTrue(coords[0].length > 0, "Polygon ring should have coordinates");
+
+        for (double[][] ring : coords) {
+            for (double[] coord : ring) {
+                assertTrue(coord[0] >= -180.0 && coord[0] <= 180.0, "Invalid longitude: " + coord[0]);
+                assertTrue(coord[1] >= -90.0 && coord[1] <= 90.0, "Invalid latitude: " + coord[1]);
+            }
+        }
     }
 }

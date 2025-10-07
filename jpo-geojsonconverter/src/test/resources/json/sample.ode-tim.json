@@ -366,6 +366,88 @@
 								]
 							},
 							"url": "null"
+						},
+						{
+							"doNotUse1": 0,
+							"frameType": "roadSignage",
+							"msgId": {
+								"furtherInfoID": "0000"
+							},
+							"startYear": 2025,
+							"startTime": 407100,
+							"durationTime": 180,
+							"priority": 1,
+							"doNotUse2": 0,
+							"regions": [
+								{
+									"anchor": {
+										"lat": 422434867,
+										"long": -835568080,
+										"elevation": 3700
+									},
+									"laneWidth": 366,
+									"closedPath": true,
+									"direction": "03C0",
+									"description": {
+										"path": {
+											"offset": {
+												"xy": {
+													"nodes": [
+														{
+															"delta": {
+																"node-XY6": {
+																	"x": 15469,
+																	"y": -1242
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-XY6": {
+																	"x": -17498,
+																	"y": -129
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-XY6": {
+																	"x": 227,
+																	"y": -11074
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-XY6": {
+																	"x": 17434,
+																	"y": 420
+																}
+															}
+														}
+													]
+												}
+											}
+										}
+									}
+								}
+							],
+							"doNotUse3": 0,
+							"doNotUse4": 0,
+							"content": {
+								"advisory": [
+									{
+										"item": {
+											"itis": 6916
+										}
+									},
+									{
+										"item": {
+											"itis": 5131
+										}
+									}
+								]
+							}
 						}
 					]
 				}
