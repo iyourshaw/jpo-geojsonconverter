@@ -7,7 +7,9 @@ import static org.mockito.Mockito.mock;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -96,6 +98,37 @@ public class SpatProcessedJsonConverterTest {
     }
 
     @Test
+<<<<<<< HEAD
+=======
+    public void testGenerateUTCTimestampMOY() {
+        ZonedDateTime moyTime =
+                spatProcessedJsonConverter.generateUTCTimestamp(481801L, 30000L, "2022-01-01T00:00:00Z");
+
+        assertNotNull(moyTime);
+        assertEquals("DECEMBER", moyTime.getMonth().toString());
+        assertEquals(1, moyTime.getDayOfMonth());
+    }
+
+    @Test
+    public void testGenerateUTCTimestampWithNullMoy() {
+        ZonedDateTime testTime = ZonedDateTime.of(2025, 1, 1, 0, 0, 30, 0, ZoneId.of("UTC"));
+        ZonedDateTime spatTime = spatProcessedJsonConverter.generateUTCTimestamp(null, 30000L,
+                testTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+
+        assertEquals(testTime, spatTime);
+    }
+
+    @Test
+    public void testGenerateUTCTimestampWithNullDSecond() {
+        ZonedDateTime testTime = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC"));
+        ZonedDateTime spatTime = spatProcessedJsonConverter.generateUTCTimestamp(481801L, null,
+                testTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
+
+        assertEquals(testTime, spatTime);
+    }
+
+    @Test
+>>>>>>> develop
     public void testClose() {
         // Should do nothing, but required override
         spatProcessedJsonConverter.close();
