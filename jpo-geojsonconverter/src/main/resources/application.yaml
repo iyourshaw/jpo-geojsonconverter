@@ -49,6 +49,12 @@ kafka.topics:
     - name: topic.ProcessedTim
       cleanupPolicy: delete
       retentionMs: 300000
+    - name: topic.ProcessedSrm
+      cleanupPolicy: delete
+      retentionMs: 300000
+    - name: topic.ProcessedSsm
+      cleanupPolicy: delete
+      retentionMs: 300000
 
 # Jackson Properties
 spring.jackson.serialization.write-dates-as-timestamps: false
@@ -63,5 +69,9 @@ rtcm.full.decode: true
 geojsonconverter:
   kafka-topic-ode-rtcm-json: topic.OdeRtcmJson
   kafka-topic-processed-rtcm: topic.ProcessedRtcm
+  kafka-topic-ode-srm-json: topic.OdeSrmJson
+  kafka-topic-processed-srm: topic.ProcessedSrm
+  kafka-topic-ode-ssm-json: topic.OdeSsmJson
+  kafka-topic-processed-ssm: topic.ProcessedSsm
   kafka-topic-ode-tim-json: topic.OdeTimJson
   kafka-topic-processed-tim: topic.ProcessedTim

@@ -17,6 +17,10 @@ import us.dot.its.jpo.geojsonconverter.converter.rtcm.RTCMTopology;
 import us.dot.its.jpo.geojsonconverter.converter.spat.SpatTopology;
 import us.dot.its.jpo.geojsonconverter.converter.bsm.BsmTopology;
 import us.dot.its.jpo.geojsonconverter.converter.tim.TimTopology;
+import us.dot.its.jpo.geojsonconverter.converter.srm.SrmConverter;
+import us.dot.its.jpo.geojsonconverter.converter.srm.SrmTopology;
+import us.dot.its.jpo.geojsonconverter.converter.ssm.SsmConverter;
+import us.dot.its.jpo.geojsonconverter.converter.ssm.SsmTopology;
 import us.dot.its.jpo.geojsonconverter.validator.*;
 
 /**
@@ -31,7 +35,9 @@ public class JsonConverterServiceController {
     @Autowired
     public JsonConverterServiceController(GeoJsonConverterProperties geojsonProps, MapJsonValidator mapJsonValidator,
             SpatJsonValidator spatJsonValidator, BsmJsonValidator bsmJsonValidator, PsmJsonValidator psmJsonValidator,
-            RTCMJsonValidator rtcmJsonValidator, RTCMConverter rtcmConverter, TimJsonValidator timJsonValidator) {
+            RTCMJsonValidator rtcmJsonValidator, RTCMConverter rtcmConverter, TimJsonValidator timJsonValidator,
+            SrmJsonValidator srmJsonValidator, SrmConverter srmConverter, SsmJsonValidator ssmJsonValidator,
+            SsmConverter ssmConverter) {
         super();
 
         try {
@@ -45,7 +51,7 @@ public class JsonConverterServiceController {
                     mapJsonValidator, geojsonProps.getGeometryOutputMode());
             var mapStreams = new KafkaStreams(mapTopology, geojsonProps.createStreamProperties("processedmapjson"));
             mapStreams.setUncaughtExceptionHandler(new StreamsExceptionHandler("MapStream"));
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            Runtime.getRuntime().addShutdownHook(Thread.ofVirtual().unstarted(() -> {
                 try {
                     // Workaround to close streams in a finally block to satisfy sonar
                 } finally {
@@ -61,7 +67,7 @@ public class JsonConverterServiceController {
                     geojsonProps.getKafkaTopicSpatGeoJson(), spatJsonValidator);
             var spatStreams = new KafkaStreams(spatTopology, geojsonProps.createStreamProperties("processedspatjson"));
             spatStreams.setUncaughtExceptionHandler(new StreamsExceptionHandler("SpatStream"));
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            Runtime.getRuntime().addShutdownHook(Thread.ofVirtual().unstarted(() -> {
                 try {
                     // Workaround to close streams in a finally block to satisfy sonar
                 } finally {
@@ -77,7 +83,7 @@ public class JsonConverterServiceController {
                     geojsonProps.getKafkaTopicProcessedBsm(), bsmJsonValidator);
             var bsmStreams = new KafkaStreams(bsmTopology, geojsonProps.createStreamProperties("processedbsmjson"));
             bsmStreams.setUncaughtExceptionHandler(new StreamsExceptionHandler("BsmStream"));
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            Runtime.getRuntime().addShutdownHook(Thread.ofVirtual().unstarted(() -> {
                 try {
                     // Workaround to close streams in a finally block to satisfy sonar
                 } finally {
@@ -93,7 +99,7 @@ public class JsonConverterServiceController {
                     geojsonProps.getKafkaTopicProcessedPsm(), psmJsonValidator);
             var psmStreams = new KafkaStreams(psmTopology, geojsonProps.createStreamProperties("processedpsmjson"));
             psmStreams.setUncaughtExceptionHandler(new StreamsExceptionHandler("PsmStream"));
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            Runtime.getRuntime().addShutdownHook(Thread.ofVirtual().unstarted(() -> {
                 try {
                     // Workaround to close streams in a finally block to satisfy sonar
                 } finally {
@@ -109,7 +115,7 @@ public class JsonConverterServiceController {
             final var rtcmStreams =
                     new KafkaStreams(rtcmTopology, geojsonProps.createStreamProperties("processedrcmjson"));
             rtcmStreams.setUncaughtExceptionHandler(new StreamsExceptionHandler("RTCMStream"));
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            Runtime.getRuntime().addShutdownHook(Thread.ofVirtual().unstarted(() -> {
                 try {
                     // Workaround to close streams in a finally block to satisfy sonar
                 } finally {
@@ -124,8 +130,7 @@ public class JsonConverterServiceController {
             var timTopology = TimTopology.build(geojsonProps.getKafkaTopicOdeTimJson(),
                     geojsonProps.getKafkaTopicProcessedTim(), timJsonValidator);
             var timStreams = new KafkaStreams(timTopology, geojsonProps.createStreamProperties("processedtimjson"));
-            timStreams.setUncaughtExceptionHandler(new StreamsExceptionHandler("TimStream"));
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            Runtime.getRuntime().addShutdownHook(Thread.ofVirtual().unstarted(() -> {
                 try {
                     // Workaround to close streams in a finally block to satisfy sonar
                 } finally {
@@ -133,6 +138,36 @@ public class JsonConverterServiceController {
                 }
             }));
             timStreams.start();
+
+            // SRM
+            logger.info("Creating the ProcessedSrm Kafka Streams topology");
+            Topology srmTopology = SrmTopology.build(geojsonProps.getKafkaTopicOdeSrmJson(),
+                    geojsonProps.getKafkaTopicProcessedSrm(), srmJsonValidator, srmConverter);
+            final var srmStreams =
+                    new KafkaStreams(srmTopology, geojsonProps.createStreamProperties("processedsrmjson"));
+            Runtime.getRuntime().addShutdownHook(Thread.ofVirtual().unstarted(() -> {
+                try {
+                    // Workaround to close streams in a finally block to satisfy sonar
+                } finally {
+                    srmStreams.close();
+                }
+            }));
+            srmStreams.start();
+
+            // SSM
+            logger.info("Creating the ProcessedSsm Kafka Streams topology");
+            Topology ssmTopology = SsmTopology.build(geojsonProps.getKafkaTopicOdeSsmJson(),
+                    geojsonProps.getKafkaTopicProcessedSsm(), ssmJsonValidator, ssmConverter);
+            final var ssmStreams =
+                    new KafkaStreams(ssmTopology, geojsonProps.createStreamProperties("processedssmjson"));
+            Runtime.getRuntime().addShutdownHook(Thread.ofVirtual().unstarted(() -> {
+                try {
+                    // Workaround to close streams in a finally block to satisfy sonar
+                } finally {
+                    ssmStreams.close();
+                }
+            }));
+            ssmStreams.start();
 
             logger.info("All geoJSON conversion services started!");
         } catch (Exception e) {

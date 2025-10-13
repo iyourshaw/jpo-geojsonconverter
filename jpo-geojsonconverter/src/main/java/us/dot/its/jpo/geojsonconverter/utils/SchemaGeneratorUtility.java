@@ -8,8 +8,11 @@ import us.dot.its.jpo.geojsonconverter.pojos.geojson.bsm.ProcessedBsm;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.map.ProcessedMap;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.psm.ProcessedPsm;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.rtcm.ProcessedRTCM;
+import us.dot.its.jpo.geojsonconverter.pojos.geojson.srm.ProcessedSrm;
 import us.dot.its.jpo.geojsonconverter.pojos.spat.ProcessedSpat;
 import us.dot.its.jpo.geojsonconverter.pojos.tim.ProcessedTim;
+import us.dot.its.jpo.geojsonconverter.pojos.ssm.ProcessedSsm;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -20,7 +23,7 @@ public class SchemaGeneratorUtility {
         try {
             // Define the classes for which to generate schemas
             Class<?>[] targetClasses = {ProcessedPsm.class, ProcessedBsm.class, ProcessedMap.class, ProcessedSpat.class,
-                    ProcessedRTCM.class, ProcessedTim.class};
+                    ProcessedRTCM.class, ProcessedSrm.class, ProcessedSsm.class, ProcessedTim.class};
 
             ObjectMapper objectMapper = new ObjectMapper();
 

@@ -1,15 +1,23 @@
 package us.dot.its.jpo.geojsonconverter.converter;
 
 
+import lombok.extern.slf4j.Slf4j;
 import us.dot.its.jpo.asn.j2735.r2024.Common.*;
 import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.DistanceUnits;
 import us.dot.its.jpo.asn.runtime.types.Asn1Bitstring;
+import us.dot.its.jpo.asn.j2735.r2024.SignalRequestMessage.DeltaTime;
+import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedBasicVehicleRole;
+import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedRequestImportanceLevel;
+import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedRequestSubRole;
+import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedVehicleType;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.ArrayList;
 
+@Slf4j
 public class FieldConversions {
 
     // Heading sector constants
@@ -324,7 +332,7 @@ public class FieldConversions {
      * Millisecond of minute.
      *
      * @param dSecond DE_DSecond
-     * @return milliseconds or null if absent
+     * @return second of minute, and nanosecond of second
      */
     public static SecondNanos convertDSecond(DSecond dSecond) {
         if (dSecond == null)
@@ -555,4 +563,185 @@ public class FieldConversions {
                 return (double) radius;
         }
     }
+
+    final static int MINUTES_PER_DAY = 24 * 60;
+
+    /**
+     * Produce a ZonedDateTime from a minute of the year, and ingest time, adjusting for the edge case where the message
+     * is produced on New Year's Eve and ingested on New Year's Day.
+     * 
+     * @param minuteOfTheYear J2735 Minute-of-the-year Integer
+     * @param ingestTime The ingest time
+     * @return A ZonedDateTime for the minute of the year
+     */
+    public static ZonedDateTime convertMinuteOfYear(final MinuteOfTheYear minuteOfTheYear,
+            final ZonedDateTime ingestTime) {
+        if (minuteOfTheYear == null)
+            return null;
+        final int moy = (int) minuteOfTheYear.getValue();
+        final int dayOfYear = (moy / MINUTES_PER_DAY) + 1;
+        final boolean isLastDayOfYear = dayOfYear >= 365; // or second to last if leap year
+
+        // J2735 (2024) - Section 7.109: Says DE_Minute of the year is the minute of the "current year in the time
+        // system being used (typically UTC time)" so we assume it is in fact UTC time.
+        final ZonedDateTime utcIngestTime = ingestTime.withZoneSameInstant(ZoneOffset.UTC);
+        final int ingestDayOfYear = utcIngestTime.getDayOfYear();
+        final boolean isIngestFirstDayOfYear = (ingestDayOfYear == 1);
+
+        int year = utcIngestTime.getYear();
+        // If message produced on last day of year, and ingested on first day of year, it was produced last year.
+        if (isLastDayOfYear && isIngestFirstDayOfYear) {
+            --year;
+        }
+
+        return convertMinuteOfYear(minuteOfTheYear, year);
+    }
+
+    /**
+     * Convert Minute of Year to ZonedDateTime. Requires knowing what year it is. Value of 527040 represents "invalid"
+     * 
+     * @param minuteOfTheYear DE_MinuteOfYear
+     * @param year The year
+     * @return ZonedDateTime for the year at the beginning of the minute
+     */
+    public static ZonedDateTime convertMinuteOfYear(final MinuteOfTheYear minuteOfTheYear, final int year) { //
+        if (minuteOfTheYear == null)
+            return null;
+        final long moy = minuteOfTheYear.getValue();
+        if (moy == 527040L)
+            return null;
+        final String dateString = String.format("%d-01-01T00:00:00.00Z", year);
+        final ZonedDateTime yearDate = Instant.parse(dateString).atZone(ZoneId.of("UTC"));
+        return yearDate.plusMinutes(moy);
+    }
+
+    public static ZonedDateTime convertMinuteOfYearAndDSecond(final MinuteOfTheYear minuteOfTheYear,
+            final ZonedDateTime ingestTime, final DSecond dSecond) {
+        ZonedDateTime minuteDate = convertMinuteOfYear(minuteOfTheYear, ingestTime);
+        return convertMinuteOfYearAndDSecond(minuteDate, dSecond);
+    }
+
+    public static ZonedDateTime convertMinuteOfYearAndDSecond(final MinuteOfTheYear minuteOfTheYear, final int year,
+            final DSecond dSecond) {
+        ZonedDateTime minuteDate = convertMinuteOfYear(minuteOfTheYear, year);
+        return convertMinuteOfYearAndDSecond(minuteDate, dSecond);
+    }
+
+    private static ZonedDateTime convertMinuteOfYearAndDSecond(final ZonedDateTime minuteDate, final DSecond dSecond) {
+        if (minuteDate == null)
+            return null;
+        if (dSecond == null)
+            return minuteDate;
+        SecondNanos secondNanos = convertDSecond(dSecond);
+        return minuteDate.withSecond(secondNanos.secondOfMinute()).withNano(secondNanos.nanoOfSecond());
+    }
+
+
+
+    public static Integer convertMsgCount(final MsgCount msgCount) {
+        if (msgCount == null)
+            return null;
+        return (int) msgCount.getValue();
+    }
+
+    public static RegionIntersectionId convertIntersectionReferenceID(IntersectionReferenceID intersectionReferenceID) {
+        if (intersectionReferenceID == null)
+            return new RegionIntersectionId(null, null);
+        var region = intersectionReferenceID.getRegion();
+        Integer regionValue = region != null ? (int) region.getValue() : null;
+        var id = intersectionReferenceID.getId();
+        Integer idValue = id != null ? (int) id.getValue() : null;
+        return new RegionIntersectionId(regionValue, idValue);
+    }
+
+    public record RegionIntersectionId(Integer region, Integer intersectionId) {
+    }
+
+    public static String convertVehicleID(final VehicleID vehicleID) {
+        if (vehicleID == null)
+            return null;
+        // CHOICE of EntityID or StationID
+        // EntityID is an Octet string, StationId is an integer
+        // Return a String in either case
+        if (vehicleID.getEntityID() != null) {
+            return vehicleID.getEntityID().getValue();
+        }
+        if (vehicleID.getStationID() != null) {
+            return Long.toString(vehicleID.getStationID().getValue());
+        }
+        return null;
+    }
+
+    public static AccessPointID convertIntersectionAccessPointID(final IntersectionAccessPoint iap) {
+        if (iap == null)
+            return new AccessPointID(null, null, null);
+
+        // CHOICE of LaneID, ConnectionID, or ApproachID
+        Integer laneId = null;
+        Integer approachId = null;
+        Integer connectionId = null;
+        if (iap.getLane() != null) {
+            laneId = (int) iap.getLane().getValue();
+        }
+        if (iap.getApproach() != null) {
+            approachId = (int) iap.getApproach().getValue();
+        }
+        if (iap.getConnection() != null) {
+            connectionId = (int) iap.getConnection().getValue();
+        }
+        return new AccessPointID(laneId, approachId, connectionId);
+    }
+
+    public record AccessPointID(Integer laneID, Integer approachID, Integer connectionID) {
+    }
+
+    public static ProcessedBasicVehicleRole convertBasicVehicleRole(final BasicVehicleRole role) {
+        if (role != null && role.getName() != null) {
+            return ProcessedBasicVehicleRole.fromName(role.getName());
+        }
+        return null;
+    }
+
+    public static ProcessedRequestSubRole convertRequestSubRole(final RequestSubRole role) {
+        if (role != null && role.getName() != null) {
+            return ProcessedRequestSubRole.fromName(role.getName());
+        }
+        return null;
+    }
+
+    public static ProcessedVehicleType convertVehicleType(final VehicleType vehicleType) {
+        if (vehicleType != null && vehicleType.getName() != null) {
+            return ProcessedVehicleType.fromName(vehicleType.getName());
+        }
+        return null;
+    }
+
+    public static ProcessedRequestImportanceLevel convertRequestImportanceLevel(
+            final RequestImportanceLevel importanceLevel) {
+        if (importanceLevel != null && importanceLevel.getName() != null) {
+            return ProcessedRequestImportanceLevel.valueOf(importanceLevel.getName());
+        }
+        return null;
+    }
+
+    /**
+     * DeltaTime ::= INTEGER (-122 .. 121) -- Supporting a range of +/- 20 minute in steps of 10 seconds -- the value of
+     * -121 shall be used when more than -20 minutes -- the value of +120 shall be used when more than +20 minutes --
+     * the value -122 shall be used when the value is unavailable
+     * 
+     * @param deltaTime The difference from scheduled time
+     * @return Duration in seconds
+     */
+    public static Duration convertDeltaTime(final DeltaTime deltaTime) {
+        if (deltaTime == null) {
+            return null;
+        }
+        long value = (int) deltaTime.getValue();
+        if (value == -122L) {
+            return null;
+        }
+        return Duration.ofSeconds(value * 10);
+    }
+
+
 }

@@ -34,7 +34,7 @@ import static org.junit.Assert.*;
 @RunWith(Parameterized.class)
 public class RTCMTopologyTest {
 
-    final String inputTopicName = "topio.OdeRtcmJson";
+    final String inputTopicName = "topic.OdeRtcmJson";
     final String outputTopicName = "topic.ProcessedRtcm";
 
     @Parameter(0)
@@ -61,9 +61,7 @@ public class RTCMTopologyTest {
 
     @Test
     public void topologyTest() {
-        Resource jsonSchemaResource = getResource("schemas/rtcm.schema.json");
-        log.debug("jsonSchemaResource: {}", jsonSchemaResource);
-        RTCMJsonValidator validator = new RTCMJsonValidator(jsonSchemaResource);
+        RTCMJsonValidator validator = new RTCMJsonValidator("classpath:schemas/rtcm.schema.json");
         RTCMDecoder decoder = new RTCMDecoder(false);
         RTCMConverter converter = new RTCMConverter(decoder);
         Topology topology = RTCMTopology.build(inputTopicName, outputTopicName, validator, converter);

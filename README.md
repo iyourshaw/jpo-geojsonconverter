@@ -429,7 +429,122 @@ Example `ProcessedRtcm` message:
 }
 ```
 
+### ProcessedSrm
 
+The GeoJSON Converter produces `ProcessedSrm` messages from `SignalRequestMessage` (SRM) message frames received from the ODE.
+
+The SRMs are validated with the J2735 JSON schema.  CTI-4501 doesn't have any guidelines for SRMs, so no additional validation is performed beyond J2735 conformance.
+
+SRMs are similar to BSMs in that they are sent from a vehicle and can include the vehicle's location. Unlike BSMs, the location is optional in SRMs, but if it is present it is used as the point geometry of a GeoJSON feature.
+
+It is possible for one SRM to contain requests for multiple lanes at one intersection, or to target more than one intersection, so ProcessedSrm data structures contain a list of requests. We have observed actual data with multiple requests for different lanes in CDOT's installation. The processed structure retains all the requests in the SRM, even if there happened to be requests for more than one intersection.
+
+The Kafka messages for ProcessedSrm use a key containing the RSU ID and VehicleID. The intersection ID and region are not included in the key because of the possibility of a message targeting more than one intersection.
+
+Example `ProcessedSrm` message:
+
+```json
+{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -105.0851191,
+      39.5532496
+    ]
+  },
+  "properties": {
+    "schemaVersion": 1,
+    "messageType": "SRM",
+    "odeReceivedAt": "2025-09-26T00:46:10.771Z",
+    "originIp": "172.18.0.1",
+    "asn1": "001D2F72DC028000050890BD481080201F1A62242F5205200408430AB02F236614C002D4D3841D02CA71A8851970D51C3060",
+    "timeStamp": "2025-09-18T06:29:00Z",
+    "sequenceNumber": 5,
+    "vehicleID": "2031825062",
+    "role": "PUBLICTRANSPORT",
+    "latitude": 39.5532496,
+    "longitude": -105.0851191,
+    "elevation": 1679.1000000000001,
+    "heading": 21.3,
+    "transmission": "UNAVAILABLE",
+    "speedMetersPerSecond": 7.74,
+    "requests": [
+      {
+        "intersectionId": 12114,
+        "requestID": 4,
+        "priorityRequestType": "PRIORITYREQUEST",
+        "inboundLaneID": 2,
+        "outboundLaneID": 15,
+        "estimatedTimeOfArrivalDurationSeconds": 36.145000000
+      },
+      {
+        "intersectionId": 12114,
+        "requestID": 5,
+        "priorityRequestType": "PRIORITYREQUEST",
+        "inboundLaneID": 1,
+        "outboundLaneID": 16,
+        "estimatedTimeOfArrivalDurationSeconds": 34.325000000
+      }
+    ],
+    "validationMessages": []
+  }
+}
+```
+
+
+### ProcessedSsm
+
+The GeoJSON Converter produces `ProcessedSsm` messages from `SignalStatusMessage` (SSM) message frames received from the ODE.
+
+The SSMs are validated against the J2735 JSON schema.  CTI-4501 doesn't have any guidelines for SSMs, so no additional validation is performed beyond J2735 conformance.
+
+SSMs are similar to SPATs in that they don't have a geometry of their own but must be matched with a corresponding MAP message to obtain location data. Therefore, ProcessedSsm objects are simple POJOs, not GeoJSON.
+
+Also, like SPATs, SSMs can contain groups of messages for more than one intersection, but it is anticipated that it is unlikely that they actually would, because they are broadcast from RSUs located at one intersection. Therefore, this code takes only the first intersection from any SSM it receives, and logs a warning if an SSM contains more than one intersection. This is the same as how SPATs are treated.
+
+It also would be possible for SSMs to contain responses for more than one vehicle, or for requests for more than one lane for a vehicle. We have not seen examples of SSMs with multiple statuses in a cursory check of one day of data from CDOT, but this scenario seems more likely that it could happen according to the language in the J2735 where SSMs are defined, which describes them as collections of statuses targeted for multiple vehicles and lanes. For this reason, the ProcessedSsm data structure contains a list of statuses.
+
+The Kafka messages for ProcessedSsm use RSU ID and Intersection in the key because they are associated with only one intersection.
+
+Example `ProcessedSsm` message:
+
+```json
+{
+  "schemaVersion": 1,
+  "messageType": "SSM",
+  "asn1": "001E2565B8056D601800E8BD482C95E46CC2981028200807C30A9325791B30A6050A08010210C2A4",
+  "odeReceivedAt": "2025-09-26T00:55:06.425Z",
+  "originIp": "172.18.0.1",
+  "timeStamp": "2025-09-18T06:29:28Z",
+  "sequenceNumber": 12,
+  "statusSequenceNumber": 29,
+  "intersectionId": 12114,
+  "statusList": [
+    {
+      "vehicleID": "2031825062",
+      "requestID": 4,
+      "requesterSequenceNumber": 5,
+      "requesterRole": "PUBLICTRANSPORT",
+      "inboundOnLaneID": 2,
+      "outboundOnLaneID": 15,
+      "estimatedTimeOfArrivalDurationSeconds": 34.325000000,
+      "status": "PROCESSING"
+    },
+    {
+      "vehicleID": "2031825062",
+      "requestID": 5,
+      "requesterSequenceNumber": 5,
+      "requesterRole": "PUBLICTRANSPORT",
+      "inboundOnLaneID": 1,
+      "outboundOnLaneID": 16,
+      "estimatedTimeOfArrivalDurationSeconds": 34.325000000,
+      "status": "PROCESSING"
+    }
+  ],
+  "validationMessages": []
+}
+```
 
 
 [Back to top](#toc)

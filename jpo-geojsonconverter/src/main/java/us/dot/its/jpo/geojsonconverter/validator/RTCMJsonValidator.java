@@ -11,7 +11,14 @@ import org.springframework.stereotype.Service;
 @Service
 public class RTCMJsonValidator extends AbstractJsonValidator {
 
-    public RTCMJsonValidator(@Value("${schema.rtcm}") Resource jsonSchemaResource) {
-        super(jsonSchemaResource);
+    public RTCMJsonValidator() {
+        super("classpath:schemas/srm.schema.json");
+    }
+
+    /**
+     * @param schemaLocation The json schema classpath
+     */
+    public RTCMJsonValidator(String schemaLocation) {
+        super(schemaLocation);
     }
 }

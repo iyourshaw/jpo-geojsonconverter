@@ -3,6 +3,7 @@ package us.dot.its.jpo.geojsonconverter.partitioner;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import us.dot.its.jpo.asn.j2735.r2024.Common.IntersectionID;
 import us.dot.its.jpo.asn.j2735.r2024.Common.IntersectionReferenceID;
 import us.dot.its.jpo.asn.j2735.r2024.Common.RoadRegulatorID;
@@ -13,7 +14,7 @@ import us.dot.its.jpo.asn.j2735.r2024.Common.RoadRegulatorID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class RsuIntersectionKey implements RsuIdKey, IntersectionKey {
+public class RsuIntersectionKey implements RsuIdKey, IntersectionKey, Comparable<RsuIntersectionKey> {
 
     private String rsuId;
     private int intersectionId;
@@ -67,5 +68,20 @@ public class RsuIntersectionKey implements RsuIdKey, IntersectionKey {
     public String toString() {
         return "{" + " rsuId='" + getRsuId() + "'" + ", intersectionId='" + getIntersectionId() + "'" + ", region='"
                 + getRegion() + "'" + "}";
+    }
+
+    // Implement comparable interface to allow easily sorting the in a predictable order
+    // e.g. in SortedSet.
+    @Override
+    public int compareTo(RsuIntersectionKey o) {
+        int compareRsuId = StringUtils.compare(getRsuId(), o.getRsuId());
+        if (compareRsuId != 0) {
+            return compareRsuId;
+        }
+        int compareRegion = Integer.compare(getRegion(), o.getRegion());
+        if (compareRegion != 0) {
+            return compareRegion;
+        }
+        return Integer.compare(getIntersectionId(), o.getIntersectionId());
     }
 }

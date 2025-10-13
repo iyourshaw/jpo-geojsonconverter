@@ -1,18 +1,16 @@
 package us.dot.its.jpo.geojsonconverter.serialization;
 
-import us.dot.its.jpo.geojsonconverter.partitioner.RsuIntersectionKey;
-import us.dot.its.jpo.geojsonconverter.partitioner.RsuLogKey;
-import us.dot.its.jpo.geojsonconverter.partitioner.RsuStationIdKey;
-import us.dot.its.jpo.geojsonconverter.partitioner.RsuTimKey;
+import us.dot.its.jpo.geojsonconverter.partitioner.*;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.bsm.ProcessedBsm;
-import us.dot.its.jpo.geojsonconverter.partitioner.RsuPsmIdKey;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.rtcm.ProcessedRTCM;
+import us.dot.its.jpo.geojsonconverter.pojos.geojson.srm.ProcessedSrm;
 import us.dot.its.jpo.geojsonconverter.pojos.spat.*;
 import us.dot.its.jpo.geojsonconverter.pojos.tim.ProcessedTim;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.LineString;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.Point;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.map.ProcessedMap;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.psm.ProcessedPsm;
+import us.dot.its.jpo.geojsonconverter.pojos.ssm.ProcessedSsm;
 import us.dot.its.jpo.geojsonconverter.serialization.deserializers.*;
 import us.dot.its.jpo.geojsonconverter.serialization.serializers.*;
 import us.dot.its.jpo.ode.model.OdeMessageFrameData;
@@ -78,5 +76,17 @@ public class JsonSerdes {
 
     public static Serde<ProcessedTim> ProcessedTim() {
         return Serdes.serdeFrom(new JsonSerializer<ProcessedTim>(), new JsonDeserializer<>(ProcessedTim.class));
+    }
+
+    public static Serde<ProcessedSsm> ProcessedSsm() {
+        return Serdes.serdeFrom(new JsonSerializer<>(), new JsonDeserializer<>(ProcessedSsm.class));
+    }
+
+    public static Serde<ProcessedSrm> ProcessedSrm() {
+        return Serdes.serdeFrom(new JsonSerializer<>(), new JsonDeserializer<>(ProcessedSrm.class));
+    }
+
+    public static Serde<RsuVehicleIdKey> RsuVehicleIdKey() {
+        return Serdes.serdeFrom(new JsonSerializer<>(), new JsonDeserializer<>(RsuVehicleIdKey.class));
     }
 }
