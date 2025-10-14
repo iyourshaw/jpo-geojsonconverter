@@ -17,7 +17,6 @@ schema:
   spat: classpath:schemas/spat.schema.json
   psm: classpath:schemas/psm.schema.json
   rtcm: classpath:schemas/rtcm.schema.json
-  tim: classpath:schemas/tim.schema.json
 
 # Geometry JSON output mode (GEOJSON_ONLY or WKT)
 geometry.output.mode: GEOJSON_ONLY
