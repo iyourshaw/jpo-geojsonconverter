@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * contentItems - Ordered list of content items (ITIS codes and plain text) as they appear in the original message
  * <p>
- * sentance - Combined message from ITIS phrases and plain text
+ * sentence - Combined message from ITIS phrases and plain text
  */
 @Data
 @Generated
