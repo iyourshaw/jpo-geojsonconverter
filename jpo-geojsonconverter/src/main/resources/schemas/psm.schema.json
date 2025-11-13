@@ -1,4 +1,4 @@
 ﻿{
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$ref": "https://raw.githubusercontent.com/CDOT-CV/jpo-ode/refs/heads/dev/jpo-ode-core/src/main/resources/schemas/schema-psm.json"
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "https://raw.githubusercontent.com/usdot-jpo-ode/jpo-ode/refs/heads/master/jpo-ode-core/src/main/resources/schemas/schema-psm.json"
 }

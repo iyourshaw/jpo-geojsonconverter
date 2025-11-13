@@ -2,27 +2,34 @@ package us.dot.its.jpo.geojsonconverter.pojos.ssm;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Generated;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import us.dot.its.jpo.geojsonconverter.DateJsonMapper;
 import us.dot.its.jpo.geojsonconverter.pojos.ProcessedValidationMessage;
-import us.dot.its.jpo.geojsonconverter.pojos.common.*;
-
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * A Java object representing a processed J2735 MSG_SignalStatusMessage.
- * <p>The SSM may contain responses to multiple requests from multiple vehicles.</p>
- * <p>Similar to a SPAT, the SSM is associated with an intersection, but does not contain any geographic information
- * itself, therefore this is a plain Java object, not a GeoJSON object.  It must be matched with a corresponding MAP
- * message to find the intersection location.</p>
- * <p>It is possible, in theory, for an SSM to contain SignalRequests for more than one intersection, but that
- * scenario is not supported by this library.  If an SSM containing multiple intersection were received, all but the
- * first one would be discarded by the converter (similar to the behavior for SPATs).</p>
+ * <p>
+ * The SSM may contain responses to multiple requests from multiple vehicles.
+ * </p>
+ * <p>
+ * Similar to a SPAT, the SSM is associated with an intersection, but does not contain any geographic information
+ * itself, therefore this is a plain Java object, not a GeoJSON object. It must be matched with a corresponding MAP
+ * message to find the intersection location.
+ * </p>
+ * <p>
+ * It is possible, in theory, for an SSM to contain SignalRequests for more than one intersection, but that scenario is
+ * not supported by this library. If an SSM containing multiple intersection were received, all but the first one would
+ * be discarded by the converter (similar to the behavior for SPATs).
+ * </p>
  */
 @Data
 @NoArgsConstructor
@@ -30,6 +37,7 @@ import java.util.List;
 @Generated
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Slf4j
 public class ProcessedSsm {
     private int schemaVersion = -1;
     private final String messageType = "SSM";
@@ -46,7 +54,7 @@ public class ProcessedSsm {
 
     /**
      * Top-level timestamp of MSG_SignalStatusMessage
-      */
+     */
     private ZonedDateTime timeStamp;
 
     /**
@@ -71,9 +79,11 @@ public class ProcessedSsm {
 
     private List<ProcessedSignalStatus> statusList;
 
-    /* -----------------------------------------------------------------------
-        Validation
-    ------------------------------------------------------------------------*/
+    /*
+     * ------------------------------------------------------------------------ 
+     * Validation
+     * ------------------------------------------------------------------------
+     */
     private List<ProcessedValidationMessage> validationMessages = new ArrayList<>();
 
     public void addValidationMessage(ProcessedValidationMessage message) {
@@ -94,5 +104,17 @@ public class ProcessedSsm {
         var validationMessage = new ProcessedValidationMessage();
         validationMessage.setMessage(message);
         addValidationMessage(validationMessage);
+    }
+
+    @Override
+    public String toString() {
+        ObjectMapper mapper = DateJsonMapper.getInstance();
+        String testReturn = "";
+        try {
+            testReturn = (mapper.writeValueAsString(this));
+        } catch (JsonProcessingException e) {
+            log.error(e.getMessage(), e);
+        }
+        return testReturn;
     }
 }
