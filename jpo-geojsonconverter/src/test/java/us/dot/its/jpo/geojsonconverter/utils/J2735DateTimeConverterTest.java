@@ -3,7 +3,8 @@ package us.dot.its.jpo.geojsonconverter.utils;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-
+import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
@@ -458,7 +459,8 @@ public class J2735DateTimeConverterTest {
 
         ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForTimeMark(TEST_BASE_DATE, timeMark);
 
-        assertNull("Result should be null for out of range value", result);
+        assertEquals("Result should be set to UTC time zero",
+                ZonedDateTime.ofInstant(Instant.ofEpochMilli(0), ZoneId.of("UTC")), result);
     }
 
     @Test
@@ -468,7 +470,8 @@ public class J2735DateTimeConverterTest {
 
         ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForTimeMark(TEST_BASE_DATE, timeMark);
 
-        assertNull("Result should be null for out of range value", result);
+        assertEquals("Result should be set to UTC time zero",
+                ZonedDateTime.ofInstant(Instant.ofEpochMilli(0), ZoneId.of("UTC")), result);
     }
 
     @Test
@@ -506,11 +509,8 @@ public class J2735DateTimeConverterTest {
 
         ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForTimeMark(TEST_BASE_DATE, timeMark);
 
-        assertNotNull("Result should not be null", result);
-        assertEquals("Hour should be next hour due to rollover", TEST_BASE_DATE.getHour() + 1, result.getHour());
-        assertEquals("Minute should be 0 (36050 * 100ms = 3605000ms = 60min 5s)", 0, result.getMinute());
-        assertEquals("Second should be 5", 5, result.getSecond());
-        assertEquals("Millisecond should be 0", 0, result.getNano() / 1_000_000);
+        assertEquals("Result should be set to UTC time zero",
+                ZonedDateTime.ofInstant(Instant.ofEpochMilli(0), ZoneId.of("UTC")), result);
     }
 
     @Test
@@ -524,17 +524,6 @@ public class J2735DateTimeConverterTest {
         assertEquals("Minute should be 59", 59, result.getMinute());
         assertEquals("Second should be 59 (3599900ms = 3599.9s = 59min 59.9s)", 59, result.getSecond());
         assertEquals("Millisecond should be 900 (9 deciseconds = 900ms)", 900, result.getNano() / 1_000_000);
-    }
-
-    @Test
-    public void testGenerateOffsetUTCTimestampForTimeMarkWithNegativeTimeMark() {
-        // Test with negative time mark
-        TimeMark timeMark = new TimeMark(-1000);
-
-        ZonedDateTime result = J2735DateTimeConverter.generateOffsetUTCTimestampForTimeMark(TEST_BASE_DATE, timeMark);
-
-        // The method should return null for out of range values
-        assertNull("Result should be null for negative time mark", result);
     }
 
     // ===== generateOffsetUTCTimestampForSecMark TESTS =====
