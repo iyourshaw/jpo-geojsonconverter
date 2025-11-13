@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.*;
+import us.dot.its.jpo.geojsonconverter.converter.FieldConversions;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.Geometry;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.LineString;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.MultiLineString;
@@ -164,6 +165,11 @@ public class TimGeometryProcessorTest {
         TravelerDataFrame dataFrame = messageFrame.getValue().getDataFrames().get(2); // 3rd dataframe (index 2)
         GeographicalPath region = dataFrame.getRegions().get(0);
 
+        Circle circle = region.getDescription().getGeometry().getCircle();
+        double centerLat = FieldConversions.convertLat(circle.getCenter().getLat().getValue());
+        double centerLon = FieldConversions.convertLong(circle.getCenter().getLong_().getValue());
+        double radius = FieldConversions.convertRadiusToMeters(circle.getRadius().getValue(), circle.getUnits());
+
         // Test geometry creation from circle region
         Geometry geometry = geometryProcessor.createGeometryFromRegion(region);
 
@@ -200,12 +206,6 @@ public class TimGeometryProcessorTest {
             assertTrue(Math.abs(first[1] - last[1]) < 0.000001, "Circle polygon should be closed (latitude)");
         }
 
-        // Verify circle has reasonable radius by checking distance from center to edge points
-        // The circle in the test data has radius 250 meters
-        double centerLon = -104.6636836; // From anchor point in test data
-        double centerLat = 41.1501408; // From anchor point in test data
-        double expectedRadius = 250.0; // From circle radius in test data
-
         if (coords.length > 0 && coords[0].length > 1) {
             double[] firstPoint = coords[0][0];
             // Calculate distance using Geotools GeodeticCalculator
@@ -215,11 +215,11 @@ public class TimGeometryProcessorTest {
             double distance = calculator.getOrthodromicDistance();
 
             // Allow some tolerance for approximation (within 10% of expected radius)
-            double tolerance = expectedRadius * 0.1;
-            assertTrue(Math.abs(distance - expectedRadius) <= tolerance,
+            double tolerance = radius * 0.1;
+            assertTrue(Math.abs(distance - radius) <= tolerance,
                     String.format(
                             "Circle radius should be approximately %f meters, but calculated distance is %f meters",
-                            expectedRadius, distance));
+                            radius, distance));
         }
     }
 }

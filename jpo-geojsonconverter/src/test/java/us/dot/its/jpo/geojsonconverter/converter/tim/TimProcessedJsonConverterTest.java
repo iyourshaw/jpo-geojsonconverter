@@ -66,7 +66,7 @@ public class TimProcessedJsonConverterTest {
         ProcessedTim processedTim = result.value;
         assertEquals("TIM", processedTim.getMessageType());
         assertEquals(1, processedTim.getMsgCnt().intValue());
-        assertEquals("8D442EF003FC6B1B04", processedTim.getPacketId());
+        assertEquals("18D4A500000D7BA133", processedTim.getPacketId());
         assertNotNull(processedTim.getTimeStamp());
         assertNotNull(processedTim.getOdeReceivedAt());
 
@@ -95,9 +95,9 @@ public class TimProcessedJsonConverterTest {
 
         // Verify deployment agency and content type processing
         assertNotNull(feature.getProperties().getDeploymentAgencyType());
-        assertEquals(ProcessedDeploymentAgency.UNKNOWN, feature.getProperties().getDeploymentAgencyType());
+        assertEquals(ProcessedDeploymentAgency.STATE_OR_LOCAL, feature.getProperties().getDeploymentAgencyType());
         assertNotNull(feature.getProperties().getContent());
-        assertEquals(ProcessedContentType.ROAD_SIGNAGE, feature.getProperties().getContent().getType());
+        assertEquals(ProcessedContentType.ADVISORY, feature.getProperties().getContent().getType());
 
         // Verify coordinate transformation accuracy
         validateCoordinateTransformation(timMF, processedTim);

@@ -60,7 +60,7 @@ public class TimConverterTest {
 
         // Verify TIM-specific properties
         assertEquals(1, processedTim.getMsgCnt().intValue());
-        assertEquals("8D442EF003FC6B1B04", processedTim.getPacketId());
+        assertEquals("18D4A500000D7BA133", processedTim.getPacketId());
         assertNotNull(processedTim.getGnisRegionId());
 
         // Verify compliance
@@ -90,7 +90,7 @@ public class TimConverterTest {
 
         // Verify content processing
         assertNotNull(feature.getProperties().getContent());
-        assertEquals(ProcessedContentType.ROAD_SIGNAGE, feature.getProperties().getContent().getType());
+        assertEquals(ProcessedContentType.ADVISORY, feature.getProperties().getContent().getType());
         assertNotNull(feature.getProperties().getContent().getContentItems());
         assertTrue(feature.getProperties().getContent().getContentItems().size() > 0);
     }

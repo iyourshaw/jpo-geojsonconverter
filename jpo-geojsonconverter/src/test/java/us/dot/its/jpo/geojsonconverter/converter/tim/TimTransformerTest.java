@@ -59,7 +59,7 @@ public class TimTransformerTest {
         // Verify key properties
         RsuTimKey key = result.key;
         assertNotNull(key.getRsuId());
-        assertEquals("8D442EF003FC6B1B04", key.getPacketId());
+        assertEquals("18D4A500000D7BA133", key.getPacketId());
         assertEquals(1, key.getMsgCnt().intValue());
 
         // Verify processed TIM properties
@@ -67,7 +67,7 @@ public class TimTransformerTest {
         assertNotNull(processedTim.getTimeStamp());
         assertNotNull(processedTim.getOdeReceivedAt());
         assertEquals(1, processedTim.getMsgCnt().intValue());
-        assertEquals("8D442EF003FC6B1B04", processedTim.getPacketId());
+        assertEquals("18D4A500000D7BA133", processedTim.getPacketId());
     }
 
     @Test

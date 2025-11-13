@@ -22,7 +22,7 @@
 		"sanitized": false,
 		"odePacketID": "",
 		"odeTimStartDateTime": "",
-		"asn1": "001F81047015E5D88D442EF003FC6B1B040F775D9B1B0100003F42F2EC21C0A001E84E2C61ED2CE9F09D2711842142491D01225EFA874512D7542DE894716125C4AEB703D410E360C408617000000C80218313711081EEEBB3630100003F42F2EC21C0A003EA00000000271630F69674F84E9388C3F0A1248E80912F7D43A2896BAA16F44A38B092E2575B81EA0871B0620430B80000064010C189B88840F775D9B18080001FA44C86384050019500000000138AFB180B39DA36C43FFFD4E2BEC602CE768DB57400FA60000013043DDD766C40400007E96363C01684003729C57FF3259D166423CE805BBFE1E0022DE36BD9314EE99FDFCB01C6A97C5C41A81A4000010D820502C0",
+		"asn1": "001f813b7015e5d818d4a500000d7ba1330f775d9b1a0200003f4b157e7d004011e94ed2a473397c14bb1e6005dc800c22df18a1bf6ffea39bfe5b85977ecc2d76ca4266715b18b95a86c78278538f4a76952399cbe0a5d8f3002ee4006116f8c50dfb7ff51cdff2dc2cbbf6616bb65213338ad8c5cad4363c13c29c000146a3e1e200fad004306232221040400007e962afcfa008003529da5931e72f88b6a3cc00bb80081e506a76326ebec84432e6c22d467c21fdeb640ce1c9a211d70d90d8b27a20b1607c174641c000146a341e200fad004306232221040400007e962f70fa004003529da59af672f839e83ce805b843c03d4ed2cd7b397c1cf417263e94000041b040a808d4050100001fa58bdc3e801000dca76971269cbdfc3e8f3a016e81e00008b78daf64c53ba67f7f2c071aa5f17106a0690000043608140b",
 		"source": "RSU",
 		"originIp": "172.27.0.1",
 		"isCertPresent": false
@@ -34,88 +34,96 @@
 				"TravelerInformation": {
 					"msgCnt": 1,
 					"timeStamp": 386520,
-					"packetID": "8D442EF003FC6B1B04",
+					"packetID": "18D4A500000D7BA133",
 					"urlB": "null",
 					"dataFrames": [
 						{
 							"doNotUse1": 0,
-							"frameType": "advisory",
+							"frameType": "roadSignage",
 							"msgId": {
 								"furtherInfoID": "0000"
 							},
-							"startYear": 2024,
-							"startTime": 386520,
-							"durationTime": 8640,
-							"priority": 5,
+							"startYear": 2025,
+							"startTime": 404220,
+							"durationTime": 32000,
+							"priority": 2,
 							"doNotUse2": 0,
 							"regions": [
 								{
 									"anchor": {
-										"lat": 411531501,
-										"long": -1046471010
+										"lat": 422427507,
+										"long": -835566916,
+										"elevation": 3680
 									},
-									"laneWidth": 5000,
-									"directionality": "both",
+									"laneWidth": 750,
+									"directionality": "forward",
 									"closedPath": false,
 									"description": {
 										"path": {
-											"scale": 0,
 											"offset": {
-												"ll": {
+												"xy": {
 													"nodes": [
 														{
 															"delta": {
-																"node-LL2": {
-																	"lon": -5853,
-																	"lat": 2057
+																"node-XY3": {
+																	"x": -1313,
+																	"y": -1654
 																}
 															}
 														},
 														{
 															"delta": {
-																"node-LL3": {
-																	"lon": -8454,
-																	"lat": 1861
+																"node-XY4": {
+																	"x": -37,
+																	"y": 4085
 																}
 															}
 														},
 														{
 															"delta": {
-																"node-LL3": {
-																	"lon": -9494,
-																	"lat": 1469
+																"node-XY4": {
+																	"x": 895,
+																	"y": 2414
 																}
 															}
 														},
 														{
 															"delta": {
-																"node-LL3": {
-																	"lon": -11835,
-																	"lat": 1175
+																"node-XY3": {
+																	"x": 1211,
+																	"y": 1894
 																}
 															}
 														},
 														{
 															"delta": {
-																"node-LL3": {
-																	"lon": -10405,
-																	"lat": 490
+																"node-XY3": {
+																	"x": 1398,
+																	"y": 1188
 																}
 															}
 														},
 														{
 															"delta": {
-																"node-LL2": {
-																	"lon": -7283,
-																	"lat": 196
+																"node-XY5": {
+																	"x": 4920,
+																	"y": 2915
 																}
 															}
 														},
 														{
 															"delta": {
-																"node-LL2": {
-																	"lon": -7413,
-																	"lat": 0
+																"node-XY3": {
+																	"x": 1622,
+																	"y": 539
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-XY4": {
+																	"x": 2087,
+																	"y": 167
 																}
 															}
 														}
@@ -127,221 +135,84 @@
 								},
 								{
 									"anchor": {
-										"lat": 412531501,
-										"long": -1040471010
+										"lat": 422427507,
+										"long": -835566916,
+										"elevation": 3680
 									},
-									"laneWidth": 5000,
-									"directionality": "both",
+									"laneWidth": 750,
+									"directionality": "forward",
 									"closedPath": false,
 									"description": {
 										"path": {
-											"scale": 0,
 											"offset": {
-												"ll": {
+												"xy": {
 													"nodes": [
 														{
 															"delta": {
-																"node-LL2": {
-																	"lon": -5853,
-																	"lat": 2057
+																"node-XY3": {
+																	"x": -1313,
+																	"y": -1654
 																}
 															}
 														},
 														{
 															"delta": {
-																"node-LL3": {
-																	"lon": -8454,
-																	"lat": 1861
+																"node-XY4": {
+																	"x": -37,
+																	"y": 4085
 																}
 															}
 														},
 														{
 															"delta": {
-																"node-LL3": {
-																	"lon": -9494,
-																	"lat": 1469
+																"node-XY4": {
+																	"x": 895,
+																	"y": 2414
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-XY3": {
+																	"x": 1211,
+																	"y": 1894
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-XY3": {
+																	"x": 1398,
+																	"y": 1188
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-XY5": {
+																	"x": 4920,
+																	"y": 2915
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-XY3": {
+																	"x": 1622,
+																	"y": 539
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-XY4": {
+																	"x": 2087,
+																	"y": 167
 																}
 															}
 														}
 													]
 												}
-											}
-										}
-									}
-								}
-							],
-							"doNotUse3": 0,
-							"doNotUse4": 0,
-							"content": {
-								"speedLimit": [
-									{
-										"item": {
-											"itis": 268
-										}
-									},
-									{
-										"item": {
-											"itis": 12599
-										}
-									},
-									{
-										"item": {
-											"itis": 8720
-										}
-									}
-								]
-							},
-							"url": "null"
-						},
-						{
-							"doNotUse1": 0,
-							"frameType": "advisory",
-							"msgId": {
-								"furtherInfoID": "0000"
-							},
-							"startYear": 2024,
-							"startTime": 386520,
-							"durationTime": 8640,
-							"priority": 5,
-							"doNotUse2": 0,
-							"regions": [
-								{
-									"id": {
-										"region": 0,
-										"id": 0
-									},
-									"anchor": {
-										"lat": 411531501,
-										"long": -1046471010
-									},
-									"laneWidth": 5000,
-									"directionality": "both",
-									"closedPath": false,
-									"description": {
-										"path": {
-											"scale": 15,
-											"offset": {
-												"ll": {
-													"nodes": [
-														{
-															"delta": {
-																"node-LL2": {
-																	"lon": -5853,
-																	"lat": 2057
-																}
-															}
-														},
-														{
-															"delta": {
-																"node-LL3": {
-																	"lon": -8454,
-																	"lat": 1861
-																}
-															}
-														},
-														{
-															"delta": {
-																"node-LL3": {
-																	"lon": -9494,
-																	"lat": 1469
-																}
-															}
-														},
-														{
-															"delta": {
-																"node-LL3": {
-																	"lon": -11835,
-																	"lat": 1175
-																}
-															}
-														},
-														{
-															"delta": {
-																"node-LL3": {
-																	"lon": -10405,
-																	"lat": 490
-																}
-															}
-														},
-														{
-															"delta": {
-																"node-LL2": {
-																	"lon": -7283,
-																	"lat": 196
-																}
-															}
-														},
-														{
-															"delta": {
-																"node-LL2": {
-																	"lon": -7413,
-																	"lat": 0
-																}
-															}
-														}
-													]
-												}
-											}
-										}
-									}
-								}
-							],
-							"doNotUse3": 0,
-							"doNotUse4": 0,
-							"content": {
-								"speedLimit": [
-									{
-										"item": {
-											"itis": 268
-										}
-									},
-									{
-										"item": {
-											"itis": 12599
-										}
-									},
-									{
-										"item": {
-											"itis": 8720
-										}
-									}
-								]
-							},
-							"url": "null"
-						},
-						{
-							"doNotUse1": 0,
-							"frameType": "advisory",
-							"msgId": {
-								"furtherInfoID": "0000"
-							},
-							"startYear": 2025,
-							"startTime": 78360,
-							"durationTime": 28800,
-							"priority": 5,
-							"doNotUse2": 0,
-							"regions": [
-								{
-									"id": {
-										"region": 0,
-										"id": 0
-									},
-									"anchor": {
-										"lat": 411501408,
-										"long": -1046636836
-									},
-									"closedPath": false,
-									"description": {
-										"geometry": {
-											"direction": "FFFF",
-											"circle": {
-												"center": {
-													"lat": 411501408,
-													"long": -1046636836,
-													"elevation": 18240
-												},
-												"radius": 250,
-												"units": "meter"
 											}
 										}
 									}
@@ -353,12 +224,36 @@
 								"advisory": [
 									{
 										"item": {
-											"itis": 4868
+											"itis": 13599
+										}
+									},
+									{
+										"item": {
+											"itis": 7712
+										}
+									},
+									{
+										"item": {
+											"itis": 8026
+										}
+									},
+									{
+										"item": {
+											"itis": 268
+										}
+									},
+									{
+										"item": {
+											"itis": 12569
+										}
+									},
+									{
+										"item": {
+											"itis": 8720
 										}
 									}
 								]
-							},
-							"url": "null"
+							}
 						},
 						{
 							"doNotUse1": 0,
@@ -367,20 +262,227 @@
 								"furtherInfoID": "0000"
 							},
 							"startYear": 2025,
-							"startTime": 407100,
-							"durationTime": 180,
+							"startTime": 404220,
+							"durationTime": 32000,
+							"priority": 2,
+							"doNotUse2": 0,
+							"regions": [
+								{
+									"anchor": {
+										"lat": 422437007,
+										"long": -835554378,
+										"elevation": 3680
+									},
+									"laneWidth": 750,
+									"closedPath": false,
+									"description": {
+										"path": {
+											"offset": {
+												"xy": {
+													"nodes": [
+														{
+															"delta": {
+																"node-XY4": {
+																	"x": 2369,
+																	"y": 1339
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-XY4": {
+																	"x": -2851,
+																	"y": -78
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-XY3": {
+																	"x": -1511,
+																	"y": -202
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-XY3": {
+																	"x": -1324,
+																	"y": -388
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-XY5": {
+																	"x": -4113,
+																	"y": -2360
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-XY4": {
+																	"x": -2290,
+																	"y": -1630
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-XY3": {
+																	"x": -1106,
+																	"y": -1614
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-XY4": {
+																	"x": -935,
+																	"y": -2142
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-XY2": {
+																	"x": -234,
+																	"y": -962
+																}
+															}
+														},
+														{
+															"delta": {
+																"node-XY2": {
+																	"x": -93,
+																	"y": -761
+																}
+															}
+														}
+													]
+												}
+											}
+										}
+									}
+								}
+							],
+							"doNotUse3": 0,
+							"doNotUse4": 0,
+							"content": {
+								"advisory": [
+									{
+										"item": {
+											"itis": 13594
+										}
+									},
+									{
+										"item": {
+											"itis": 7712
+										}
+									},
+									{
+										"item": {
+											"itis": 8026
+										}
+									},
+									{
+										"item": {
+											"itis": 268
+										}
+									},
+									{
+										"item": {
+											"itis": 12569
+										}
+									},
+									{
+										"item": {
+											"itis": 8720
+										}
+									}
+								]
+							}
+						},
+						{
+							"doNotUse1": 0,
+							"frameType": "roadSignage",
+							"msgId": {
+								"furtherInfoID": "0000"
+							},
+							"startYear": 2025,
+							"startTime": 405360,
+							"durationTime": 32000,
 							"priority": 1,
 							"doNotUse2": 0,
 							"regions": [
 								{
 									"anchor": {
-										"lat": 411506329,
-										"long": -1046552286,
+										"lat": 422438011,
+										"long": -835564811,
+										"elevation": 3700
+									},
+									"laneWidth": 366,
+									"closedPath": false,
+									"description": {
+										"geometry": {
+											"direction": "F00F",
+											"circle": {
+												"center": {
+													"lat": 422438011,
+													"long": -835564811,
+													"elevation": 1830
+												},
+												"radius": 1001,
+												"units": "decimeter"
+											}
+										}
+									}
+								}
+							],
+							"doNotUse3": 0,
+							"doNotUse4": 0,
+							"content": {
+								"advisory": [
+									{
+										"item": {
+											"itis": 6916
+										}
+									},
+									{
+										"item": {
+											"itis": 5377
+										}
+									},
+									{
+										"item": {
+											"itis": 13569
+										}
+									}
+								]
+							}
+						},
+						{
+							"doNotUse1": 0,
+							"frameType": "roadSignage",
+							"msgId": {
+								"furtherInfoID": "0000"
+							},
+							"startYear": 2025,
+							"startTime": 405360,
+							"durationTime": 32000,
+							"priority": 1,
+							"doNotUse2": 0,
+							"regions": [
+								{
+									"anchor": {
+										"lat": 422443341,
+										"long": -835574146,
 										"elevation": 3700
 									},
 									"laneWidth": 366,
 									"closedPath": true,
-									"direction": "FF0F",
+									"direction": "03C0",
 									"description": {
 										"path": {
 											"offset": {
