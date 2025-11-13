@@ -270,6 +270,4 @@ public class SpatProcessedJsonConverter
 
         return processedSpat;
     }
-
-
 }

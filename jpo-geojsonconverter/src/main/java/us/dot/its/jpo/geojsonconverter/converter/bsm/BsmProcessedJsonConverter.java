@@ -139,6 +139,7 @@ public class BsmProcessedJsonConverter
 
         ZonedDateTime utcDateTime = ZonedDateTime.now(ZoneOffset.UTC);
 
+
         object.setMessage(message);
         object.setException(ExceptionUtils.getStackTrace(validatorResult.getExceptions().get(0)));
 

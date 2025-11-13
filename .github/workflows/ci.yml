@@ -23,55 +23,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  test-no-sonar:
-    if: github.event.pull_request.base.repo.owner.login != 'usdot-jpo-ode'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          java-version: "21"
-          distribution: "temurin"
-      - name: Cache Maven packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.m2
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}-${{ hashFiles('**/settings.xml') }}-${{ runner.os }}-java-21
-          restore-keys: |
-            ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}-${{ runner.os }}-java-21
-            ${{ runner.os }}-maven-${{ runner.os }}-java-21
-            ${{ runner.os }}-maven
-
-      - name: Install Dependencies
-        env:
-          MAVEN_GITHUB_TOKEN: ${{ secrets.MAVEN_GITHUB_TOKEN }}
-          MAVEN_GITHUB_ORG: ${{ github.repository_owner }}
-        run: |
-          cd $GITHUB_WORKSPACE/jpo-geojsonconverter
-          mvn clean install -DskipTests -s ./settings.xml
-          mvn dependency:go-offline -s ./settings.xml
-
-      - name: Run tests
-        env:
-          MAVEN_GITHUB_TOKEN: ${{ secrets.MAVEN_GITHUB_TOKEN }}
-          MAVEN_GITHUB_ORG: ${{ github.repository_owner }}
-        run: |
-          cd $GITHUB_WORKSPACE/jpo-geojsonconverter
-          mvn verify -s ./settings.xml
-
-      - name: Archive Test Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: jpo-geojsonconverter-test-results
-          path: $GITHUB_WORKSPACE/jpo-geojsonconverter/target/surefire-reports
-
-      - name: Clean up
-        run: |
-          rm -rf $GITHUB_WORKSPACE/jpo-geojsonconverter/target
-
   sonar:
     if: github.event.pull_request.base.repo.owner.login == 'usdot-jpo-ode'
     runs-on: ubuntu-latest

@@ -1,6 +1,5 @@
 package us.dot.its.jpo.geojsonconverter.converter;
 
-
 import lombok.extern.slf4j.Slf4j;
 import us.dot.its.jpo.asn.j2735.r2024.Common.*;
 import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.DistanceUnits;
@@ -13,7 +12,6 @@ import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedVehicleType;
 
 import java.time.*;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -217,6 +215,13 @@ public class FieldConversions {
         return returnValue;
     }
 
+    public static Double convertLaneWidth(LaneWidth laneWidth) {
+        if (laneWidth == null) {
+            return null;
+        }
+        return laneWidth.getValue() * 1e-2d;
+    }
+
     public static Double convertSpeed(long speed) {
         // Speed ::= INTEGER (0..8191) -- Units of 0.02 m/s
         // -- The value 8191 indicates that
@@ -365,19 +370,6 @@ public class FieldConversions {
         int offsetHours = Math.floorDiv(value, 60);
         int offsetMinutes = value - (offsetHours * 60);
         return ZoneOffset.ofHoursMinutes(offsetHours, offsetMinutes);
-    }
-
-    /**
-     * Converts a J2735 LaneWidth value to meters. Providing a range of 0 to + 327.67 m meters.
-     *
-     * @param j2735LaneWidth J2735 lane width value.
-     * @return Lane width in meters, or null if unavailable.
-     */
-    public static Double convertLaneWidth(LaneWidth laneWidth) {
-        if (laneWidth == null) {
-            return null;
-        }
-        return laneWidth.getValue() * 1e-2d;
     }
 
     /**
@@ -742,6 +734,5 @@ public class FieldConversions {
         }
         return Duration.ofSeconds(value * 10);
     }
-
 
 }

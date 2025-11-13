@@ -461,7 +461,6 @@ public class MapProcessedJsonConverter
         return processedMapObject;
     }
 
-
     public List<MapNode> nodeConversionList(NodeSetXY nodeXYs) { // 2022-10-31T15:40:26.687292Z
         List<MapNode> mapNodes = new ArrayList<MapNode>();
         try {
