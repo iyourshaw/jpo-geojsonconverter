@@ -67,143 +67,143 @@ Example ProcessedSpat message:
 
 ```json
 {
-	"schemaVersion": 2,
-	"messageType": "SPAT",
-	"odeReceivedAt": "2025-07-16T22:55:40.636Z",
-	"originIp": "172.18.0.1",
-	"asn1": "0381004003807C00134700081132000000E437070010434257925790010232119A11CE800C10D095E495E400808684AF24AF20050434257925790030232119A11CE801C10D095E495E401008684AF24AF200",
-	"validationMessages": [
-		{
-			"message": "CTI-4501 conformance issue: the SPAT 'timeStamp' DE_MinuteOfTheYear is missing"
-		},
-		{
-			"message": "CTI-4501 conformance issue: the intersections 'id.region' DE_RoadRegulatorID is missing"
-		},
-		{
-			"message": "CTI-4501 conformance issue: the state-time-speed 'timing.startTime' DE_TimeMark is missing"
-		},
-		{
-			"message": "CTI-4501 conformance issue: the state-time-speed 'timing.nextTime' DE_TimeMark is missing"
-		}
-	],
-	"intersectionId": 8804,
-	"cti4501Conformant": false,
-	"revision": 0,
-	"status": {
-		"manualControlIsEnabled": false,
-		"stopTimeIsActivated": false,
-		"failureFlash": false,
-		"preemptIsActive": false,
-		"signalPriorityIsActive": false,
-		"fixedTimeOperation": false,
-		"trafficDependentOperation": false,
-		"standbyOperation": false,
-		"failureMode": false,
-		"off": false,
-		"recentMAPmessageUpdate": false,
-		"recentChangeInMAPassignedLanesIDsUsed": false,
-		"noValidMAPisAvailableAtThisTime": false,
-		"noValidSPATisAvailableAtThisTime": false
-	},
-	"utcTimeStamp": "2025-07-16T22:55:58.423Z",
-	"states": [
-		{
-			"signalGroup": 1,
-			"stateTimeSpeed": [
-				{
-					"eventState": "stop-And-Remain",
-					"timing": {
-						"minEndTime": "2025-07-16T22:31:58.6Z",
-						"maxEndTime": "2025-07-16T22:31:58.6Z"
-					}
-				}
-			]
-		},
-		{
-			"signalGroup": 2,
-			"stateTimeSpeed": [
-				{
-					"eventState": "protected-Movement-Allowed",
-					"timing": {
-						"minEndTime": "2025-07-16T22:30:02.4Z",
-						"maxEndTime": "2025-07-16T22:30:23.4Z"
-					}
-				}
-			]
-		},
-		{
-			"signalGroup": 3,
-			"stateTimeSpeed": [
-				{
-					"eventState": "stop-And-Remain",
-					"timing": {
-						"minEndTime": "2025-07-16T22:31:58.6Z",
-						"maxEndTime": "2025-07-16T22:31:58.6Z"
-					}
-				}
-			]
-		},
-		{
-			"signalGroup": 4,
-			"stateTimeSpeed": [
-				{
-					"eventState": "stop-And-Remain",
-					"timing": {
-						"minEndTime": "2025-07-16T22:31:58.6Z",
-						"maxEndTime": "2025-07-16T22:31:58.6Z"
-					}
-				}
-			]
-		},
-		{
-			"signalGroup": 5,
-			"stateTimeSpeed": [
-				{
-					"eventState": "stop-And-Remain",
-					"timing": {
-						"minEndTime": "2025-07-16T22:31:58.6Z",
-						"maxEndTime": "2025-07-16T22:31:58.6Z"
-					}
-				}
-			]
-		},
-		{
-			"signalGroup": 6,
-			"stateTimeSpeed": [
-				{
-					"eventState": "protected-Movement-Allowed",
-					"timing": {
-						"minEndTime": "2025-07-16T22:30:02.4Z",
-						"maxEndTime": "2025-07-16T22:30:23.4Z"
-					}
-				}
-			]
-		},
-		{
-			"signalGroup": 7,
-			"stateTimeSpeed": [
-				{
-					"eventState": "stop-And-Remain",
-					"timing": {
-						"minEndTime": "2025-07-16T22:31:58.6Z",
-						"maxEndTime": "2025-07-16T22:31:58.6Z"
-					}
-				}
-			]
-		},
-		{
-			"signalGroup": 8,
-			"stateTimeSpeed": [
-				{
-					"eventState": "stop-And-Remain",
-					"timing": {
-						"minEndTime": "2025-07-16T22:31:58.6Z",
-						"maxEndTime": "2025-07-16T22:31:58.6Z"
-					}
-				}
-			]
-		}
-	]
+ "schemaVersion": 2,
+ "messageType": "SPAT",
+ "odeReceivedAt": "2025-07-16T22:55:40.636Z",
+ "originIp": "172.18.0.1",
+ "asn1": "0381004003807C00134700081132000000E437070010434257925790010232119A11CE800C10D095E495E400808684AF24AF20050434257925790030232119A11CE801C10D095E495E401008684AF24AF200",
+ "validationMessages": [
+  {
+   "message": "CTI-4501 conformance issue: the SPAT 'timeStamp' DE_MinuteOfTheYear is missing"
+  },
+  {
+   "message": "CTI-4501 conformance issue: the intersections 'id.region' DE_RoadRegulatorID is missing"
+  },
+  {
+   "message": "CTI-4501 conformance issue: the state-time-speed 'timing.startTime' DE_TimeMark is missing"
+  },
+  {
+   "message": "CTI-4501 conformance issue: the state-time-speed 'timing.nextTime' DE_TimeMark is missing"
+  }
+ ],
+ "intersectionId": 8804,
+ "cti4501Conformant": false,
+ "revision": 0,
+ "status": {
+  "manualControlIsEnabled": false,
+  "stopTimeIsActivated": false,
+  "failureFlash": false,
+  "preemptIsActive": false,
+  "signalPriorityIsActive": false,
+  "fixedTimeOperation": false,
+  "trafficDependentOperation": false,
+  "standbyOperation": false,
+  "failureMode": false,
+  "off": false,
+  "recentMAPmessageUpdate": false,
+  "recentChangeInMAPassignedLanesIDsUsed": false,
+  "noValidMAPisAvailableAtThisTime": false,
+  "noValidSPATisAvailableAtThisTime": false
+ },
+ "utcTimeStamp": "2025-07-16T22:55:58.423Z",
+ "states": [
+  {
+   "signalGroup": 1,
+   "stateTimeSpeed": [
+    {
+     "eventState": "stop-And-Remain",
+     "timing": {
+      "minEndTime": "2025-07-16T22:31:58.6Z",
+      "maxEndTime": "2025-07-16T22:31:58.6Z"
+     }
+    }
+   ]
+  },
+  {
+   "signalGroup": 2,
+   "stateTimeSpeed": [
+    {
+     "eventState": "protected-Movement-Allowed",
+     "timing": {
+      "minEndTime": "2025-07-16T22:30:02.4Z",
+      "maxEndTime": "2025-07-16T22:30:23.4Z"
+     }
+    }
+   ]
+  },
+  {
+   "signalGroup": 3,
+   "stateTimeSpeed": [
+    {
+     "eventState": "stop-And-Remain",
+     "timing": {
+      "minEndTime": "2025-07-16T22:31:58.6Z",
+      "maxEndTime": "2025-07-16T22:31:58.6Z"
+     }
+    }
+   ]
+  },
+  {
+   "signalGroup": 4,
+   "stateTimeSpeed": [
+    {
+     "eventState": "stop-And-Remain",
+     "timing": {
+      "minEndTime": "2025-07-16T22:31:58.6Z",
+      "maxEndTime": "2025-07-16T22:31:58.6Z"
+     }
+    }
+   ]
+  },
+  {
+   "signalGroup": 5,
+   "stateTimeSpeed": [
+    {
+     "eventState": "stop-And-Remain",
+     "timing": {
+      "minEndTime": "2025-07-16T22:31:58.6Z",
+      "maxEndTime": "2025-07-16T22:31:58.6Z"
+     }
+    }
+   ]
+  },
+  {
+   "signalGroup": 6,
+   "stateTimeSpeed": [
+    {
+     "eventState": "protected-Movement-Allowed",
+     "timing": {
+      "minEndTime": "2025-07-16T22:30:02.4Z",
+      "maxEndTime": "2025-07-16T22:30:23.4Z"
+     }
+    }
+   ]
+  },
+  {
+   "signalGroup": 7,
+   "stateTimeSpeed": [
+    {
+     "eventState": "stop-And-Remain",
+     "timing": {
+      "minEndTime": "2025-07-16T22:31:58.6Z",
+      "maxEndTime": "2025-07-16T22:31:58.6Z"
+     }
+    }
+   ]
+  },
+  {
+   "signalGroup": 8,
+   "stateTimeSpeed": [
+    {
+     "eventState": "stop-And-Remain",
+     "timing": {
+      "minEndTime": "2025-07-16T22:31:58.6Z",
+      "maxEndTime": "2025-07-16T22:31:58.6Z"
+     }
+    }
+   ]
+  }
+ ]
 }
 ```
 
@@ -225,57 +225,57 @@ When an OdeBsmJson message is processed through the jpo-geojsonconverter, a Proc
 
 ```json
 {
-	"type": "Feature",
-	"geometry": {
-		"type": "Point",
-		"coordinates": [
-			-105.0317754,
-			40.5659938
-		]
-	},
-	"properties": {
-		"schemaVersion": 2,
-		"messageType": "BSM",
-		"odeReceivedAt": "2025-07-15T12:25:38.620Z",
-		"timeStamp": "2025-07-15T12:25:25.399Z",
-		"originIp": "172.18.0.1",
-		"asn1": "001480B8494C4C950CD8CDE6E9651116579F22A424DD78FFFFF00761E4FD7EB7D07F7FFF80005F11D1020214C1C0FFC7C016AFF4017A0FF65403B0FD204C20FFCCC04F8FE40C420FFE6404CEFE60E9A10133408FCFDE1438103AB4138F00E1EEC1048EC160103E237410445C171104E26BC103DC4154305C2C84103B1C1C8F0A82F42103F34262D1123198103DAC25FB12034CE10381C259F12038CA103574251B10E3B2210324C23AD0F23D8EFFFE0000209340D10000004264BF00",
-		"validationMessages": [],
-		"accelSet": {
-			"accelLat": 0.0,
-			"accelLong": 0.27,
-			"accelVert": 0.0,
-			"accelYaw": 0.0
-		},
-		"accuracy": {
-			"semiMajor": 9.3,
-			"semiMinor": 12.05
-		},
-		"brakes": {
-			"wheelBrakes": {
-				"unavailable": true,
-				"leftFront": false,
-				"leftRear": false,
-				"rightFront": false,
-				"rightRear": false
-			},
-			"traction": "unavailable",
-			"abs": "unavailable",
-			"scs": "unavailable",
-			"brakeBoost": "unavailable",
-			"auxBrakes": "unavailable"
-		},
-		"heading": 313.25,
-		"id": "31325433",
-		"msgCnt": 37,
-		"secMark": 25399,
-		"size": {
-			"width": 190,
-			"length": 570
-		},
-		"speed": 0.28,
-		"transmission": "unavailable"
-	}
+ "type": "Feature",
+ "geometry": {
+  "type": "Point",
+  "coordinates": [
+   -105.0317754,
+   40.5659938
+  ]
+ },
+ "properties": {
+  "schemaVersion": 2,
+  "messageType": "BSM",
+  "odeReceivedAt": "2025-07-15T12:25:38.620Z",
+  "timeStamp": "2025-07-15T12:25:25.399Z",
+  "originIp": "172.18.0.1",
+  "asn1": "001480B8494C4C950CD8CDE6E9651116579F22A424DD78FFFFF00761E4FD7EB7D07F7FFF80005F11D1020214C1C0FFC7C016AFF4017A0FF65403B0FD204C20FFCCC04F8FE40C420FFE6404CEFE60E9A10133408FCFDE1438103AB4138F00E1EEC1048EC160103E237410445C171104E26BC103DC4154305C2C84103B1C1C8F0A82F42103F34262D1123198103DAC25FB12034CE10381C259F12038CA103574251B10E3B2210324C23AD0F23D8EFFFE0000209340D10000004264BF00",
+  "validationMessages": [],
+  "accelSet": {
+   "accelLat": 0.0,
+   "accelLong": 0.27,
+   "accelVert": 0.0,
+   "accelYaw": 0.0
+  },
+  "accuracy": {
+   "semiMajor": 9.3,
+   "semiMinor": 12.05
+  },
+  "brakes": {
+   "wheelBrakes": {
+    "unavailable": true,
+    "leftFront": false,
+    "leftRear": false,
+    "rightFront": false,
+    "rightRear": false
+   },
+   "traction": "unavailable",
+   "abs": "unavailable",
+   "scs": "unavailable",
+   "brakeBoost": "unavailable",
+   "auxBrakes": "unavailable"
+  },
+  "heading": 313.25,
+  "id": "31325433",
+  "msgCnt": 37,
+  "secMark": 25399,
+  "size": {
+   "width": 190,
+   "length": 570
+  },
+  "speed": 0.28,
+  "transmission": "unavailable"
+ }
 }
 ```
 
@@ -305,29 +305,29 @@ Example ProcessedPsm message:
 
 ```json
 {
-	"type": "Feature",
-	"geometry": {
-		"type": "Point",
-		"coordinates": [
-			-74.27614369999999,
-			40.2397377
-		]
-	},
-	"properties": {
-		"schemaVersion": 2,
-		"messageType": "PSM",
-		"odeReceivedAt": "2025-07-25T10:09:36.120Z",
-		"timeStamp": "2025-07-25T10:09:03.564Z",
-		"originIp": "172.18.0.1",
-		"asn1": "00201A0000021BD86891DE75F84DA101C13F042E2214141FFF00022C2000270000000163B2CC79860100",
-		"validationMessages": [],
-		"basicType": "aPEDESTRIAN",
-		"id": "24779D7E",
-		"msgCnt": 26,
-		"secMark": 3564,
-		"speed": 0.0,
-		"heading": 111.22500000000001
-	}
+ "type": "Feature",
+ "geometry": {
+  "type": "Point",
+  "coordinates": [
+   -74.27614369999999,
+   40.2397377
+  ]
+ },
+ "properties": {
+  "schemaVersion": 2,
+  "messageType": "PSM",
+  "odeReceivedAt": "2025-07-25T10:09:36.120Z",
+  "timeStamp": "2025-07-25T10:09:03.564Z",
+  "originIp": "172.18.0.1",
+  "asn1": "00201A0000021BD86891DE75F84DA101C13F042E2214141FFF00022C2000270000000163B2CC79860100",
+  "validationMessages": [],
+  "basicType": "aPEDESTRIAN",
+  "id": "24779D7E",
+  "msgCnt": 26,
+  "secMark": 3564,
+  "speed": 0.0,
+  "heading": 111.22500000000001
+ }
 }
 ```
 
@@ -339,21 +339,21 @@ Validation with reference to the [CTI-4501 specification](https://www.ite.org/IT
 
 The RTCM decoding functionality can be configured with the `rtcm.full.decode` setting in `application.yaml`.
 
-* If `rtcm.full.decode=true`, the app uses the native `gpsd-client` library to fully decode the RTCM payloads.
-* If `rtcm.full.decode=false`, it uses pure Java methods to partially decode the payload.  In partial mode it is only capable of extracting the message types and station IDs for RTCM rev 3 messages.
+- If `rtcm.full.decode=true`, the app uses the native `gpsd-client` library to fully decode the RTCM payloads.
+- If `rtcm.full.decode=false`, it uses pure Java methods to partially decode the payload.  In partial mode it is only capable of extracting the message types and station IDs for RTCM rev 3 messages.
 
 `ProcessedRtcm` fields:
 
-* *type* - Always 'Feature'
-* *geometry* - Point geometry, location of the station from the `FullPositionVector` frame.
-* *properties* - Selected properties from the message frame, and decoded from the binary RTCM messages, including:
-  * *msgCnt* - Message count
-  * *rev* - Must equal "rtcmRev3" to be CTI-4501 compliant, although it is possible to decode rev 2 messages in full decode mode.
-  * *messageTypes* - A list of message types from the decoded messages.
-  * *stationId* - The station ID from the decoded messages.
-  * *messages* - A list of fully or partially decoded messages.  
-    * *hex* - The hex-encoded raw RTCM message.
-    * *decodedMessage* - The decoded message in JSON format. There are numerous message types, and the structure of this node varies depending on type.
+- *type* - Always 'Feature'
+- *geometry* - Point geometry, location of the station from the `FullPositionVector` frame.
+- *properties* - Selected properties from the message frame, and decoded from the binary RTCM messages, including:
+  - *msgCnt* - Message count
+  - *rev* - Must equal "rtcmRev3" to be CTI-4501 compliant, although it is possible to decode rev 2 messages in full decode mode.
+  - *messageTypes* - A list of message types from the decoded messages.
+  - *stationId* - The station ID from the decoded messages.
+  - *messages* - A list of fully or partially decoded messages.  
+    - *hex* - The hex-encoded raw RTCM message.
+    - *decodedMessage* - The decoded message in JSON format. There are numerous message types, and the structure of this node varies depending on type.
 
 Example `ProcessedRtcm` message:
 
@@ -492,7 +492,6 @@ Example `ProcessedSrm` message:
 }
 ```
 
-
 ### ProcessedSsm
 
 The GeoJSON Converter produces `ProcessedSsm` messages from `SignalStatusMessage` (SSM) message frames received from the ODE.
@@ -546,6 +545,219 @@ Example `ProcessedSsm` message:
 }
 ```
 
+### ProcessedTim
+
+The GeoJSON Converter produces `ProcessedTim` messages from `TravelerInformationMessage` (TIM) message frames received from the ODE.
+
+The ODE TIMs are not yet being validated in the GeoJsonConverter as this will be implemented in a following work item. Validation of messages will use best practices guidance from either the Interoperability Technical Working Group (ITWG) or Connecting The West (CTW) best practices.
+
+#### Transformation Process
+
+When an `OdeTimJson` message is processed through the jpo-geojsonconverter, a `ProcessedTim` message is created through the following transformation steps:
+
+1. **Message Structure**: The `ProcessedTim` is a single JSON object containing:
+   - Root-level metadata (message type, timestamps, origin IP, ASN.1 data, etc.)
+   - A `regionFeatureCollection` containing GeoJSON Feature objects
+   - A `location` field (Point geometry) for MongoDB 2D sphere indexing
+   - Compliance information for validation tracking
+
+2. **Data Frame to Feature Conversion**: Each `TravelerDataFrame` in the TIM message becomes a GeoJSON Feature in the `regionFeatureCollection`:
+   - Each data frame is assigned a sequential feature ID (0, 1, 2, ...)
+   - The geometry is derived from the regions defined in the data frame
+   - Properties are extracted from the data frame metadata and content
+
+3. **Region Geometry Processing**: Regions within each data frame are converted to GeoJSON geometries based on their type:
+   - **PATH**: Converted to `LineString` geometry using offset path calculations from the anchor point
+   - **CIRCLE**: Converted to `Polygon` geometry using UTM coordinate transformations for accurate geodetic calculations. The circle is approximated with an adaptive number of points based on diameter (12-64 points)
+   - **POLYGON**: Converted to `Polygon` geometry from closed paths
+   - If a data frame contains multiple regions, they are combined into `MultiLineString` or `MultiPolygon` geometries
+
+4. **Offset Path Processing**: For PATH regions, coordinates are calculated using:
+   - An anchor point (absolute lat/lon) as the starting coordinate
+   - Offset nodes (LL or XY format) that are accumulated from the anchor
+   - Zoom scaling factors (2^scale) applied to offset calculations
+   - Support for both latitude/longitude (LL) and Cartesian (XY) coordinate systems
+
+5. **Content Processing**: The content field is processed to extract:
+   - **ITIS Codes**: Converted to both numeric codes and human-readable phrases using ITIS code lookup
+   - **Text Content**: Plain text items are preserved as-is
+   - **Content Type**: Determined from the frame type (ADVISORY, ROAD_SIGNAGE, or COMMERCIAL_SIGNAGE)
+   - **Combined Sentence**: All content items are concatenated in order to form a readable sentence
+
+6. **Validity Period Calculation**: The validity period is calculated from:
+   - Start time: Derived from `startYear` and `startTime` (MinuteOfTheYear), or defaults to ODE receive time
+   - End time: Calculated by adding `durationTime` (in minutes) to the start time
+   - Infinite duration: If `durationTime` equals 32000, the validity period is marked as infinite with an end time of 9999-12-31T23:59:59Z
+
+7. **Region Information Extraction**: For each region, the following information is extracted:
+   - **Region Type**: Determined by checking for circle geometry, closed path flag, or path existence
+   - **Elevation Profile**: Default elevation from anchor point, plus node-level elevation offsets
+   - **Lane Width Profile**: Default width from region, plus node-level width offsets (for PATH regions only)
+   - **Direction Information**: Either directionality (forward/backward/both) or heading sectors (bitstring converted to heading ranges)
+
+8. **Location Calculation**: The `location` field is calculated as the geographic center point of all anchor points from all regions across all data frames, using a simple average of coordinates.
+
+9. **Compliance Information**: Compliance tracking includes:
+   - Standard type (currently ITWG, with CTW planned for future)
+   - Compliance status (true if no validation messages)
+   - List of validation messages if any issues are found
+
+10. **Kafka Key Generation**: ProcessedTim messages are partitioned using an `RsuTimKey` containing:
+    - RSU IP address (originIp)
+    - Packet ID (from the TIM message)
+    - Message count (msgCnt)
+
+[ProcessedTim schema can be found here.](<jpo-geojsonconverter/src/main/resources/schemas/processed-tim.schema.json>)
+
+Example `ProcessedTim` message:
+
+```JSON
+{
+ "schemaVersion": 1,
+ "messageType": "TIM",
+ "odeReceivedAt": "2025-10-15T20:19:28.543Z",
+ "originIp": "172.27.0.1",
+ "asn1": "001F606015120C16D30800002B8ACCEF28080000FD2A2419F4010007A5270F4454E3EBF36000002EE2000022D02890237A6C0011020086C910100001FA525E83B102000F4A4E1E88A9C7D7E6C000005DC4000045A0512046F4D80064010C188C888400",
+ "msgCnt": 1,
+ "timeStamp": "2025-08-19T18:20:28.543Z",
+ "packetId": "16D30800002B8ACCEF",
+ "gnisRegionId": 1495816,
+ "location": {
+  "type": "Point",
+  "coordinates": [
+   -84.4027175,
+   33.7569813
+  ]
+ },
+ "compliance": [
+  {
+   "standard": "ITWG",
+   "compliant": true,
+   "validationMessages": []
+  }
+ ],
+ "regionFeatureCollection": {
+  "features": [
+   {
+    "type": "Feature",
+    "id": 0,
+    "geometry": {
+     "type": "LineString",
+     "coordinates": [
+      [
+       -84.4027126287049,
+       33.75693611995482
+      ],
+      [
+       -84.40270505113875,
+       33.75760914062784
+      ]
+     ]
+    },
+    "properties": {
+     "deploymentAgencyType": "STATE_OR_LOCAL",
+     "validityPeriod": {
+      "startTime": "2025-08-19T18:20:28.543Z",
+      "endTime": "9999-12-31T23:59:59Z",
+      "infinite": true
+     },
+     "priority": 2,
+     "regionInfoList": [
+      {
+       "regionType": "PATH",
+       "elevationProfile": {},
+       "directionInfo": {
+        "directionType": "DIRECTIONALITY",
+        "directionality": "forward"
+       },
+       "laneWidthProfile": {
+        "defaultWidthMeters": 15.0
+       }
+      }
+     ],
+     "content": {
+      "type": "COMMERCIAL_SIGNAGE",
+      "contentItems": [
+       {
+        "type": "ITIS_CODE",
+        "itisCode": 1025,
+        "itisPhrase": "road-construction"
+       },
+       {
+        "type": "ITIS_CODE",
+        "itisCode": 6948,
+        "itisPhrase": "fines-doubled"
+       }
+      ],
+      "sentence": "road-construction fines-doubled"
+     }
+    }
+   },
+   {
+    "type": "Feature",
+    "id": 1,
+    "geometry": {
+     "type": "LineString",
+     "coordinates": [
+      [
+       -84.4027126287049,
+       33.75693611995482
+      ],
+      [
+       -84.40270505113875,
+       33.75760914062784
+      ]
+     ]
+    },
+    "properties": {
+     "deploymentAgencyType": "STATE_OR_LOCAL",
+     "validityPeriod": {
+      "startTime": "2025-07-29T00:00:28.543Z",
+      "endTime": "2025-08-19T00:00:28.543Z",
+      "infinite": false
+     },
+     "priority": 2,
+     "regionInfoList": [
+      {
+       "regionType": "PATH",
+       "elevationProfile": {},
+       "directionInfo": {
+        "directionType": "DIRECTIONALITY",
+        "directionality": "forward"
+       },
+       "laneWidthProfile": {
+        "defaultWidthMeters": 15.0
+       }
+      }
+     ],
+     "content": {
+      "type": "ROAD_SIGNAGE",
+      "contentItems": [
+       {
+        "type": "ITIS_CODE",
+        "itisCode": 268,
+        "itisPhrase": "speed-limit"
+       },
+       {
+        "type": "ITIS_CODE",
+        "itisCode": 12569,
+        "itisPhrase": "n25"
+       },
+       {
+        "type": "ITIS_CODE",
+        "itisCode": 8720,
+        "itisPhrase": "mPH"
+       }
+      ],
+      "sentence": "speed-limit n25 mPH"
+     }
+    }
+   }
+  ],
+  "type": "FeatureCollection"
+ }
+}
+```
 
 [Back to top](#toc)
 
