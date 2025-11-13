@@ -4,7 +4,105 @@
 
 The JPO Intersection GeoJSON Converter is a real-time validator and data converter of JPO-ODE MAP and SPaT JSON based on the SAE J2735 message standard. Messages are consumed from Kafka and validated based on both the SAE J2735 standard and the more robust Connected Transportation Interoperability (CTI) Intersection Implementation Guide Message Requirements (Section 3.3.3). Message validation occurs simultaneously as the GeoJSON converter converts the JPO-ODE MAP and SPaT messages into mappable geoJSON. The JPO Intersection GeoJSON Converter outputs the resulting geoJSON onto Kafka topics. These messages contain validation information that identifies all issues encountered with validation, if any.
 
-![alt text](docs/jpo-geojsonconverter_arch_diagram.png "jpo-geojsonconverter Design Diagram")
+```mermaid
+flowchart LR
+
+%% Column 0: The Source
+subgraph COL0 ["Source"]
+    direction TB %% <-- Keep columns vertical
+    ODE["ODE (Operational Data Environment)"]
+end
+
+%% Column 1: Input Topics
+subgraph COL1 ["Kafka - Input Topics"]
+    direction TB
+    A_Map["OdeMapJson"]
+    A_Spat["OdeSpatJson"]
+    A_Bsm["OdeBsmJson"]
+    A_Psm["OdePsmJson"]
+    A_Rtcm["OdeRtcmJson"]
+    A_Srm["OdeSrmJson"]
+    A_Ssm["OdeSsmJson"]
+    A_Tim["OdeTimJson"]
+end
+
+%% Column 2: Processing
+subgraph COL2 ["Processing Service<br/>(jpo-geojsonconverter)"]
+    direction TB
+    V_Map["Validate Map"] --> C_Map["Convert Map"]
+    V_Spat["Validate Spat"] --> C_Spat["Convert Spat"]
+    V_Bsm["Validate Bsm"] --> C_Bsm["Convert Bsm"]
+    V_Psm["Validate Psm"] --> C_Psm["Convert Psm"]
+    V_Rtcm["Validate Rtcm"] --> C_Rtcm["Convert Rtcm"]
+    V_Srm["Validate Srm"] --> C_Srm["Convert Srm"]
+    V_Ssm["Validate Ssm"] --> C_Ssm["Convert Ssm"]
+    V_Tim["Validate Tim"] --> C_Tim["Convert Tim"]
+end
+
+%% Column 3: Output Topics
+subgraph COL3 ["Kafka - Output Topics"]
+    direction TB
+    O_Map["ProcessedMap"]
+    O_MapWKT["ProcessedMapWKT"]
+    O_Spat["ProcessedSpat"]
+    O_Bsm["ProcessedBsm"]
+    O_Psm["ProcessedPsm"]
+    O_Rtcm["ProcessedRtcm"]
+    O_Srm["ProcessedSrm"]
+    O_Ssm["ProcessedSsm"]
+    O_Tim["ProcessedTim"]
+end
+
+%% ------------------------
+%% Wiring: ODE → Input
+%% ------------------------
+ODE --> A_Map
+ODE --> A_Spat
+ODE --> A_Bsm
+ODE --> A_Psm
+ODE --> A_Rtcm
+ODE --> A_Srm
+ODE --> A_Ssm
+ODE --> A_Tim
+
+%% ------------------------
+%% Wiring: Input → Validator
+%% ------------------------
+A_Map --> V_Map
+A_Spat --> V_Spat
+A_Bsm --> V_Bsm
+A_Psm --> V_Psm
+A_Rtcm --> V_Rtcm
+A_Srm --> V_Srm
+A_Ssm --> V_Ssm
+A_Tim --> V_Tim
+
+%% ------------------------
+%% Wiring: Converter → Output
+%% ------------------------
+C_Map --> O_Map
+C_Map --> O_MapWKT
+C_Spat --> O_Spat
+C_Bsm --> O_Bsm
+C_Psm --> O_Psm
+C_Rtcm --> O_Rtcm
+C_Srm --> O_Srm
+C_Ssm --> O_Ssm
+C_Tim --> O_Tim
+
+%% ------------------------
+%% Node Coloring
+%% ------------------------
+classDef odeStyle fill:#ff9800,stroke:#e65100,color:#000,stroke-width:2px;
+classDef kafka fill:#9c27b0,stroke:#6a1b9a,color:#fff,stroke-width:2px;
+classDef val fill:#000,stroke:#ff9800,color:#fff,stroke-width:2px;
+classDef conv fill:#2196f3,stroke:#1565c0,color:#fff,stroke-width:2px;
+
+class ODE odeStyle
+class A_Map,A_Spat,A_Bsm,A_Psm,A_Rtcm,A_Srm,A_Ssm,A_Tim,O_Map,O_MapWKT,O_Spat,O_Bsm,O_Psm,O_Rtcm,O_Srm,O_Ssm,O_Tim kafka
+class V_Map,V_Spat,V_Bsm,V_Psm,V_Rtcm,V_Srm,V_Ssm,V_Tim val
+class C_Map,C_Spat,C_Bsm,C_Psm,C_Rtcm,C_Srm,C_Ssm,C_Tim conv
+```
 
 The message validation has been included in the jpo-geojsonconverter in order to prevent too many small microservices from being created. The extent of the current validation that occurs is surface level and is supported by simple verification against a schema that is based on J2735 and the CTI Intersection Implementation Guide. There may be reason to eventually break this feature out into a new, separate repository if more complex validation must be performed.
 
@@ -758,6 +856,8 @@ Example `ProcessedTim` message:
  }
 }
 ```
+
+<a name="configuration"/>
 
 ## 2. Configuration
 
