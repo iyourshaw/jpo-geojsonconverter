@@ -1094,7 +1094,7 @@ permissions and limitations under the [License](http://www.apache.org/licenses/L
 
 ## 7. Contributing
 
-Please read our [contributing guide](docs/contributing_guide.md) to learn about our development process, how to propose pull requests and improvements, and how to build and test your changes to this project.
+Please read our [contributing guide](https://github.com/usdot-jpo-ode/jpo-ode/blob/develop/docs/contributing_guide.md) to learn about our development process, how to propose pull requests and improvements, and how to build and test your changes to this project.
 
 ### Source Repositories - GitHub
 

@@ -15,15 +15,13 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * Represents the properties of a TIM region feature.
  * <p>
- * frameType - The frame type (roadSignage, commercialSignage)
+ * deploymentAgencyType - The agency responsible for deploying the TIM message
  * <p>
  * validityPeriod - The validity period for the TIM message
  * <p>
- * status - The status of the TIM message (active, inactive, etc.)
- * <p>
  * priority - The priority level of the TIM message
  * <p>
- * regionInfo - Array of information about each region geometry and characteristics
+ * regionInfoList - List of information about each region geometry and characteristics
  * <p>
  * content - The content of the TIM message including ITIS codes and text
  */
