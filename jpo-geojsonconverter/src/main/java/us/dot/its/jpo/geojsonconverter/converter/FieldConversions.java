@@ -405,11 +405,11 @@ public class FieldConversions {
      * (0°) and moving clockwise.
      *
      * @param directionBitstring The Asn1Bitstring direction field
-     * @return Array of active sector bit positions
+     * @return List of active sector bit positions
      */
-    public static int[] parseHeadingSectorsFromBitstring(Asn1Bitstring directionBitstring) {
+    public static List<Integer> parseHeadingSectorsFromBitstring(HeadingSlice directionBitstring) {
         if (directionBitstring == null) {
-            return new int[0];
+            return new ArrayList<>();
         }
 
         List<Integer> activeSectors = new ArrayList<>();
@@ -424,7 +424,7 @@ public class FieldConversions {
             }
         }
 
-        return activeSectors.stream().mapToInt(Integer::intValue).toArray();
+        return activeSectors;
     }
 
     /**
@@ -434,22 +434,8 @@ public class FieldConversions {
      * @param directionBitstring The Asn1Bitstring direction field
      * @return Array of heading ranges, where each range is represented as [startBit, endBit] (inclusive)
      */
-    public static int[][] parseHeadingSectorsAsRanges(Asn1Bitstring directionBitstring) {
-        if (directionBitstring == null) {
-            return new int[0][];
-        }
-
-        List<Integer> activeSectors = new ArrayList<>();
-
-        // Check each bit up to the maximum number of heading sectors or the bitstring size
-        int bitstringSize = directionBitstring.size();
-        int maxBits = Math.min(MAX_HEADING_SECTORS, bitstringSize);
-
-        for (int bit = 0; bit < maxBits; bit++) {
-            if (directionBitstring.get(bit)) {
-                activeSectors.add(bit);
-            }
-        }
+    public static int[][] parseHeadingSectorsAsRanges(HeadingSlice directionBitstring) {
+        List<Integer> activeSectors = parseHeadingSectorsFromBitstring(directionBitstring);
 
         if (activeSectors.isEmpty()) {
             return new int[0][];
@@ -533,27 +519,17 @@ public class FieldConversions {
             return null;
         }
 
-        switch (units) {
-            case CENTIMETER:
-                return radius * 0.01; // 1 cm = 0.01 m
-            case CM2_5:
-                return radius * 0.025; // 1 cm2-5 = 0.025 m (2.5 cm)
-            case DECIMETER:
-                return radius * 0.1; // 1 dm = 0.1 m
-            case METER:
-                return (double) radius; // 1 m = 1 m
-            case KILOMETER:
-                return radius * 1000.0; // 1 km = 1000 m
-            case FOOT:
-                return radius * 0.3048; // 1 ft = 0.3048 m
-            case YARD:
-                return radius * 0.9144; // 1 yd = 0.9144 m
-            case MILE:
-                return radius * 1609.344; // 1 mi = 1609.344 m
-            default:
-                // Default to meters if unknown unit
-                return (double) radius;
-        }
+        return switch (units) {
+            case CENTIMETER -> radius * 0.01; // 1 cm = 0.01 m
+            case CM2_5 -> radius * 0.025; // 1 cm2-5 = 0.025 m (2.5 cm)
+            case DECIMETER -> radius * 0.1; // 1 dm = 0.1 m
+            case METER -> (double) radius; // 1 m = 1 m
+            case KILOMETER -> radius * 1000.0; // 1 km = 1000 m
+            case FOOT -> radius * 0.3048; // 1 ft = 0.3048 m
+            case YARD -> radius * 0.9144; // 1 yd = 0.9144 m
+            case MILE -> radius * 1609.344; // 1 mi = 1609.344 m
+            default -> (double) radius; // Default to meters if unknown unit
+        };
     }
 
     final static int MINUTES_PER_DAY = 24 * 60;

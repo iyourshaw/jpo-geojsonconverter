@@ -6,6 +6,7 @@ services:
     profiles:
       - all
       - geojson_full
+      - geojson_base
     build:
       context: .
       dockerfile: Dockerfile
@@ -35,40 +36,14 @@ services:
         condition: service_healthy
         required: false
 
-  geojsonconverter_base:
-    profiles:
-      - geojson_base
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        MAVEN_GITHUB_TOKEN: ${MAVEN_GITHUB_TOKEN:?error}
-        MAVEN_GITHUB_ORG: ${MAVEN_GITHUB_ORG:?error}
-    image: jpo_geojsonconverter:latest
-    restart: ${RESTART_POLICY}
-    deploy:
-      resources:
-        limits:
-          cpus: "1"
-          memory: 2G
-    environment:
-      DOCKER_HOST_IP: ${DOCKER_HOST_IP:?error}
-      KAFKA_TYPE: ${KAFKA_TYPE}
-      CONFLUENT_KEY: ${CONFLUENT_KEY}
-      CONFLUENT_SECRET: ${CONFLUENT_SECRET}
-      geometry.output.mode: ${GEOMETRY_OUTPUT_MODE}
-      spring.kafka.bootstrap-servers: ${DOCKER_HOST_IP:?error}:9092
-    logging:
-      options:
-        max-size: "10m"
-        max-file: "5"
-
   # ODE Services:
   ode:
     profiles:
       - all
       - geojson_full
-    image: usdotjpoode/jpo-ode:latest
+      - ode_full
+      - ode
+    image: usdotjpoode/jpo-ode:${ODE_VERSION:-latest}
     restart: ${RESTART_POLICY}
     deploy:
       resources:
@@ -128,7 +103,9 @@ services:
     profiles:
       - all
       - geojson_full
-    image: usdotjpoode/asn1_codec:latest
+      - ode_full
+      - adm
+    image: usdotjpoode/asn1_codec:${ODE_VERSION:-latest}
     restart: ${RESTART_POLICY}
     deploy:
       resources:

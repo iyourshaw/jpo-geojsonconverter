@@ -16,14 +16,14 @@ end
 %% Column 1: Input Topics
 subgraph COL1 ["Kafka - Input Topics"]
     direction TB
-    A_Map["OdeMapJson"]
-    A_Spat["OdeSpatJson"]
-    A_Bsm["OdeBsmJson"]
-    A_Psm["OdePsmJson"]
-    A_Rtcm["OdeRtcmJson"]
-    A_Srm["OdeSrmJson"]
-    A_Ssm["OdeSsmJson"]
-    A_Tim["OdeTimJson"]
+    A_Map["topic.OdeMapJson"]
+    A_Spat["topic.OdeSpatJson"]
+    A_Bsm["topic.OdeBsmJson"]
+    A_Psm["topic.OdePsmJson"]
+    A_Rtcm["topic.OdeRtcmJson"]
+    A_Srm["topic.OdeSrmJson"]
+    A_Ssm["topic.OdeSsmJson"]
+    A_Tim["topic.OdeTimJson"]
 end
 
 %% Column 2: Processing
@@ -42,15 +42,15 @@ end
 %% Column 3: Output Topics
 subgraph COL3 ["Kafka - Output Topics"]
     direction TB
-    O_Map["ProcessedMap"]
-    O_MapWKT["ProcessedMapWKT"]
-    O_Spat["ProcessedSpat"]
-    O_Bsm["ProcessedBsm"]
-    O_Psm["ProcessedPsm"]
-    O_Rtcm["ProcessedRtcm"]
-    O_Srm["ProcessedSrm"]
-    O_Ssm["ProcessedSsm"]
-    O_Tim["ProcessedTim"]
+    O_Map["topic.ProcessedMap"]
+    O_MapWKT["topic.ProcessedMapWKT"]
+    O_Spat["topic.ProcessedSpat"]
+    O_Bsm["topic.ProcessedBsm"]
+    O_Psm["topic.ProcessedPsm"]
+    O_Rtcm["topic.ProcessedRtcm"]
+    O_Srm["topic.ProcessedSrm"]
+    O_Ssm["topic.ProcessedSsm"]
+    O_Tim["topic.ProcessedTim"]
 end
 
 %% ------------------------

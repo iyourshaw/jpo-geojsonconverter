@@ -5,14 +5,16 @@ import us.dot.its.jpo.asn.j2735.r2024.Common.*;
 import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.DistanceUnits;
 import us.dot.its.jpo.asn.j2735.r2024.SignalRequestMessage.DeltaTime;
 
-import java.time.*;
 import java.time.Duration;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class FieldConversionsTest {
     @Test
@@ -603,9 +605,367 @@ public class FieldConversionsTest {
         assertThat(result, nullValue());
     }
 
+    // ========== DDateTime Conversion Tests ==========
+
+    @Test
+    public void testConvertDDateTime() {
+        List<String> validationMessages = new ArrayList<>();
+
+        // Test complete DDateTime
+        DDateTime dDateTime = new DDateTime();
+        dDateTime.setYear(new DYear(2024L));
+        dDateTime.setMonth(new DMonth(6L));
+        dDateTime.setDay(new DDay(15L));
+        dDateTime.setHour(new DHour(14L));
+        dDateTime.setMinute(new DMinute(30L));
+        dDateTime.setSecond(new DSecond(45000L)); // 45 seconds
+        dDateTime.setOffset(new DOffset(0L)); // UTC
+
+        Long result = FieldConversions.convertDDateTime(validationMessages, dDateTime);
+        assertThat(result, notNullValue());
+        assertThat(validationMessages, empty());
+
+        // Test null DDateTime
+        validationMessages.clear();
+        result = FieldConversions.convertDDateTime(validationMessages, null);
+        assertThat(result, nullValue());
+        assertThat(validationMessages, hasSize(1));
+        assertThat(validationMessages.get(0), containsString("DDateTime is missing"));
+
+        // Test DDateTime with missing year
+        validationMessages.clear();
+        dDateTime = new DDateTime();
+        dDateTime.setYear(new DYear(0L)); // Unknown year
+        dDateTime.setMonth(new DMonth(6L));
+        dDateTime.setDay(new DDay(15L));
+        dDateTime.setHour(new DHour(14L));
+        dDateTime.setMinute(new DMinute(30L));
+        dDateTime.setSecond(new DSecond(45000L));
+        dDateTime.setOffset(new DOffset(0L));
+
+        result = FieldConversions.convertDDateTime(validationMessages, dDateTime);
+        assertThat(result, nullValue());
+        assertThat(validationMessages, hasItem(containsString("year")));
+    }
+
+    // ========== Heading Sector Bitstring Tests ==========
+
+    @Test
+    public void testParseHeadingSectorsFromBitstring() {
+        // Test null bitstring
+        List<Integer> result = FieldConversions.parseHeadingSectorsFromBitstring(null);
+        assertThat(result, notNullValue());
+        assertThat(result, empty());
+
+        // Test bitstring with single bit set
+        HeadingSlice bitstring = mock(HeadingSlice.class);
+        when(bitstring.size()).thenReturn(16);
+        when(bitstring.get(0)).thenReturn(true);
+        when(bitstring.get(1)).thenReturn(false);
+        when(bitstring.get(2)).thenReturn(false);
+        when(bitstring.get(3)).thenReturn(true);
+        when(bitstring.get(4)).thenReturn(false);
+        for (int i = 5; i < 16; i++) {
+            when(bitstring.get(i)).thenReturn(false);
+        }
+
+        result = FieldConversions.parseHeadingSectorsFromBitstring(bitstring);
+        assertThat(result, notNullValue());
+        assertThat(result, hasSize(2));
+        assertThat(result, contains(0, 3));
+
+        // Test bitstring with all bits set
+        HeadingSlice allBitsSet = mock(HeadingSlice.class);
+        when(allBitsSet.size()).thenReturn(16);
+        for (int i = 0; i < 16; i++) {
+            when(allBitsSet.get(i)).thenReturn(true);
+        }
+
+        result = FieldConversions.parseHeadingSectorsFromBitstring(allBitsSet);
+        assertThat(result, notNullValue());
+        assertThat(result, hasSize(16));
+
+        // Test bitstring with no bits set
+        HeadingSlice noBitsSet = mock(HeadingSlice.class);
+        when(noBitsSet.size()).thenReturn(16);
+        for (int i = 0; i < 16; i++) {
+            when(noBitsSet.get(i)).thenReturn(false);
+        }
+
+        result = FieldConversions.parseHeadingSectorsFromBitstring(noBitsSet);
+        assertThat(result, notNullValue());
+        assertThat(result, empty());
+    }
+
+    @Test
+    public void testParseHeadingSectorsAsRanges() {
+        // Test null bitstring
+        int[][] result = FieldConversions.parseHeadingSectorsAsRanges(null);
+        assertThat(result, notNullValue());
+        assertThat(result.length, equalTo(0));
+
+        // Test bitstring with adjacent sectors (should merge into one range)
+        HeadingSlice adjacentBits = mock(HeadingSlice.class);
+        when(adjacentBits.size()).thenReturn(16);
+        when(adjacentBits.get(0)).thenReturn(true);
+        when(adjacentBits.get(1)).thenReturn(true);
+        when(adjacentBits.get(2)).thenReturn(true);
+        for (int i = 3; i < 16; i++) {
+            when(adjacentBits.get(i)).thenReturn(false);
+        }
+
+        result = FieldConversions.parseHeadingSectorsAsRanges(adjacentBits);
+        assertThat(result, notNullValue());
+        assertThat(result.length, equalTo(1));
+        assertThat(result[0][0], equalTo(0));
+        assertThat(result[0][1], equalTo(2));
+
+        // Test bitstring with non-adjacent sectors (should create multiple ranges)
+        HeadingSlice nonAdjacentBits = mock(HeadingSlice.class);
+        when(nonAdjacentBits.size()).thenReturn(16);
+        when(nonAdjacentBits.get(0)).thenReturn(true);
+        when(nonAdjacentBits.get(1)).thenReturn(false);
+        when(nonAdjacentBits.get(2)).thenReturn(false);
+        when(nonAdjacentBits.get(3)).thenReturn(true);
+        when(nonAdjacentBits.get(4)).thenReturn(true);
+        when(nonAdjacentBits.get(5)).thenReturn(false);
+        when(nonAdjacentBits.get(6)).thenReturn(false);
+        when(nonAdjacentBits.get(7)).thenReturn(true);
+        for (int i = 8; i < 16; i++) {
+            when(nonAdjacentBits.get(i)).thenReturn(false);
+        }
+
+        result = FieldConversions.parseHeadingSectorsAsRanges(nonAdjacentBits);
+        assertThat(result, notNullValue());
+        assertThat(result.length, equalTo(3));
+        assertThat(result[0][0], equalTo(0));
+        assertThat(result[0][1], equalTo(0));
+        assertThat(result[1][0], equalTo(3));
+        assertThat(result[1][1], equalTo(4));
+        assertThat(result[2][0], equalTo(7));
+        assertThat(result[2][1], equalTo(7));
+
+        // Test bitstring with no bits set
+        HeadingSlice noBitsSet = mock(HeadingSlice.class);
+        when(noBitsSet.size()).thenReturn(16);
+        for (int i = 0; i < 16; i++) {
+            when(noBitsSet.get(i)).thenReturn(false);
+        }
+
+        result = FieldConversions.parseHeadingSectorsAsRanges(noBitsSet);
+        assertThat(result, notNullValue());
+        assertThat(result.length, equalTo(0));
+    }
+
+    // ========== Minute of Year Conversion Tests (with year parameter) ==========
+
+    @Test
+    public void testConvertMinuteOfYear_WithYear() {
+        // Test normal minute of year with explicit year
+        MinuteOfTheYear moy = new MinuteOfTheYear(1000L);
+        ZonedDateTime result = FieldConversions.convertMinuteOfYear(moy, 2024);
+        assertThat(result, notNullValue());
+        assertThat(result.getYear(), equalTo(2024));
+        assertThat(result.getMonthValue(), equalTo(1));
+        assertThat(result.getDayOfMonth(), equalTo(1));
+
+        // Test invalid minute of year (527040)
+        moy = new MinuteOfTheYear(527040L);
+        result = FieldConversions.convertMinuteOfYear(moy, 2024);
+        assertThat(result, nullValue());
+
+        // Test null minute of year
+        result = FieldConversions.convertMinuteOfYear(null, 2024);
+        assertThat(result, nullValue());
+    }
+
+    // ========== Minute of Year and DSecond Conversion Tests ==========
+
+    @Test
+    public void testConvertMinuteOfYearAndDSecond_WithIngestTime() {
+        ZonedDateTime ingestTime = ZonedDateTime.of(2024, 6, 15, 14, 30, 0, 0, ZoneOffset.UTC);
+        MinuteOfTheYear moy = new MinuteOfTheYear(1000L);
+        DSecond dSecond = new DSecond(45000L); // 45 seconds
+
+        ZonedDateTime result = FieldConversions.convertMinuteOfYearAndDSecond(moy, ingestTime, dSecond);
+        assertThat(result, notNullValue());
+        assertThat(result.getYear(), equalTo(2024));
+        assertThat(result.getSecond(), equalTo(45));
+
+        // Test with null DSecond
+        result = FieldConversions.convertMinuteOfYearAndDSecond(moy, ingestTime, null);
+        assertThat(result, notNullValue());
+        assertThat(result.getSecond(), equalTo(0));
+
+        // Test with null minute of year
+        result = FieldConversions.convertMinuteOfYearAndDSecond(null, ingestTime, dSecond);
+        assertThat(result, nullValue());
+    }
+
+    @Test
+    public void testConvertMinuteOfYearAndDSecond_WithYear() {
+        MinuteOfTheYear moy = new MinuteOfTheYear(1000L);
+        DSecond dSecond = new DSecond(45000L); // 45 seconds
+
+        ZonedDateTime result = FieldConversions.convertMinuteOfYearAndDSecond(moy, 2024, dSecond);
+        assertThat(result, notNullValue());
+        assertThat(result.getYear(), equalTo(2024));
+        assertThat(result.getSecond(), equalTo(45));
+
+        // Test with null DSecond
+        result = FieldConversions.convertMinuteOfYearAndDSecond(moy, 2024, null);
+        assertThat(result, notNullValue());
+        assertThat(result.getSecond(), equalTo(0));
+
+        // Test with null minute of year
+        result = FieldConversions.convertMinuteOfYearAndDSecond(null, 2024, dSecond);
+        assertThat(result, nullValue());
+    }
+
+    // ========== Intersection Reference ID Conversion Tests ==========
+
+    @Test
+    public void testConvertIntersectionReferenceID() {
+        // Test with both region and ID
+        IntersectionReferenceID intersectionRef = new IntersectionReferenceID();
+        intersectionRef.setRegion(new RoadRegulatorID(10L));
+        intersectionRef.setId(new IntersectionID(10001L));
+
+        FieldConversions.RegionIntersectionId result = FieldConversions.convertIntersectionReferenceID(intersectionRef);
+        assertThat(result, notNullValue());
+        assertThat(result.region(), equalTo(10));
+        assertThat(result.intersectionId(), equalTo(10001));
+
+        // Test with only region
+        intersectionRef = new IntersectionReferenceID();
+        intersectionRef.setRegion(new RoadRegulatorID(10L));
+        intersectionRef.setId(null);
+
+        result = FieldConversions.convertIntersectionReferenceID(intersectionRef);
+        assertThat(result, notNullValue());
+        assertThat(result.region(), equalTo(10));
+        assertThat(result.intersectionId(), nullValue());
+
+        // Test with only ID
+        intersectionRef = new IntersectionReferenceID();
+        intersectionRef.setRegion(null);
+        intersectionRef.setId(new IntersectionID(10001L));
+
+        result = FieldConversions.convertIntersectionReferenceID(intersectionRef);
+        assertThat(result, notNullValue());
+        assertThat(result.region(), nullValue());
+        assertThat(result.intersectionId(), equalTo(10001));
+
+        // Test with null
+        result = FieldConversions.convertIntersectionReferenceID(null);
+        assertThat(result, notNullValue());
+        assertThat(result.region(), nullValue());
+        assertThat(result.intersectionId(), nullValue());
+    }
+
     // ========== Vehicle ID Conversion Tests ==========
-    // Note: VehicleID tests are commented out due to EntityID constructor issues
-    // These would need to be implemented with proper mock objects or test data
+
+    @Test
+    public void testConvertVehicleID() {
+        // Test with EntityID (TemporaryID)
+        VehicleID vehicleID = mock(VehicleID.class);
+        var entityID = mock(us.dot.its.jpo.asn.j2735.r2024.Common.TemporaryID.class);
+        when(entityID.getValue()).thenReturn("TEST123");
+        when(vehicleID.getEntityID()).thenReturn(entityID);
+        when(vehicleID.getStationID()).thenReturn(null);
+
+        String result = FieldConversions.convertVehicleID(vehicleID);
+        assertThat(result, notNullValue());
+        assertThat(result, equalTo("TEST123"));
+
+        // Test with StationID
+        vehicleID = mock(VehicleID.class);
+        StationID stationID = new StationID(12345L);
+        when(vehicleID.getEntityID()).thenReturn(null);
+        when(vehicleID.getStationID()).thenReturn(stationID);
+
+        result = FieldConversions.convertVehicleID(vehicleID);
+        assertThat(result, notNullValue());
+        assertThat(result, equalTo("12345"));
+
+        // Test with null
+        result = FieldConversions.convertVehicleID(null);
+        assertThat(result, nullValue());
+
+        // Test with neither EntityID nor StationID
+        vehicleID = mock(VehicleID.class);
+        when(vehicleID.getEntityID()).thenReturn(null);
+        when(vehicleID.getStationID()).thenReturn(null);
+
+        result = FieldConversions.convertVehicleID(vehicleID);
+        assertThat(result, nullValue());
+    }
+
+    // ========== Intersection Access Point ID Conversion Tests ==========
+
+    @Test
+    public void testConvertIntersectionAccessPointID() {
+        // Test with LaneID
+        IntersectionAccessPoint iap = mock(IntersectionAccessPoint.class);
+        LaneID laneID = new LaneID(5L);
+        when(iap.getLane()).thenReturn(laneID);
+        when(iap.getApproach()).thenReturn(null);
+        when(iap.getConnection()).thenReturn(null);
+
+        FieldConversions.AccessPointID result = FieldConversions.convertIntersectionAccessPointID(iap);
+        assertThat(result, notNullValue());
+        assertThat(result.laneID(), equalTo(5));
+        assertThat(result.approachID(), nullValue());
+        assertThat(result.connectionID(), nullValue());
+
+        // Test with ApproachID
+        iap = mock(IntersectionAccessPoint.class);
+        ApproachID approachID = new ApproachID(10L);
+        when(iap.getLane()).thenReturn(null);
+        when(iap.getApproach()).thenReturn(approachID);
+        when(iap.getConnection()).thenReturn(null);
+
+        result = FieldConversions.convertIntersectionAccessPointID(iap);
+        assertThat(result, notNullValue());
+        assertThat(result.laneID(), nullValue());
+        assertThat(result.approachID(), equalTo(10));
+        assertThat(result.connectionID(), nullValue());
+
+        // Test with ConnectionID (LaneConnectionID)
+        iap = mock(IntersectionAccessPoint.class);
+        var connectionID = mock(us.dot.its.jpo.asn.j2735.r2024.Common.LaneConnectionID.class);
+        when(connectionID.getValue()).thenReturn(15L);
+        when(iap.getLane()).thenReturn(null);
+        when(iap.getApproach()).thenReturn(null);
+        when(iap.getConnection()).thenReturn(connectionID);
+
+        result = FieldConversions.convertIntersectionAccessPointID(iap);
+        assertThat(result, notNullValue());
+        assertThat(result.laneID(), nullValue());
+        assertThat(result.approachID(), nullValue());
+        assertThat(result.connectionID(), equalTo(15));
+
+        // Test with all three
+        iap = mock(IntersectionAccessPoint.class);
+        var connectionID2 = mock(us.dot.its.jpo.asn.j2735.r2024.Common.LaneConnectionID.class);
+        when(connectionID2.getValue()).thenReturn(15L);
+        when(iap.getLane()).thenReturn(new LaneID(5L));
+        when(iap.getApproach()).thenReturn(new ApproachID(10L));
+        when(iap.getConnection()).thenReturn(connectionID2);
+
+        result = FieldConversions.convertIntersectionAccessPointID(iap);
+        assertThat(result, notNullValue());
+        assertThat(result.laneID(), equalTo(5));
+        assertThat(result.approachID(), equalTo(10));
+        assertThat(result.connectionID(), equalTo(15));
+
+        // Test with null
+        result = FieldConversions.convertIntersectionAccessPointID(null);
+        assertThat(result, notNullValue());
+        assertThat(result.laneID(), nullValue());
+        assertThat(result.approachID(), nullValue());
+        assertThat(result.connectionID(), nullValue());
+    }
 
     // ========== Delta Time Conversion Tests ==========
 
