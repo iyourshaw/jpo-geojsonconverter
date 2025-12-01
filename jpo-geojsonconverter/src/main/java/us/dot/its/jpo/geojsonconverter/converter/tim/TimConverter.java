@@ -1,21 +1,5 @@
 package us.dot.its.jpo.geojsonconverter.converter.tim;
 
-import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.*;
-import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.TravelerDataFrame.ContentChoice;
-import us.dot.its.jpo.asn.j2735.r2024.Common.*;
-import us.dot.its.jpo.asn.j2735.r2024.ITIS.*;
-import us.dot.its.jpo.geojsonconverter.pojos.ProcessedValidationMessage;
-import us.dot.its.jpo.geojsonconverter.pojos.tim.*;
-import us.dot.its.jpo.geojsonconverter.pojos.geojson.tim.*;
-import us.dot.its.jpo.geojsonconverter.pojos.geojson.*;
-import us.dot.its.jpo.geojsonconverter.utils.*;
-import us.dot.its.jpo.geojsonconverter.converter.FieldConversions;
-import us.dot.its.jpo.ode.model.OdeMessageFrameMetadata;
-import org.locationtech.jts.geom.Point;
-
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
-
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -23,6 +7,29 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.locationtech.jts.geom.Point;
+import org.springframework.stereotype.Component;
+import lombok.extern.slf4j.Slf4j;
+import us.dot.its.jpo.asn.j2735.r2024.Common.MinuteOfTheYear;
+import us.dot.its.jpo.asn.j2735.r2024.Common.Position3D;
+import us.dot.its.jpo.asn.j2735.r2024.J2540ITIS.ITIScodes;
+import us.dot.its.jpo.asn.j2735.r2024.ITIS.ITIScodesAndTextSequence;
+import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.GeographicalPath;
+import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.SpeedLimitSequence;
+import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.TravelerDataFrame;
+import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.TravelerDataFrame.ContentChoice;
+import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.TravelerInfoType;
+import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.TravelerInformation;
+import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.WorkZoneSequence;
+import us.dot.its.jpo.geojsonconverter.converter.FieldConversions;
+import us.dot.its.jpo.geojsonconverter.pojos.ProcessedValidationMessage;
+import us.dot.its.jpo.geojsonconverter.pojos.geojson.Geometry;
+import us.dot.its.jpo.geojsonconverter.pojos.geojson.tim.*;
+import us.dot.its.jpo.geojsonconverter.pojos.tim.OffsetInformation;
+import us.dot.its.jpo.geojsonconverter.pojos.tim.ProcessedCompliance;
+import us.dot.its.jpo.geojsonconverter.pojos.tim.ProcessedTim;
+import us.dot.its.jpo.geojsonconverter.utils.J2735DateTimeConverter;
+import us.dot.its.jpo.ode.model.OdeMessageFrameMetadata;
 
 /**
  * Converts ASN.1 TravelerInformation to ProcessedTim objects. This class contains the core conversion logic separated
@@ -582,7 +589,7 @@ public class TimConverter {
             // Process ITIS codes - check for item field first
             if (advisory.getItem() != null && advisory.getItem().getItis() != null) {
                 Long itisCode = advisory.getItem().getItis().getValue();
-                String itisPhrase = ItisCodeLookup.lookupItisCode(itisCode);
+                String itisPhrase = lookupItisCode(itisCode);
                 contentItems.add(new ProcessedTimContentItem(itisCode, itisPhrase));
             }
 
@@ -606,7 +613,7 @@ public class TimConverter {
             // Process ITIS codes - check for item field first
             if (speedLimit.getItem() != null && speedLimit.getItem().getItis() != null) {
                 Long itisCode = speedLimit.getItem().getItis().getValue();
-                String itisPhrase = ItisCodeLookup.lookupItisCode(itisCode);
+                String itisPhrase = lookupItisCode(itisCode);
                 contentItems.add(new ProcessedTimContentItem(itisCode, itisPhrase));
             }
 
@@ -630,7 +637,7 @@ public class TimConverter {
             // Process ITIS codes - check for item field first
             if (workZone.getItem() != null && workZone.getItem().getItis() != null) {
                 Long itisCode = workZone.getItem().getItis().getValue();
-                String itisPhrase = ItisCodeLookup.lookupItisCode(itisCode);
+                String itisPhrase = lookupItisCode(itisCode);
                 contentItems.add(new ProcessedTimContentItem(itisCode, itisPhrase));
             }
 
@@ -641,6 +648,26 @@ public class TimConverter {
                     contentItems.add(ProcessedTimContentItem.createPlainTextItem(text.trim()));
                 }
             }
+        }
+    }
+
+    /**
+     * Look up a single ITIS code and return its human-readable message.
+     *
+     * @param itisCode The ITIS code to look up
+     * @return The human-readable message for the ITIS code, or "unknown" if not found
+     */
+    public static String lookupItisCode(Long itisCode) {
+        if (itisCode == null) {
+            return "unknown";
+        }
+
+        try {
+            ITIScodes itisCodes = new ITIScodes(itisCode);
+            return itisCodes.name().orElse("unknown");
+        } catch (Exception e) {
+            log.debug("Error looking up ITIS code {}: {}", itisCode, e.getMessage());
+            return "unknown";
         }
     }
 }

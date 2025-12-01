@@ -114,4 +114,40 @@ public class TimConverterTest {
         assertTrue(!processedTim.getCompliance().get(0).isCompliant());
         assertEquals(validationMessages, processedTim.getCompliance().get(0).getValidationMessages());
     }
+
+    // Known ITIS codes for testing (these should be valid ITIS codes)
+    private static final Long KNOWN_ITIS_CODE_1 = 268L; // Should be a valid ITIS code
+    private static final Long UNKNOWN_ITIS_CODE = 999999L; // Should be an unknown ITIS code
+    private static final Long NEGATIVE_ITIS_CODE = -1L; // Invalid ITIS code
+    private static final Long ZERO_ITIS_CODE = 0L; // Zero ITIS code
+
+    @Test
+    public void testLookupItisCodeWithValidCode() {
+        String result = TimConverter.lookupItisCode(KNOWN_ITIS_CODE_1);
+        assertEquals("Road Closed", result);
+    }
+
+    @Test
+    public void testLookupItisCodeWithUnknownCode() {
+        String result = TimConverter.lookupItisCode(UNKNOWN_ITIS_CODE);
+        assertEquals("unknown", result);
+    }
+
+    @Test
+    public void testLookupItisCodeWithNullCode() {
+        String result = TimConverter.lookupItisCode(null);
+        assertEquals("unknown", result);
+    }
+
+    @Test
+    public void testLookupItisCodeWithNegativeCode() {
+        String result = TimConverter.lookupItisCode(NEGATIVE_ITIS_CODE);
+        assertEquals("unknown", result);
+    }
+
+    @Test
+    public void testLookupItisCodeWithZeroCode() {
+        String result = TimConverter.lookupItisCode(ZERO_ITIS_CODE);
+        assertEquals("unknown", result);
+    }
 }
