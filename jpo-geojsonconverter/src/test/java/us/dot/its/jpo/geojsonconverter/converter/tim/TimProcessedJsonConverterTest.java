@@ -76,13 +76,13 @@ public class TimProcessedJsonConverterTest {
         assertTrue(processedTim.getCompliance().get(0).isCompliant());
 
         // Verify feature collection and geometry processing
-        assertNotNull(processedTim.getRegionFeatureCollection());
-        assertNotNull(processedTim.getRegionFeatureCollection().getFeatures());
-        assertTrue(processedTim.getRegionFeatureCollection().getFeatures().size() > 0);
+        assertNotNull(processedTim.getDataFrameFeatureCollection());
+        assertNotNull(processedTim.getDataFrameFeatureCollection().getFeatures());
+        assertTrue(processedTim.getDataFrameFeatureCollection().getFeatures().size() > 0);
         assertNotNull(processedTim.getLocation());
 
         // Verify region type processing and scale attribute handling
-        var feature = processedTim.getRegionFeatureCollection().getFeatures().get(0);
+        var feature = processedTim.getDataFrameFeatureCollection().getFeatures().get(0);
         assertNotNull(feature.getProperties());
         assertNotNull(feature.getProperties().getRegionInfoList());
         assertTrue(feature.getProperties().getRegionInfoList().size() > 0);
@@ -183,7 +183,7 @@ public class TimProcessedJsonConverterTest {
             double inputLon = FieldConversions.convertLong(region.getAnchor().getLong_().getValue());
 
             // Extract output coordinates from GeoJSON
-            var feature = outputTim.getRegionFeatureCollection().getFeatures().get(0);
+            var feature = outputTim.getDataFrameFeatureCollection().getFeatures().get(0);
             LineString lineString = (LineString) feature.getGeometry();
             double[][] coordinates = lineString.getCoordinates();
 

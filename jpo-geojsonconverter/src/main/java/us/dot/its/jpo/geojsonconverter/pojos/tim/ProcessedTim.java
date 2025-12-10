@@ -42,7 +42,7 @@ import us.dot.its.jpo.geojsonconverter.pojos.geojson.Point;
  * <p>
  * compliance - List of compliance validation results
  * <p>
- * regionFeatureCollection - GeoJSON FeatureCollection containing the TIM regions
+ * dataFrameFeatureCollection - GeoJSON FeatureCollection containing the TIM data frames
  */
 @Data
 @Generated
@@ -64,7 +64,7 @@ public class ProcessedTim {
     private Integer gnisRegionId;
     private Point location;
     private List<ProcessedCompliance> compliance;
-    private ProcessedTimFeatureCollection regionFeatureCollection;
+    private ProcessedTimFeatureCollection dataFrameFeatureCollection;
 
     @Override
     public String toString() {

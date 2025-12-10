@@ -13,11 +13,11 @@ import lombok.extern.slf4j.Slf4j;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.GeoJSON;
 
 /**
- * Represents a GeoJSON FeatureCollection for TIM regions.
+ * Represents a GeoJSON FeatureCollection for TIM data frames.
  * <p>
  * type - Always "FeatureCollection" for GeoJSON FeatureCollection
  * <p>
- * features - List of TIM region features
+ * features - List of TIM data frame features
  */
 @Data
 @Generated

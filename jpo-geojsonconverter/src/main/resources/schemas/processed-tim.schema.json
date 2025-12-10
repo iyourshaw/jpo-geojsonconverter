@@ -251,6 +251,9 @@
         "$ref" : "#/$defs/ProcessedCompliance"
       }
     },
+    "dataFrameFeatureCollection" : {
+      "$ref" : "#/$defs/ProcessedTimFeatureCollection"
+    },
     "gnisRegionId" : {
       "type" : "integer",
       "format" : "int32"
@@ -273,9 +276,6 @@
     },
     "packetId" : {
       "type" : "string"
-    },
-    "regionFeatureCollection" : {
-      "$ref" : "#/$defs/ProcessedTimFeatureCollection"
     },
     "schemaVersion" : {
       "type" : "integer",

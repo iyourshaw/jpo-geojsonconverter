@@ -150,13 +150,13 @@ public class TimConverter {
             ProcessedTimFeatureCollection featureCollection = new ProcessedTimFeatureCollection();
             List<ProcessedTimFeature<?>> features = processDataFrames(travelerInfo, odeDate);
             featureCollection.setFeatures(features);
-            processedTim.setRegionFeatureCollection(featureCollection);
+            processedTim.setDataFrameFeatureCollection(featureCollection);
         } catch (Exception e) {
             log.error("Error processing TIM ASN.1 data: {}", e.getMessage(), e);
             // Create empty feature collection if processing fails
             ProcessedTimFeatureCollection featureCollection = new ProcessedTimFeatureCollection();
             featureCollection.setFeatures(new ArrayList<ProcessedTimFeature<?>>());
-            processedTim.setRegionFeatureCollection(featureCollection);
+            processedTim.setDataFrameFeatureCollection(featureCollection);
         }
     }
 

@@ -655,11 +655,11 @@ When an `OdeTimJson` message is processed through the jpo-geojsonconverter, a `P
 
 1. **Message Structure**: The `ProcessedTim` is a single JSON object containing:
    - Root-level metadata (message type, timestamps, origin IP, ASN.1 data, etc.)
-   - A `regionFeatureCollection` containing GeoJSON Feature objects
+   - A `dataFrameFeatureCollection` containing GeoJSON Feature objects, one for each dataframe within the incoming TIM.
    - A `location` field (Point geometry) for MongoDB 2D sphere indexing
-   - Compliance information for validation tracking
+   - Compliance information for validation tracking.
 
-2. **Data Frame to Feature Conversion**: Each `TravelerDataFrame` in the TIM message becomes a GeoJSON Feature in the `regionFeatureCollection`:
+2. **Data Frame to Feature Conversion**: Each `TravelerDataFrame` in the TIM message becomes a GeoJSON Feature in the `dataFrameFeatureCollection`:
    - Each data frame is assigned a sequential feature ID (0, 1, 2, ...)
    - The geometry is derived from the regions defined in the data frame
    - Properties are extracted from the data frame metadata and content
@@ -734,7 +734,7 @@ Example `ProcessedTim` message:
    "validationMessages": []
   }
  ],
- "regionFeatureCollection": {
+ "dataFrameFeatureCollection": {
   "features": [
    {
     "type": "Feature",

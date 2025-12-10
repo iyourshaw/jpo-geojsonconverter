@@ -69,15 +69,15 @@ public class TimConverterTest {
         assertTrue(processedTim.getCompliance().get(0).isCompliant());
 
         // Verify feature collection
-        assertNotNull(processedTim.getRegionFeatureCollection());
-        assertNotNull(processedTim.getRegionFeatureCollection().getFeatures());
-        assertTrue(processedTim.getRegionFeatureCollection().getFeatures().size() > 0);
+        assertNotNull(processedTim.getDataFrameFeatureCollection());
+        assertNotNull(processedTim.getDataFrameFeatureCollection().getFeatures());
+        assertTrue(processedTim.getDataFrameFeatureCollection().getFeatures().size() > 0);
 
         // Verify location calculation
         assertNotNull(processedTim.getLocation());
 
         // Verify feature properties
-        var feature = processedTim.getRegionFeatureCollection().getFeatures().get(0);
+        var feature = processedTim.getDataFrameFeatureCollection().getFeatures().get(0);
         assertNotNull(feature.getProperties());
         assertNotNull(feature.getProperties().getRegionInfoList());
         assertTrue(feature.getProperties().getRegionInfoList().size() > 0);
