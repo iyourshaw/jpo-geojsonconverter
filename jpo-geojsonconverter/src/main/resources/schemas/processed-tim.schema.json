@@ -254,10 +254,6 @@
     "dataFrameFeatureCollection" : {
       "$ref" : "#/$defs/ProcessedTimFeatureCollection"
     },
-    "gnisRegionId" : {
-      "type" : "integer",
-      "format" : "int32"
-    },
     "location" : {
       "$ref" : "#/$defs/Point-2"
     },

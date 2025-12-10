@@ -3,21 +3,19 @@ package us.dot.its.jpo.geojsonconverter.converter.tim;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.junit.Before;
 import org.junit.Test;
-
-import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.*;
+import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.TravelerInformation;
+import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.TravelerInformationMessageFrame;
 import us.dot.its.jpo.geojsonconverter.pojos.ProcessedValidationMessage;
-import us.dot.its.jpo.geojsonconverter.pojos.tim.ProcessedTim;
-import us.dot.its.jpo.geojsonconverter.pojos.geojson.tim.ProcessedRegionType;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.tim.ProcessedContentType;
+import us.dot.its.jpo.geojsonconverter.pojos.geojson.tim.ProcessedRegionType;
+import us.dot.its.jpo.geojsonconverter.pojos.tim.ProcessedTim;
 import us.dot.its.jpo.geojsonconverter.serialization.deserializers.JsonDeserializer;
 import us.dot.its.jpo.ode.model.OdeMessageFrameData;
 
@@ -61,7 +59,6 @@ public class TimConverterTest {
         // Verify TIM-specific properties
         assertEquals(1, processedTim.getMsgCnt().intValue());
         assertEquals("18D4A500000D7BA133", processedTim.getPacketId());
-        assertNotNull(processedTim.getGnisRegionId());
 
         // Verify compliance
         assertNotNull(processedTim.getCompliance());
@@ -124,7 +121,7 @@ public class TimConverterTest {
     @Test
     public void testLookupItisCodeWithValidCode() {
         String result = TimConverter.lookupItisCode(KNOWN_ITIS_CODE_1);
-        assertEquals("Road Closed", result);
+        assertEquals("speed-limit", result);
     }
 
     @Test

@@ -719,7 +719,6 @@ Example `ProcessedTim` message:
  "msgCnt": 1,
  "timeStamp": "2025-08-19T18:20:28.543Z",
  "packetId": "16D30800002B8ACCEF",
- "gnisRegionId": 1495816,
  "location": {
   "type": "Point",
   "coordinates": [

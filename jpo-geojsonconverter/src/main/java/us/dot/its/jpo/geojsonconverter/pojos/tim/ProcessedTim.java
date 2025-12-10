@@ -36,8 +36,6 @@ import us.dot.its.jpo.geojsonconverter.pojos.geojson.Point;
  * <p>
  * packetId - The packet ID of the TIM message
  * <p>
- * gnisRegionId - The GNIS region ID extracted from packet ID
- * <p>
  * location - GeoJSON Point representing the center location for MongoDB 2D sphere indexing
  * <p>
  * compliance - List of compliance validation results
@@ -61,7 +59,6 @@ public class ProcessedTim {
     private Integer msgCnt;
     private ZonedDateTime timeStamp;
     private String packetId;
-    private Integer gnisRegionId;
     private Point location;
     private List<ProcessedCompliance> compliance;
     private ProcessedTimFeatureCollection dataFrameFeatureCollection;

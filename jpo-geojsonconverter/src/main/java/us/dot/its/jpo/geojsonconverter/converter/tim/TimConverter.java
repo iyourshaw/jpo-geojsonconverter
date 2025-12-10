@@ -131,13 +131,6 @@ public class TimConverter {
         if (travelerInfo.getPacketID() != null) {
             String packetId = travelerInfo.getPacketID().getValue();
             processedTim.setPacketId(packetId);
-
-            // GNIS code is the first 3 bytes of the packet ID converted from hex to decimal
-            byte[] packetBytes = travelerInfo.getPacketID().getOctets();
-            if (packetBytes.length >= 3) {
-                int gnisId = ((packetBytes[0] & 0xFF) << 16) | ((packetBytes[1] & 0xFF) << 8) | (packetBytes[2] & 0xFF);
-                processedTim.setGnisRegionId(gnisId);
-            }
         }
     }
 
