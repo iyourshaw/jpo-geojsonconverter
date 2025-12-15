@@ -2,17 +2,13 @@ package us.dot.its.jpo.geojsonconverter.pojos.geojson.psm;
 
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
-import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedSpeedConfidence;
 
 import java.util.Objects;
 
 @Getter
 public enum ProcessedPersonalDeviceUserType {
-    UNAVAILABLE(0, "unavailable"),
-    APEDESTRIAN(1, "aPEDESTRIAN"),
-    APEDALCYCLIST(2, "aPEDALCYCLIST"),
-    APUBLICSAFETYWORKER(3, "aPUBLICSAFETYWORKER"),
-    ANANIMAL(4, "anANIMAL");
+    UNAVAILABLE(0, "unavailable"), APEDESTRIAN(1, "aPEDESTRIAN"), APEDALCYCLIST(2,
+            "aPEDALCYCLIST"), APUBLICSAFETYWORKER(3, "aPUBLICSAFETYWORKER"), ANANIMAL(4, "anANIMAL");
 
     private final int index;
     private final String name;

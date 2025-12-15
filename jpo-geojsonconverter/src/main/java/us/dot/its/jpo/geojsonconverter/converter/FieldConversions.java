@@ -3,7 +3,6 @@ package us.dot.its.jpo.geojsonconverter.converter;
 import lombok.extern.slf4j.Slf4j;
 import us.dot.its.jpo.asn.j2735.r2024.Common.*;
 import us.dot.its.jpo.asn.j2735.r2024.TravelerInformation.DistanceUnits;
-import us.dot.its.jpo.asn.runtime.types.Asn1Bitstring;
 import us.dot.its.jpo.asn.j2735.r2024.SignalRequestMessage.DeltaTime;
 import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedBasicVehicleRole;
 import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedRequestImportanceLevel;

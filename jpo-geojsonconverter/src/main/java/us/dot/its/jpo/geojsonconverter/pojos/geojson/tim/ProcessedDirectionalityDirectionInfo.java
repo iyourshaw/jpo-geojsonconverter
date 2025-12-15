@@ -3,7 +3,6 @@ package us.dot.its.jpo.geojsonconverter.pojos.geojson.tim;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Generated;

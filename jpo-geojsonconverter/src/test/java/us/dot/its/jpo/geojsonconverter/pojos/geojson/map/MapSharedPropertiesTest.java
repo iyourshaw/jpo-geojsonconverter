@@ -4,9 +4,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.Test;
-import us.dot.its.jpo.asn.j2735.r2024.Common.IntersectionID;
-import us.dot.its.jpo.asn.j2735.r2024.Common.IntersectionReferenceID;
-import us.dot.its.jpo.asn.j2735.r2024.Common.RoadRegulatorID;
 import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedIntersectionReferenceID;
 
 public class MapSharedPropertiesTest {
