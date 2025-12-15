@@ -651,27 +651,27 @@ public class FieldConversions {
     }
 
     /**
-     * Convert a radius value from the specified distance units to meters.
+     * Converts a distance value from the specified distance units to meters.
      * 
-     * @param radius The radius value in the specified units
+     * @param distance The distance value in the specified units
      * @param units The distance units enum value
-     * @return Radius converted to meters, or null if units is null
+     * @return Distance converted to meters, or null if units is null
      */
-    public static Double convertRadiusToMeters(long radius, DistanceUnits units) {
+    public static Double convertDistanceToMeters(long distance, DistanceUnits units) {
         if (units == null) {
             return null;
         }
 
         return switch (units) {
-            case CENTIMETER -> radius * CENTIMETERS_TO_METERS; // 1 cm = 0.01 m
-            case CM2_5 -> radius * CM2_5_TO_METERS; // 1 cm2-5 = 0.025 m (2.5 cm)
-            case DECIMETER -> radius * DECIMETER_TO_METERS; // 1 dm = 0.1 m
-            case METER -> (double) radius; // 1 m = 1 m
-            case KILOMETER -> radius * KILOMETER_TO_METERS; // 1 km = 1000 m
-            case FOOT -> radius * FOOT_TO_METERS; // 1 ft = 0.3048 m
-            case YARD -> radius * YARD_TO_METERS; // 1 yd = 0.9144 m
-            case MILE -> radius * MILE_TO_METERS; // 1 mi = 1609.344 m
-            default -> (double) radius; // Default to meters if unknown unit
+            case CENTIMETER -> distance * CENTIMETERS_TO_METERS; // 1 cm = 0.01 m
+            case CM2_5 -> distance * CM2_5_TO_METERS; // 1 cm2-5 = 0.025 m (2.5 cm)
+            case DECIMETER -> distance * DECIMETER_TO_METERS; // 1 dm = 0.1 m
+            case METER -> (double) distance; // 1 m = 1 m
+            case KILOMETER -> distance * KILOMETER_TO_METERS; // 1 km = 1000 m
+            case FOOT -> distance * FOOT_TO_METERS; // 1 ft = 0.3048 m
+            case YARD -> distance * YARD_TO_METERS; // 1 yd = 0.9144 m
+            case MILE -> distance * MILE_TO_METERS; // 1 mi = 1609.344 m
+            default -> (double) distance; // Default to meters if unknown unit
         };
     }
 

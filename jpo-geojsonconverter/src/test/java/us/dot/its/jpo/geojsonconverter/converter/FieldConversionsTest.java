@@ -569,25 +569,25 @@ public class FieldConversionsTest {
     // ========== Radius Conversion Tests ==========
 
     @Test
-    public void testConvertRadiusToMeters() {
+    public void testConvertDistanceToMeters() {
         // Test centimeter conversion
-        Double result = FieldConversions.convertRadiusToMeters(100L, DistanceUnits.CENTIMETER);
+        Double result = FieldConversions.convertDistanceToMeters(100L, DistanceUnits.CENTIMETER);
         assertThat(result, equalTo(1.0));
 
         // Test meter conversion
-        result = FieldConversions.convertRadiusToMeters(100L, DistanceUnits.METER);
+        result = FieldConversions.convertDistanceToMeters(100L, DistanceUnits.METER);
         assertThat(result, equalTo(100.0));
 
         // Test kilometer conversion
-        result = FieldConversions.convertRadiusToMeters(1L, DistanceUnits.KILOMETER);
+        result = FieldConversions.convertDistanceToMeters(1L, DistanceUnits.KILOMETER);
         assertThat(result, equalTo(1000.0));
 
         // Test foot conversion
-        result = FieldConversions.convertRadiusToMeters(100L, DistanceUnits.FOOT);
+        result = FieldConversions.convertDistanceToMeters(100L, DistanceUnits.FOOT);
         assertThat(result, closeTo(30.48, 0.01));
 
         // Test null units (should return null)
-        result = FieldConversions.convertRadiusToMeters(100L, null);
+        result = FieldConversions.convertDistanceToMeters(100L, null);
         assertThat(result, nullValue());
     }
 

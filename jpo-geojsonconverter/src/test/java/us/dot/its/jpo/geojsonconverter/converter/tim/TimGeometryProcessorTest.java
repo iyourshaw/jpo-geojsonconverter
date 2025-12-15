@@ -168,7 +168,7 @@ public class TimGeometryProcessorTest {
         Circle circle = region.getDescription().getGeometry().getCircle();
         double centerLat = FieldConversions.convertLat(circle.getCenter().getLat().getValue());
         double centerLon = FieldConversions.convertLong(circle.getCenter().getLong_().getValue());
-        double radius = FieldConversions.convertRadiusToMeters(circle.getRadius().getValue(), circle.getUnits());
+        double radius = FieldConversions.convertDistanceToMeters(circle.getRadius().getValue(), circle.getUnits());
 
         // Test geometry creation from circle region
         Geometry geometry = geometryProcessor.createGeometryFromRegion(region);

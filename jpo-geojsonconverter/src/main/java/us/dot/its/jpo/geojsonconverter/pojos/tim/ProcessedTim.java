@@ -50,8 +50,7 @@ import us.dot.its.jpo.geojsonconverter.pojos.geojson.Point;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Slf4j
 public class ProcessedTim {
-    // Default schemaVersion is -1 for older messages that lack a schemaVersion value
-    private int schemaVersion = -1;
+    private int schemaVersion = 1;
     private String messageType = "TIM";
     private String odeReceivedAt;
     private String originIp;

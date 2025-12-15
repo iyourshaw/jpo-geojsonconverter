@@ -577,7 +577,7 @@ public class TimGeometryProcessor {
             if (circle.getRadius() != null && circle.getCenter() != null) {
                 long radius = circle.getRadius().getValue();
                 DistanceUnits units = circle.getUnits();
-                Double radiusMeters = FieldConversions.convertRadiusToMeters(radius, units);
+                Double radiusMeters = FieldConversions.convertDistanceToMeters(radius, units);
 
                 // Use circle's center coordinates, not the anchor point
                 double centerLat = FieldConversions.convertLat(circle.getCenter().getLat().getValue());
