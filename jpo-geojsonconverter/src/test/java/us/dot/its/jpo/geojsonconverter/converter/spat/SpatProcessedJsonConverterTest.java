@@ -24,6 +24,7 @@ import us.dot.its.jpo.geojsonconverter.partitioner.RsuIntersectionKey;
 import us.dot.its.jpo.geojsonconverter.pojos.spat.DeserializedRawSpat;
 import us.dot.its.jpo.geojsonconverter.pojos.spat.ProcessedSpat;
 import us.dot.its.jpo.geojsonconverter.serialization.deserializers.JsonDeserializer;
+import us.dot.its.jpo.geojsonconverter.standards.SpatStandard;
 import us.dot.its.jpo.geojsonconverter.validator.JsonValidatorResult;
 import us.dot.its.jpo.ode.model.OdeMessageFrameData;
 
@@ -38,7 +39,7 @@ public class SpatProcessedJsonConverterTest {
                 new JsonDeserializer<>(OdeMessageFrameData.class)) {
             spatMF = odeSpatDeserializer.deserialize("test-topic", odeSpatJsonString.getBytes());
         }
-        spatProcessedJsonConverter = new SpatProcessedJsonConverter();
+        spatProcessedJsonConverter = new SpatProcessedJsonConverter(SpatStandard.CTI4501_V1);
     }
 
     @Test

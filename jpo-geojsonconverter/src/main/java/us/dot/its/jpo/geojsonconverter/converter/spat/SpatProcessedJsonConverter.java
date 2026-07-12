@@ -9,6 +9,7 @@ import us.dot.its.jpo.geojsonconverter.pojos.ProcessedValidationMessage;
 import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedIntersectionReferenceID;
 import us.dot.its.jpo.geojsonconverter.pojos.common.ProcessedSpeedConfidence;
 import us.dot.its.jpo.geojsonconverter.pojos.spat.*;
+import us.dot.its.jpo.geojsonconverter.standards.SpatStandard;
 import us.dot.its.jpo.geojsonconverter.utils.BitstringUtils;
 import us.dot.its.jpo.geojsonconverter.utils.ProcessedSchemaVersions;
 import us.dot.its.jpo.geojsonconverter.validator.CTI4501Validator;
@@ -38,6 +39,12 @@ public class SpatProcessedJsonConverter
         implements Transformer<Void, DeserializedRawSpat, KeyValue<RsuIntersectionKey, ProcessedSpat>> {
     private static final Logger logger = LoggerFactory.getLogger(SpatProcessedJsonConverter.class);
 
+    private final SpatStandard spatStandardVersion;
+
+    public SpatProcessedJsonConverter(SpatStandard spatStandardVersion) {
+        this.spatStandardVersion = spatStandardVersion;
+    }
+
     @Override
     public void init(ProcessorContext arg0) {}
 
@@ -61,7 +68,8 @@ public class SpatProcessedJsonConverter
                 SPATMessageFrame spatMessageFrame = (SPATMessageFrame) rawValue.getPayload().getData();
 
                 ProcessedSpat processedSpat =
-                        createProcessedSpat(spatMessageFrame.getValue(), spatMetadata, rawSpat.getValidatorResults());
+                        createProcessedSpat(spatMessageFrame.getValue(), spatMetadata, rawSpat.getValidatorResults(),
+                                spatStandardVersion);
 
                 // Set the schema version
                 processedSpat.setSchemaVersion(ProcessedSchemaVersions.PROCESSED_SPAT_SCHEMA_VERSION);
@@ -95,7 +103,7 @@ public class SpatProcessedJsonConverter
     }
 
     public ProcessedSpat createProcessedSpat(SPAT spat, OdeMessageFrameMetadata metadata,
-            JsonValidatorResult validationMessages) {
+            JsonValidatorResult validationMessages, SpatStandard spatStandardVersion) {
         // Create an IntersectionState from the SPAT for easier readability
         IntersectionState intersectionState = spat.getIntersections().get(0);
 
@@ -138,7 +146,7 @@ public class SpatProcessedJsonConverter
 
             processedSpatValidationMessages.add(object);
         }
-        processedSpatValidationMessages.addAll(CTI4501Validator.spatValidation(spat));
+        processedSpatValidationMessages.addAll(CTI4501Validator.spatValidation(spat, spatStandardVersion));
         processedSpat.setValidationMessages(processedSpatValidationMessages);
         processedSpat.setCti4501Conformant(processedSpat.getValidationMessages().size() == 0);
 

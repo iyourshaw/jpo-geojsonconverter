@@ -10,11 +10,13 @@ import us.dot.its.jpo.asn.j2735.r2024.Common.*;
 import us.dot.its.jpo.asn.j2735.r2024.RTCMcorrections.RTCM_Revision;
 import us.dot.its.jpo.asn.j2735.r2024.RTCMcorrections.RTCMcorrections;
 import us.dot.its.jpo.asn.j2735.r2024.RTCMcorrections.RTCMcorrectionsMessageFrame;
+import us.dot.its.jpo.geojsonconverter.GeoJsonConverterProperties;
 import us.dot.its.jpo.geojsonconverter.pojos.ProcessedValidationMessage;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.Point;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.rtcm.DecodedRTCMmessage;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.rtcm.ProcessedRTCM;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.rtcm.RTCMProperties;
+import us.dot.its.jpo.geojsonconverter.standards.RtcmStandard;
 import us.dot.its.jpo.geojsonconverter.validator.JsonValidatorResult;
 
 import java.util.*;
@@ -30,10 +32,21 @@ import static us.dot.its.jpo.geojsonconverter.converter.FieldConversions.*;
 public class RTCMConverter {
 
     private final RTCMDecoder decoder;
+    private final RtcmStandard rtcmStandardVersion;
+    private final String spec;
+    private final String conformanceIssue;
 
     @Autowired
-    public RTCMConverter(RTCMDecoder decoder) {
+    public RTCMConverter(RTCMDecoder decoder, GeoJsonConverterProperties properties) {
         this.decoder = decoder;
+        this.rtcmStandardVersion = properties.getRtcmStandardVersion();
+        if (rtcmStandardVersion != null) {
+            this.spec = rtcmStandardVersion.getShortName();
+        } else {
+            log.error("properties.rtcmStandardVersion is null");
+            this.spec = "unknown standard version";
+        }
+        this.conformanceIssue = spec + " conformance issue: ";
     }
 
     /**
@@ -41,6 +54,7 @@ public class RTCMConverter {
      * @param rtcmFrame The RTCM message frame
      * @return The processed RTCM
      */
+    @SuppressWarnings("java:S3776") // Ignore Sonar 'cognitive complexity' warning
     public ProcessedRTCM processRTCM(final RTCMcorrectionsMessageFrame rtcmFrame) {
         var properties = new RTCMProperties();
 
@@ -64,7 +78,7 @@ public class RTCMConverter {
             // CTI 4501 v01.01, Sec. 4.3.3.5.1: Revision 3 is required
             log.debug("Invalid rev: {}", rev);
             properties.addValidationMessage(
-                    "CTI-4501 conformance issue: The RTCMcorrections 'rev' (DE_RTCM_Revision) is not 'rtcmRev3'.");
+                    conformanceIssue + "The RTCMcorrections 'rev' (DE_RTCM_Revision) is not 'rtcmRev3'.");
         }
 
         // CTI 4501 v01.01, Sec. 4.3.3.5.1: optional timestamp is forbidden
@@ -72,25 +86,35 @@ public class RTCMConverter {
         if (timestamp != null) {
 
             properties.addValidationMessage(
-              "CTI-4501 conformance issue: The RTCMcorrections optional field 'timestamp' (DE_MinuteOfTheYear) is " +
+              conformanceIssue + "The RTCMcorrections optional field 'timestamp' (DE_MinuteOfTheYear) is " +
                       "present.  It is forbidden by CTI-4501.");
         }
 
         // FullPositionVector is mandatory in CTI 4501
         // See CTI 4501 v01.01, Sec. 4.3.3.1.1.11, Table 11
-        FullPositionVector anchor = rtcm.getAnchorPoint();
-        if (anchor != null) {
-            processFullPosition(properties, anchor);
-        } else {
-            properties.addValidationMessage(
-                "CTI-4501 conformance issue: The RTCMcorrections 'anchorPoint' (DF_FullPositionVector) is missing.");
+        if (rtcmStandardVersion == RtcmStandard.CTI4501_V1) {
+            FullPositionVector anchor = rtcm.getAnchorPoint();
+            if (anchor != null) {
+                processFullPosition(properties, anchor);
+            } else {
+                properties.addValidationMessage(
+                        conformanceIssue + "The RTCMcorrections 'anchorPoint' (DF_FullPositionVector) is missing.");
+            }
+        } else if (rtcmStandardVersion == RtcmStandard.J3258_DRAFT){
+            // FullPositionVector is not used in J3258
+            FullPositionVector anchor = rtcm.getAnchorPoint();
+            if (anchor != null) {
+                properties.addValidationMessage(
+                        conformanceIssue + "The RTCMcorrections 'anchorPoint' (DF_FullPositionVector) is " +
+                                "present. It is disallowed by J3258.");
+            }
         }
 
         // CTI 4501 v01.01, Sec. 4.3.3.5.1: optional RTCMheader is forbidden
         RTCMheader header = rtcm.getRtcmHeader();
         if (header != null) {
             properties.addValidationMessage(
-                    "CTI-4501 conformance issue: The RTCMcorrections optional field 'rtcmHeader' (DF_RTCMheader) is" +
+                    conformanceIssue + "The RTCMcorrections optional field 'rtcmHeader' (DF_RTCMheader) is" +
                             " present.  It is forbidden by CTI-4501.");
         }
 
@@ -101,11 +125,13 @@ public class RTCMConverter {
             log.info("RTCM messageList is null");
         }
 
+
+
         // CTI 4501 v01.01, Sec. 4.3.3.5.1: optional regional extension is forbidden
         RTCMcorrections.SequenceOfRegional regionalSeq = rtcm.getRegional();
         if (regionalSeq != null && !regionalSeq.isEmpty()) {
             properties.addValidationMessage(
-                    "CTI-4501 conformance issue: The RTCMcorrections has regional extensions present which are " +
+                    conformanceIssue + "The RTCMcorrections has regional extensions present which are " +
                             "forbidden by CTI-4501.");
         }
 
@@ -134,7 +160,7 @@ public class RTCMConverter {
         Long timestamp = convertDDateTime(utcValidations, utcTime);
         properties.setUtcTime(timestamp);
         for (String utcValidation : utcValidations) {
-            properties.addValidationMessage("CTI-4501 conformance issue: anchorPoint (DF_FullPositionVector) " +
+            properties.addValidationMessage(conformanceIssue + "anchorPoint (DF_FullPositionVector) " +
                     "'utcTime' field: " + utcValidation);
         }
 
@@ -144,7 +170,7 @@ public class RTCMConverter {
         }
         if (properties.getLongitude() == null){
             properties.addValidationMessage(
-                    "CTI-4501 conformance issue: The anchorPoint (DF_FullPositionVector) 'long' field (DE_Longitude) is missing.");
+                    conformanceIssue + "The anchorPoint (DF_FullPositionVector) 'long' field (DE_Longitude) is missing.");
         }
 
         Latitude lat = anchor.getLat();
@@ -153,7 +179,7 @@ public class RTCMConverter {
         }
         if (properties.getLatitude() == null){
             properties.addValidationMessage(
-                    "CTI-4501 conformance issue: The anchorPoint (DF_FullPositionVector) 'lat' field (DE_Latitude) is missing.");
+                    conformanceIssue + "The anchorPoint (DF_FullPositionVector) 'lat' field (DE_Latitude) is missing.");
         }
 
         Elevation elevation = anchor.getElevation();
@@ -162,64 +188,94 @@ public class RTCMConverter {
         }
         if (properties.getElevation() == null) {
             properties.addValidationMessage(
-                    "CTI-4501 conformance issue: The anchorPoint (DF_FullPositionVector) 'elevation' field (DE_Elevation) is missing.");
+                    conformanceIssue + "The anchorPoint (DF_FullPositionVector) 'elevation' field (DE_Elevation) is missing.");
         }
 
         // Check for extras that should not be present in full position vector
         if (anchor.getHeading() != null) {
             properties.addValidationMessage(
-                    "CTI-4501 conformance issue: The anchorPoint (DF_FullPositionVector) 'heading' field is present " +
-                            "but should not included.");
+                    conformanceIssue + "The anchorPoint (DF_FullPositionVector) 'heading' field is present " +
+                            "but should not be included.");
         }
 
         if (anchor.getSpeed() != null) {
             properties.addValidationMessage(
-                    "CTI-4501 conformance issue: The anchorPoint (DF_FullPositionVector) 'speed' field is present " +
-                            "but should not included.");
+                    conformanceIssue + "The anchorPoint (DF_FullPositionVector) 'speed' field is present " +
+                            "but should not be included.");
         }
 
         if (anchor.getPosAccuracy() != null) {
             properties.addValidationMessage(
-                    "CTI-4501 conformance issue: The anchorPoint (DF_FullPositionVector) 'posAccuracy' field is " +
-                            "present but should not included.");
+                    conformanceIssue + "The anchorPoint (DF_FullPositionVector) 'posAccuracy' field is " +
+                            "present but should not be included.");
         }
 
         if (anchor.getTimeConfidence() != null) {
             properties.addValidationMessage(
-                    "CTI-4501 conformance issue: The anchorPoint (DF_FullPositionVector) 'timeConfidence' field is " +
-                            "present but should not included.");
+                    conformanceIssue + "The anchorPoint (DF_FullPositionVector) 'timeConfidence' field is " +
+                            "present but should not be included.");
         }
 
         if (anchor.getPosConfidence() != null) {
             properties.addValidationMessage(
-                    "CTI-4501 conformance issue: The anchorPoint (DF_FullPositionVector) 'posConfidence' field is " +
-                            "present but should not included.");
+                    conformanceIssue + "The anchorPoint (DF_FullPositionVector) 'posConfidence' field is " +
+                            "present but should not be included.");
         }
 
         if (anchor.getSpeedConfidence() != null) {
             properties.addValidationMessage(
-                    "CTI-4501 conformance issue: The anchorPoint (DF_FullPositionVector) 'speedConfidence' field is " +
-                            "present but should not included.");
+                    conformanceIssue + "The anchorPoint (DF_FullPositionVector) 'speedConfidence' field is " +
+                            "present but should not be included.");
         }
 
     }
 
+    @SuppressWarnings("java:S3776") // Ignore Sonar 'cognitive complexity' warning
     private void decodeMessages(RTCMProperties properties, RTCMmessageList messageList) {
         List<DecodedRTCMmessage> decodedMessages = new ArrayList<>();
         Set<Integer> types = new LinkedHashSet<>();
-        for (RTCMmessage message : messageList) {
-            var decodedMessage = new DecodedRTCMmessage();
-            decodedMessage.setHex(message.getValue());
-            decodedMessages.add(decodedMessage);
-            JsonNode node = decoder.decodeRtcm(decodedMessage.getHex());
-            decodedMessage.setDecodedMessage(node);
+        final String STATION_ID = "station_id";
 
-            if (node.has("type")) {
-                types.add(node.get("type").asInt());
+        if (rtcmStandardVersion == RtcmStandard.CTI4501_V1) {
+            // CTI-4501 v1: Each item in the SEQUENCE-OF has a single message
+            for (RTCMmessage message : messageList) {
+                var decodedMessage = new DecodedRTCMmessage();
+                decodedMessage.setHex(message.getValue());
+                decodedMessages.add(decodedMessage);
+                JsonNode node = decoder.decodeRtcm(message.getOctets());
+                decodedMessage.setDecodedMessage(node);
+
+                if (node.has("type")) {
+                    types.add(node.get("type").asInt());
+                }
+
+                if (node.has(STATION_ID)) {
+                    properties.setStationId(node.get(STATION_ID).asInt());
+                }
             }
+        } else if (rtcmStandardVersion == RtcmStandard.J3258_DRAFT) {
+            // J3258 draft: The messages need to be combined together then split
+            // based on the length determinants within them, because there isn't
+            // a 1-1 with items in the SEQUENCE-OF
+            try {
+                List<byte[]> splitMessages = decoder.splitMessages(messageList);
+                for (byte[] message : splitMessages) {
+                    var decodedMessage = new DecodedRTCMmessage();
+                    decodedMessage.setHex(HexFormat.of().formatHex(message));
+                    decodedMessages.add(decodedMessage);
+                    JsonNode node = decoder.decodeRtcm(message);
+                    decodedMessage.setDecodedMessage(node);
 
-            if (node.has("station_id")) {
-                properties.setStationId(node.get("station_id").asInt());
+                    if (node.has("type")) {
+                        types.add(node.get("type").asInt());
+                    }
+
+                    if (node.has(STATION_ID)) {
+                        properties.setStationId(node.get(STATION_ID).asInt());
+                    }
+                }
+            } catch (RTCMDecodeException e) {
+                properties.addValidationMessage("Error decoding RTCM messages: " + e.getMessage());
             }
         }
 
@@ -249,48 +305,51 @@ public class RTCMConverter {
         //
         // Groups should not be mixed.
         //
-        LinkedHashSet<String> categories = new LinkedHashSet<>();
-        boolean isDescriptors = categorize(DESCRIPTOR_TYPES, types);
-        if (isDescriptors) {
-            categories.add("Descriptor types: 1005, 1006, 1013, 1033");
-        }
-        boolean isMsm4 = categorize(MSM4_TYPES, types);
-        if (isMsm4) {
-            categories.add("MSM4");
-        }
-        boolean isMsm5 = categorize(MSM5_TYPES, types);
-        if (isMsm5) {
-            categories.add("MSM5");
-        }
-        boolean isMsm6 = categorize(MSM6_TYPES, types);
-        if (isMsm6) {
-            categories.add("MSM6");
-        }
-        boolean isMsm7 = categorize(MSM7_TYPES, types);
-        if (isMsm7) {
-            categories.add("MSM7");
-        }
+        // These grouping rules are CTI-4501 specific and don't apply to J3258.
+        if (rtcmStandardVersion == RtcmStandard.CTI4501_V1) {
+            LinkedHashSet<String> categories = new LinkedHashSet<>();
+            boolean isDescriptors = categorize(DESCRIPTOR_TYPES, types);
+            if (isDescriptors) {
+                categories.add("Descriptor types: 1005, 1006, 1013, 1033");
+            }
+            boolean isMsm4 = categorize(MSM4_TYPES, types);
+            if (isMsm4) {
+                categories.add("MSM4");
+            }
+            boolean isMsm5 = categorize(MSM5_TYPES, types);
+            if (isMsm5) {
+                categories.add("MSM5");
+            }
+            boolean isMsm6 = categorize(MSM6_TYPES, types);
+            if (isMsm6) {
+                categories.add("MSM6");
+            }
+            boolean isMsm7 = categorize(MSM7_TYPES, types);
+            if (isMsm7) {
+                categories.add("MSM7");
+            }
 
-        log.debug("Categories: {}", categories);
+            log.debug("Categories: {}", categories);
 
-        if (categories.isEmpty()) {
-            log.debug("No CTI 4501 categories found.");
-            properties.addValidationMessage(
-                    "CTI-4501 conformance issue: None of the message types are in categories mentioned in CTI-4501");
-        }
-        if (categories.size() > 1) {
-            log.debug("Multiple CTI 4501 categories found.");
-            properties.addValidationMessage(
-                    String.format(
-                            "CTI-4501 conformance issue: The message list contains message types from more than" +
-                                    " one category: %s", categories));
-        }
-        if (categories.size() == 1) {
-            String category = categories.iterator().next();
-            checkMsmTypes(category, types, "MSM4", MSM4_GPS, properties);
-            checkMsmTypes(category, types, "MSM5", MSM5_GPS, properties);
-            checkMsmTypes(category, types, "MSM6", MSM6_GPS, properties);
-            checkMsmTypes(category, types, "MSM7", MSM7_GPS, properties);
+            if (categories.isEmpty()) {
+                log.debug("No CTI 4501 categories found.");
+                properties.addValidationMessage(
+                        conformanceIssue + "None of the message types are in categories mentioned in CTI-4501");
+            }
+            if (categories.size() > 1) {
+                log.debug("Multiple CTI 4501 categories found.");
+                properties.addValidationMessage(
+                        String.format(
+                                conformanceIssue + "The message list contains message types from more than" +
+                                        " one category: %s", categories));
+            }
+            if (categories.size() == 1) {
+                String category = categories.iterator().next();
+                checkMsmTypes(category, types, "MSM4", MSM4_GPS, properties);
+                checkMsmTypes(category, types, "MSM5", MSM5_GPS, properties);
+                checkMsmTypes(category, types, "MSM6", MSM6_GPS, properties);
+                checkMsmTypes(category, types, "MSM7", MSM7_GPS, properties);
+            }
         }
     }
 

@@ -7,8 +7,10 @@ import org.junit.Test;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -56,10 +58,29 @@ public class SchemaGeneratorUtilityTest {
 
     @Test
     public void run_withoutArgs_usesDefaultPathAndReturnsZero() throws Exception {
-        Path defaultSchemaDir = Path.of("").toAbsolutePath().resolve("src/main/resources/schemas");
-        int status = SchemaGeneratorUtility.run(new String[0]);
+        Path tempWorkingDir = Files.createTempDirectory("schema-generator-default-path-test-");
+        Path defaultSchemaDir = tempWorkingDir.resolve("src/main/resources/schemas");
+        boolean isWindows = System.getProperty("os.name", "").toLowerCase().contains("win");
+        String javaExecutableName = isWindows ? "java.exe" : "java";
+        String javaExecutable = Path.of(System.getProperty("java.home"), "bin", javaExecutableName).toString();
+        String classpath = System.getProperty("java.class.path");
 
-        assertEquals(0, status);
+        ProcessBuilder processBuilder = new ProcessBuilder(List.of(
+                javaExecutable,
+                "-cp",
+                classpath,
+                SchemaGeneratorUtility.class.getName()));
+        processBuilder.directory(tempWorkingDir.toFile());
+        processBuilder.redirectErrorStream(true);
+
+        Process process = processBuilder.start();
+        String processOutput;
+        try (var processStream = process.getInputStream()) {
+            processOutput = new String(processStream.readAllBytes(), StandardCharsets.UTF_8);
+        }
+        int status = process.waitFor();
+
+        assertEquals(processOutput, 0, status);
 
         File spatSchema = defaultSchemaDir.resolve("processed-spat.schema.json").toFile();
         assertTrue(spatSchema.exists());

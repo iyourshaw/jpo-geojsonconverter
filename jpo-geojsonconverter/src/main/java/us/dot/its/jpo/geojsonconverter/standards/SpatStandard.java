@@ -1,0 +1,16 @@
+package us.dot.its.jpo.geojsonconverter.standards;
+
+import lombok.Getter;
+
+@Getter
+public enum SpatStandard {
+    CTI4501_V1("CTI-4501v1","CTI-4501 v01.01, June 2022"),
+    CTI4501_V2_DRAFT("CTI-4501v2","CTI-4501/1, Draft 2026-01-16");
+
+    private final String shortName;
+    private final String description;
+    private SpatStandard(String shortName, String description) {
+        this.shortName = shortName;
+        this.description = description;
+    }
+}

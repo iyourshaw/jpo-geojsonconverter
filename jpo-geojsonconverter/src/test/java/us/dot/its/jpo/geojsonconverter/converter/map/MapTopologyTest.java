@@ -27,6 +27,7 @@ import us.dot.its.jpo.geojsonconverter.pojos.GeometryOutputMode;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.LineString;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.map.ProcessedMap;
 import us.dot.its.jpo.geojsonconverter.serialization.JsonSerdes;
+import us.dot.its.jpo.geojsonconverter.standards.MapStandard;
 import us.dot.its.jpo.geojsonconverter.validator.MapJsonValidator;
 
 @SpringBootTest
@@ -50,7 +51,7 @@ public class MapTopologyTest {
     @Disabled
     public void testTopologyGeoJson() {
         Topology topology = MapTopology.build(kafkaTopicOdeMapJson, kafkaTopicMapGeoJson, kafkaTopicMapWKT,
-                mapJsonValidator, GeometryOutputMode.GEOJSON_ONLY);
+                mapJsonValidator, GeometryOutputMode.GEOJSON_ONLY, MapStandard.CTI4501_V1);
         try (TopologyTestDriver driver = new TopologyTestDriver(topology)) {
             TestInputTopic<Void, String> inputTopic = driver.createInputTopic(kafkaTopicOdeMapJson,
                     Serdes.Void().serializer(), Serdes.String().serializer());
@@ -83,7 +84,7 @@ public class MapTopologyTest {
     @Disabled
     public void testTopologyWKT() {
         Topology topology = MapTopology.build(kafkaTopicOdeMapJson, kafkaTopicMapGeoJson, kafkaTopicMapWKT,
-                mapJsonValidator, GeometryOutputMode.WKT);
+                mapJsonValidator, GeometryOutputMode.WKT, MapStandard.CTI4501_V1);
         try (TopologyTestDriver driver = new TopologyTestDriver(topology)) {
             TestInputTopic<Void, String> inputOdeTopic = driver.createInputTopic(kafkaTopicOdeMapJson,
                     Serdes.Void().serializer(), Serdes.String().serializer());
@@ -113,7 +114,7 @@ public class MapTopologyTest {
     @Test
     public void testTopologyFailureGeoJson() {
         Topology topology = MapTopology.build(kafkaTopicOdeMapJson, kafkaTopicMapGeoJson, kafkaTopicMapWKT,
-                mapJsonValidator, GeometryOutputMode.GEOJSON_ONLY);
+                mapJsonValidator, GeometryOutputMode.GEOJSON_ONLY, MapStandard.CTI4501_V1);
         try (TopologyTestDriver driver = new TopologyTestDriver(topology)) {
             TestInputTopic<Void, String> inputTopic = driver.createInputTopic(kafkaTopicOdeMapJson,
                     Serdes.Void().serializer(), Serdes.String().serializer());

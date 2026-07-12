@@ -26,6 +26,7 @@ import us.dot.its.jpo.geojsonconverter.pojos.geojson.LineString;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.map.DeserializedRawMap;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.map.ProcessedMap;
 import us.dot.its.jpo.geojsonconverter.serialization.deserializers.JsonDeserializer;
+import us.dot.its.jpo.geojsonconverter.standards.MapStandard;
 import us.dot.its.jpo.geojsonconverter.validator.JsonValidatorResult;
 import us.dot.its.jpo.ode.model.OdeMessageFrameData;
 
@@ -53,7 +54,7 @@ public class MapProcessedJsonConverterTest {
         rawMap = new DeserializedRawMap();
         rawMap.setOdeMapMessageFrameData(mapMF);
         rawMap.setValidatorResults(validatorResults);
-        mapProcessedJsonConverter = new MapProcessedJsonConverter();
+        mapProcessedJsonConverter = new MapProcessedJsonConverter(MapStandard.CTI4501_V1);
     }
 
     @Test

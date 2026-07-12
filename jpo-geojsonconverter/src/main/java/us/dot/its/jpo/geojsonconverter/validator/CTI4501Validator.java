@@ -12,6 +12,8 @@ import us.dot.its.jpo.asn.j2735.r2024.SPAT.MovementEvent;
 import us.dot.its.jpo.asn.j2735.r2024.SPAT.MovementState;
 import us.dot.its.jpo.asn.j2735.r2024.SPAT.SPAT;
 import us.dot.its.jpo.geojsonconverter.pojos.ProcessedValidationMessage;
+import us.dot.its.jpo.geojsonconverter.standards.MapStandard;
+import us.dot.its.jpo.geojsonconverter.standards.SpatStandard;
 
 public class CTI4501Validator {
     /**
@@ -37,7 +39,8 @@ public class CTI4501Validator {
      * @param spat The SPAT object to be validated for CTI-4501 conformance.
      * @return a list of validation messages describing CTI-4501 conformance issues, or an empty list if conformant.
      */
-    public static List<ProcessedValidationMessage> spatValidation(SPAT spat) {
+    @SuppressWarnings("java:S3776") // Ignore Sonar 'cognitive complexity' warning
+    public static List<ProcessedValidationMessage> spatValidation(SPAT spat, SpatStandard spatStandardVersion) {
         HashMap<String, ProcessedValidationMessage> validationMap = new HashMap<>();
 
         // Check SPAT timestamp
@@ -50,9 +53,16 @@ public class CTI4501Validator {
         IntersectionState intersection = spat.getIntersections().get(0);
 
         // Check intersection fields
-        if (intersection.getId().getRegion() == null) {
-            validationMap.put("intersection.id.region",
-                    createValidationMessage("The intersections 'id.region' DE_RoadRegulatorID is missing"));
+        if (spatStandardVersion == SpatStandard.CTI4501_V1) {
+            if (intersection.getId().getRegion() == null) {
+                validationMap.put("intersection.id.region",
+                        createValidationMessage("The intersections 'id.region' DE_RoadRegulatorID is missing"));
+            }
+        } else if (spatStandardVersion == SpatStandard.CTI4501_V2_DRAFT) {
+            if (intersection.getId().getRegion() != null) {
+                validationMap.put("intersection.id.region",
+                        createValidationMessage("The intersections 'id.region' DE_RoadRegulatorID is present. Its use is deprecated in CTI-4501 v2."));
+            }
         }
         if (intersection.getTimeStamp() == null) {
             validationMap.put("intersection.timeStamp",
@@ -121,17 +131,30 @@ public class CTI4501Validator {
      * @param mapData The MapData object to be validated for CTI-4501 conformance.
      * @return a list of validation messages describing CTI-4501 conformance issues, or an empty list if conformant.
      */
-    public static List<ProcessedValidationMessage> mapValidation(MapData mapData) {
+    @SuppressWarnings("java:S3776") // Ignore Sonar 'cognitive complexity' warning
+    public static List<ProcessedValidationMessage> mapValidation(MapData mapData, MapStandard mapStandardVersion) {
         HashMap<String, ProcessedValidationMessage> validationMap = new HashMap<>();
 
         // Get the first intersection from the Map object
         IntersectionGeometry intersection = mapData.getIntersections().get(0);
 
         // Check intersection fields
-        if (intersection.getId().getRegion() == null) {
-            validationMap.put("intersection.id.region",
-                    createValidationMessage("The intersections 'id.region' DE_RoadRegulatorID is missing"));
+
+        // RoadRegulatorID required in CTI-4501 v1, not used in CTI-4501 v2.
+        // Noncompliant if missing from v1
+        // Noncompliant if present in v2
+        if (mapStandardVersion == MapStandard.CTI4501_V1) {
+            if (intersection.getId().getRegion() == null) {
+                validationMap.put("intersection.id.region",
+                        createValidationMessage("The intersections 'id.region' DE_RoadRegulatorID is missing"));
+            }
+        } else if (mapStandardVersion == MapStandard.CTI4501_V2_DRAFT) {
+            if (intersection.getId().getRegion() != null) {
+                validationMap.put("intersection.id.region",
+                        createValidationMessage("The intersections 'id.region' DE_RoadRegulatorID is present. Its use is deprecated in CTI-4501 v2."));
+            }
         }
+
         if (intersection.getRefPoint().getElevation() == null) {
             validationMap.put("intersection.refPoint.elevation",
                     createValidationMessage("The intersections 'refPoint.elevation' DE_Elevation is missing"));

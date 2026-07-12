@@ -22,10 +22,12 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
+import us.dot.its.jpo.geojsonconverter.GeoJsonConverterProperties;
 import us.dot.its.jpo.geojsonconverter.partitioner.RsuStationIdKey;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.rtcm.ProcessedRTCM;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.rtcm.RTCMProperties;
 import us.dot.its.jpo.geojsonconverter.serialization.deserializers.JsonDeserializer;
+import us.dot.its.jpo.geojsonconverter.standards.RtcmStandard;
 import us.dot.its.jpo.geojsonconverter.validator.RTCMJsonValidator;
 
 import static org.junit.Assert.*;
@@ -63,7 +65,9 @@ public class RTCMTopologyTest {
     public void topologyTest() {
         RTCMJsonValidator validator = new RTCMJsonValidator("classpath:schemas/rtcm.schema.json");
         RTCMDecoder decoder = new RTCMDecoder(false);
-        RTCMConverter converter = new RTCMConverter(decoder);
+        var gjcProps = new GeoJsonConverterProperties();
+        gjcProps.setRtcmStandardVersion(RtcmStandard.CTI4501_V1);
+        RTCMConverter converter = new RTCMConverter(decoder, gjcProps);
         Topology topology = RTCMTopology.build(inputTopicName, outputTopicName, validator, converter);
         try (var driver = new TopologyTestDriver(topology)) {
 

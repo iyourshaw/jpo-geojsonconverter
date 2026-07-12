@@ -15,6 +15,7 @@ import us.dot.its.jpo.geojsonconverter.partitioner.RsuIntersectionKey;
 import us.dot.its.jpo.geojsonconverter.pojos.spat.DeserializedRawSpat;
 import us.dot.its.jpo.geojsonconverter.pojos.spat.ProcessedSpat;
 import us.dot.its.jpo.geojsonconverter.serialization.JsonSerdes;
+import us.dot.its.jpo.geojsonconverter.standards.SpatStandard;
 import us.dot.its.jpo.geojsonconverter.validator.JsonValidatorResult;
 import us.dot.its.jpo.geojsonconverter.validator.SpatJsonValidator;
 
@@ -26,7 +27,7 @@ public class SpatTopology {
     private static final Logger logger = LoggerFactory.getLogger(SpatTopology.class);
 
     public static Topology build(String spatOdeJsonTopic, String spatProcessedJsonTopic,
-            SpatJsonValidator spatJsonValidator) {
+            SpatJsonValidator spatJsonValidator, SpatStandard spatStandardVersion) {
         StreamsBuilder builder = new StreamsBuilder();
 
         // Stream for raw SPAT messages
@@ -60,7 +61,7 @@ public class SpatTopology {
 
         // Convert ODE SPaT to ProcessedSpat which is not GeoJSON
         KStream<RsuIntersectionKey, ProcessedSpat> processedJsonSpatStream =
-                validatedOdeSpatStream.transform(() -> new SpatProcessedJsonConverter());
+                validatedOdeSpatStream.transform(() -> new SpatProcessedJsonConverter(spatStandardVersion));
 
         processedJsonSpatStream.to(
                 // Push the ProcessedSpat to the output topic partioned by RsuIntersectionKey

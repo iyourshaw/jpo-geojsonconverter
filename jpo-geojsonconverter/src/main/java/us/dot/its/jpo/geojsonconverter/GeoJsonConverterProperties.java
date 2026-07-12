@@ -32,16 +32,22 @@ import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler;
 import org.apache.kafka.streams.processor.LogAndSkipOnInvalidTimestamp;
 
 import us.dot.its.jpo.geojsonconverter.pojos.GeometryOutputMode;
+import us.dot.its.jpo.geojsonconverter.standards.MapStandard;
+import us.dot.its.jpo.geojsonconverter.standards.RtcmStandard;
+import us.dot.its.jpo.geojsonconverter.standards.SpatStandard;
 
 @ConfigurationProperties(prefix = "geojsonconverter")
 public class GeoJsonConverterProperties implements EnvironmentAware {
 
     private static final Logger logger = LoggerFactory.getLogger(GeoJsonConverterProperties.class);
 
+    @Setter
+    @Getter
     @Autowired
     private Environment env;
 
     // General Properties
+    @Getter
     private String kafkaBrokers = null;
     private static final String DEFAULT_KAFKA_PORT = "9092";
 
@@ -51,20 +57,36 @@ public class GeoJsonConverterProperties implements EnvironmentAware {
     private String confluentSecret = null;
 
     // SPAT
+    @Setter
+    @Getter
     private String kafkaTopicOdeSpatJson = "topic.OdeSpatJson";
     private String kafkaTopicProcessedSpat = "topic.ProcessedSpat";
 
     // MAP
+    @Setter
+    @Getter
     private String kafkaTopicOdeMapJson = "topic.OdeMapJson";
+    @Setter
+    @Getter
     private String kafkaTopicProcessedMap = "topic.ProcessedMap";
+    @Setter
+    @Getter
     private String kafkaTopicProcessedMapWKT = "topic.ProcessedMapWKT";
 
     // BSM
+    @Setter
+    @Getter
     private String kafkaTopicOdeBsmJson = "topic.OdeBsmJson";
+    @Setter
+    @Getter
     private String kafkaTopicProcessedBsm = "topic.ProcessedBsm";
 
     // PSM
+    @Setter
+    @Getter
     private String kafkaTopicOdePsmJson = "topic.OdePsmJson";
+    @Setter
+    @Getter
     private String kafkaTopicProcessedPsm = "topic.ProcessedPsm";
 
     // RTCM
@@ -81,6 +103,7 @@ public class GeoJsonConverterProperties implements EnvironmentAware {
 
     private int lingerMs = 0;
 
+    @Getter
     private GeometryOutputMode geometryOutputMode = GeometryOutputMode.GEOJSON_ONLY;
 
     @Getter
@@ -128,6 +151,15 @@ public class GeoJsonConverterProperties implements EnvironmentAware {
 
     @Getter @Setter
     private int streamsConfigCommitIntervalMs;
+
+    @Getter @Setter
+    private MapStandard mapStandardVersion = MapStandard.CTI4501_V1;
+
+    @Getter @Setter
+    private SpatStandard spatStandardVersion = SpatStandard.CTI4501_V1;
+
+    @Getter @Setter
+    private RtcmStandard rtcmStandardVersion = RtcmStandard.CTI4501_V1;
 
     public Properties createStreamProperties(String name) {
         Properties streamProps = new Properties();
@@ -180,34 +212,14 @@ public class GeoJsonConverterProperties implements EnvironmentAware {
         return streamProps;
     }
 
-    public String getKafkaBrokers() {
-        return kafkaBrokers;
-    }
-
     @Value("${spring.kafka.bootstrap-servers}")
     public void setKafkaBrokers(String kafkaBrokers) {
         this.kafkaBrokers = kafkaBrokers;
     }
 
-    public Environment getEnv() {
-        return env;
-    }
-
-    public void setEnv(Environment env) {
-        this.env = env;
-    }
-
     @Override
     public void setEnvironment(Environment environment) {
         env = environment;
-    }
-
-    public String getKafkaTopicOdeSpatJson() {
-        return kafkaTopicOdeSpatJson;
-    }
-
-    public void setKafkaTopicOdeSpatJson(String kafkaTopicOdeSpatJson) {
-        this.kafkaTopicOdeSpatJson = kafkaTopicOdeSpatJson;
     }
 
     public String getKafkaTopicSpatGeoJson() {
@@ -218,64 +230,8 @@ public class GeoJsonConverterProperties implements EnvironmentAware {
         this.kafkaTopicProcessedSpat = kafkaTopicSpatGeoJson;
     }
 
-    public String getKafkaTopicOdeMapJson() {
-        return kafkaTopicOdeMapJson;
-    }
-
-    public void setKafkaTopicOdeMapJson(String kafkaTopicOdeMapJson) {
-        this.kafkaTopicOdeMapJson = kafkaTopicOdeMapJson;
-    }
-
-    public String getKafkaTopicProcessedMap() {
-        return kafkaTopicProcessedMap;
-    }
-
-    public void setKafkaTopicProcessedMap(String kafkaTopicMapGeoJson) {
-        this.kafkaTopicProcessedMap = kafkaTopicMapGeoJson;
-    }
-
-    public String getKafkaTopicProcessedMapWKT() {
-        return kafkaTopicProcessedMapWKT;
-    }
-
-    public void setKafkaTopicProcessedMapWKT(String kafkaTopicProcessedMapWKT) {
-        this.kafkaTopicProcessedMapWKT = kafkaTopicProcessedMapWKT;
-    }
-
-    public String getKafkaTopicOdeBsmJson() {
-        return kafkaTopicOdeBsmJson;
-    }
-
-    public void setKafkaTopicOdeBsmJson(String kafkaTopicOdeBsmJson) {
-        this.kafkaTopicOdeBsmJson = kafkaTopicOdeBsmJson;
-    }
-
-    public String getKafkaTopicProcessedBsm() {
-        return kafkaTopicProcessedBsm;
-    }
-
-    public void setKafkaTopicProcessedBsm(String kafkaTopicProcessedBsm) {
-        this.kafkaTopicProcessedBsm = kafkaTopicProcessedBsm;
-    }
-
     public Boolean getConfluentCloudStatus() {
         return confluentCloudEnabled;
-    }
-
-    public String getKafkaTopicOdePsmJson() {
-        return kafkaTopicOdePsmJson;
-    }
-
-    public void setKafkaTopicOdePsmJson(String kafkaTopicOdePsmJson) {
-        this.kafkaTopicOdePsmJson = kafkaTopicOdePsmJson;
-    }
-
-    public String getKafkaTopicProcessedPsm() {
-        return kafkaTopicProcessedPsm;
-    }
-
-    public void setKafkaTopicProcessedPsm(String kafkaTopicProcessedPsm) {
-        this.kafkaTopicProcessedPsm = kafkaTopicProcessedPsm;
     }
 
     @Value("${geometry.output.mode}")
@@ -284,10 +240,6 @@ public class GeoJsonConverterProperties implements EnvironmentAware {
             this.geometryOutputMode = GeometryOutputMode.findByName(gomString);
         else
             this.geometryOutputMode = GeometryOutputMode.GEOJSON_ONLY;
-    }
-
-    public GeometryOutputMode getGeometryOutputMode() {
-        return geometryOutputMode;
     }
 
 

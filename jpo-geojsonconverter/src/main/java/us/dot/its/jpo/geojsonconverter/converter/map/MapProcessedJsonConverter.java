@@ -26,6 +26,7 @@ import us.dot.its.jpo.geojsonconverter.pojos.common.*;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.LineString;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.connectinglanes.*;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.map.*;
+import us.dot.its.jpo.geojsonconverter.standards.MapStandard;
 import us.dot.its.jpo.geojsonconverter.utils.BitstringUtils;
 import us.dot.its.jpo.geojsonconverter.utils.ProcessedSchemaVersions;
 import us.dot.its.jpo.geojsonconverter.validator.CTI4501Validator;
@@ -37,6 +38,12 @@ import us.dot.its.jpo.ode.model.OdeMessageFrameMetadata;
 public class MapProcessedJsonConverter
         implements Transformer<Void, DeserializedRawMap, KeyValue<RsuIntersectionKey, ProcessedMap<LineString>>> {
     private static final Logger logger = LoggerFactory.getLogger(MapProcessedJsonConverter.class);
+
+    private final MapStandard mapStandardVersion;
+
+    public MapProcessedJsonConverter(MapStandard mapStandardVersion) {
+        this.mapStandardVersion = mapStandardVersion;
+    }
 
     @Override
     public void init(ProcessorContext arg0) {}
@@ -139,7 +146,7 @@ public class MapProcessedJsonConverter
 
             processedSpatValidationMessages.add(object);
         }
-        processedSpatValidationMessages.addAll(CTI4501Validator.mapValidation(mapData));
+        processedSpatValidationMessages.addAll(CTI4501Validator.mapValidation(mapData, mapStandardVersion));
 
         // Build the MapSharedProperties object
         MapSharedProperties sharedProps = new MapSharedProperties();

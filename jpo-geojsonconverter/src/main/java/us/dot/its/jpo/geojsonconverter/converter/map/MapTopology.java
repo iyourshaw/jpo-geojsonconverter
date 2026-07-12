@@ -17,6 +17,7 @@ import us.dot.its.jpo.geojsonconverter.pojos.geojson.LineString;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.map.DeserializedRawMap;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.map.ProcessedMap;
 import us.dot.its.jpo.geojsonconverter.serialization.JsonSerdes;
+import us.dot.its.jpo.geojsonconverter.standards.MapStandard;
 import us.dot.its.jpo.geojsonconverter.validator.JsonValidatorResult;
 import us.dot.its.jpo.geojsonconverter.validator.MapJsonValidator;
 
@@ -28,7 +29,7 @@ public class MapTopology {
     private static final Logger logger = LoggerFactory.getLogger(MapTopology.class);
 
     public static Topology build(String mapOdeJsonTopic, String processedMapTopic, String processedMapWTKTopic,
-            MapJsonValidator mapJsonValidator, GeometryOutputMode gom) {
+            MapJsonValidator mapJsonValidator, GeometryOutputMode gom, MapStandard mapStandardVersion) {
         StreamsBuilder builder = new StreamsBuilder();
 
         // Create stream from the ODE MAP topic
@@ -68,7 +69,7 @@ public class MapTopology {
 
         // Convert ODE MAP to GeoJSON
         KStream<RsuIntersectionKey, ProcessedMap<LineString>> processedMapStream =
-                validatedOdeMapStream.transform(() -> new MapProcessedJsonConverter());
+                validatedOdeMapStream.transform(() -> new MapProcessedJsonConverter(mapStandardVersion));
 
         // Removes null messages from being posted to output topic.
         // Helpful to remove generated messages that caused exceptions.

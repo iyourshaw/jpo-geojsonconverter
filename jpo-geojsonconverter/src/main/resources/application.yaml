@@ -73,3 +73,6 @@ geojsonconverter:
   streams-config-num-stream-threads: ${GJC_STREAMS_CONFIG_NUM_STREAM_THREADS:10}
   streams-config-cache-max-bytes-buffering: ${GJC_STREAMS_CONFIG_CACHE_MAX_BYTES_BUFFERING:1048576}
   streams-config-commit-interval-ms: ${GJC_STREAMS_CONFIG_COMMIT_INTERVAL_MS:100}
+  map-standard-version: CTI4501_V1
+  spat-standard-version: CTI4501_V1
+  rtcm-standard-version: CTI4501_V1

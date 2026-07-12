@@ -24,6 +24,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import us.dot.its.jpo.geojsonconverter.partitioner.RsuIntersectionKey;
 import us.dot.its.jpo.geojsonconverter.pojos.spat.ProcessedSpat;
 import us.dot.its.jpo.geojsonconverter.serialization.JsonSerdes;
+import us.dot.its.jpo.geojsonconverter.standards.SpatStandard;
 import us.dot.its.jpo.geojsonconverter.validator.SpatJsonValidator;
 
 @SpringBootTest
@@ -44,7 +45,8 @@ public class SpatTopologyTest {
 
     @Test
     public void testTopology() {
-        Topology topology = SpatTopology.build(kafkaTopicOdeSpatJson, kafkaTopicProcessedSpat, spatJsonValidator);
+        Topology topology = SpatTopology.build(kafkaTopicOdeSpatJson, kafkaTopicProcessedSpat, spatJsonValidator,
+                SpatStandard.CTI4501_V1);
         try (TopologyTestDriver driver = new TopologyTestDriver(topology)) {
             TestInputTopic<Void, String> inputOdeSpatJsonTopic = driver.createInputTopic(kafkaTopicOdeSpatJson,
                     Serdes.Void().serializer(), Serdes.String().serializer());
@@ -73,7 +75,8 @@ public class SpatTopologyTest {
 
     @Test
     public void testTopologyFailure() {
-        Topology topology = SpatTopology.build(kafkaTopicOdeSpatJson, kafkaTopicProcessedSpat, spatJsonValidator);
+        Topology topology = SpatTopology.build(kafkaTopicOdeSpatJson, kafkaTopicProcessedSpat, spatJsonValidator,
+                SpatStandard.CTI4501_V1);
         try (TopologyTestDriver driver = new TopologyTestDriver(topology)) {
             TestInputTopic<Void, String> inputOdeSpatJsonTopic = driver.createInputTopic(kafkaTopicOdeSpatJson,
                     Serdes.Void().serializer(), Serdes.String().serializer());
