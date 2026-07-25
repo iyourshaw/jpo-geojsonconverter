@@ -30,13 +30,17 @@ import us.dot.its.jpo.geojsonconverter.serialization.JsonSerdes;
 import us.dot.its.jpo.geojsonconverter.standards.MapStandard;
 import us.dot.its.jpo.geojsonconverter.validator.MapJsonValidator;
 
+@SpringBootTest
+@RunWith(SpringRunner.class)
+@ActiveProfiles("test")
 public class MapTopologyTest {
     String kafkaTopicOdeMapJson = "topic.OdeMapJson";
     String kafkaTopicMapGeoJson = "topic.ProcessedMap";
     String kafkaTopicMapWKT = "topic.ProcessedMapWKT";
     String odeMapJsonString;
 
-    private final MapJsonValidator mapJsonValidator = new MapJsonValidator();
+    @Autowired
+    private MapJsonValidator mapJsonValidator;
 
     @Before
     public void setup() throws IOException {
@@ -61,7 +65,7 @@ public class MapTopologyTest {
             // Check MapGeoJson topic for properly converted message data
             List<KeyValue<RsuIntersectionKey, ProcessedMap<LineString>>> mapGeoJsonResults =
                     outputTopic.readKeyValuesToList();
-            assertEquals(1, mapGeoJsonResults.size());
+            assertEquals(mapGeoJsonResults.size(), 1);
 
             KeyValue<RsuIntersectionKey, ProcessedMap<LineString>> mapGeoJson = mapGeoJsonResults.get(0);
             assertNotNull(mapGeoJson.key);
@@ -93,7 +97,7 @@ public class MapTopologyTest {
 
             // Check MapWKT topic for properly converted message data
             List<KeyValue<RsuIntersectionKey, ProcessedMap<String>>> mapWKTResults = outputTopic.readKeyValuesToList();
-            assertEquals(1, mapWKTResults.size());
+            assertEquals(mapWKTResults.size(), 1);
 
             KeyValue<RsuIntersectionKey, ProcessedMap<String>> mapWKT = mapWKTResults.get(0);
             assertNotNull(mapWKT.key);
