@@ -117,12 +117,12 @@ public class CTI4501Validator {
      * Checks for all strictly and conditionally mandatory fields defined in CTI-4501 (page 132)
      * <p>
      * CTI-4501 Document: https://www.ite.org/ITEORG/assets/File/Standards/CTI%204501v0101.pdf
-     * <p>
+     * <h3>
      * Notes on the logic for deciding whether a lane must have a 'connectsTo':
-     * <p>
+     * <h4>
      * Summary:
-     * vehicle lanes, bike lanes, and sidewalks that are ingress lanes should have connections.
-     * <p>
+     * <p>vehicle lanes, bike lanes, and sidewalks that are ingress lanes should have connections.
+     * <h4>
      * Reasoning:
      * <p>
      * Here we interpret cti-4501 (v1) such that all lanes which vehicles or VRUs travel on, and which are
@@ -140,7 +140,23 @@ public class CTI4501Validator {
      *  We ignore crosswalks because of the difficulty of defining if they are "ingress" or "egress".
      * <p>
      *  We hope that future editions of CTI-4501 will clarify these issues more explicitly.
-     *
+     *  <h4>Notes on logic for deciding whether a lane should have DE_AllowedManeuvers
+     *  <h5>Summary
+     *  <p>We only require ingress lanes to have a DE_AllowedManeuvers element.  Egress lanes
+     *  are not required to have a 'maneuvers' element.  This check is same for both CTI-4501 v1 and v2,
+     *  despite some ambiguity in the v1 specification.
+     *  <h5>Reasoning
+     *  <p>CTI-4501 v1, section 3.3.3.4.3 states "A connected intersection shall identify for a lane each maneuver
+     *  that is allowed for that lane at the stop line for ingress lanes and at the first node point for the
+     *  downstream lane, as defined by DE_AllowedManeuvers in SAE J2735_202007."
+     *  <p>This is not very clear.  The bit about the 'first node point for the downstream lane'
+     *  seems to suggest that maneuvers should be defined for both the
+     *  ingress and egress lanes, but it doesn't clearly state that.  Common sense would dictate that maneuvers should
+     *  not be required for egress lanes because it would be redundant information that would bloat the MAP
+     *  message size.
+     *  <p>The CTI-4501 version 2 draft standard has language that clarifies the situation, making it clear
+     *  that 'maneuvers' only needs to be defined 'for each ingress lane' instead of the ambiguous v1 language
+     *  'for a lane'.
      * @param mapData The MapData object to be validated for CTI-4501 conformance.
      * @return a list of validation messages describing CTI-4501 conformance issues, or an empty list if conformant.
      */
