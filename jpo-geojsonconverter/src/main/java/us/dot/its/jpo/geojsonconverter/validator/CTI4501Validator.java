@@ -365,7 +365,6 @@ public class CTI4501Validator {
                     }
                 }
             } else {
-                LaneDescription laneDesc = getLaneDescription(lane);
                 boolean shouldHaveConnection = laneDesc.isVehicleLane() || laneDesc.isBikeLane()
                         || laneDesc.isTrackedVehicleLane() || laneDesc.isSidewalk();
                 if (laneDesc.isIngress() && shouldHaveConnection) {
