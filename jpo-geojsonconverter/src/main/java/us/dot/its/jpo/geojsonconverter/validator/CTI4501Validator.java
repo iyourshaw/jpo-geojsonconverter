@@ -203,11 +203,12 @@ public class CTI4501Validator {
 
         // Check GenericLane fields
         for (GenericLane lane : intersection.getLaneSet()) {
+            LaneDescription laneDesc = getLaneDescription(lane);
             if (lane.getManeuvers() == null && !validationMap.containsKey(LANE_MANEUVERS)) {
                 validationMap.put(LANE_MANEUVERS,
                         createValidationMessage(mapStandardVersion,
-                                "The '%s' DE_AllowedManeuvers element is missing for lane ID %s",
-                                LANE_MANEUVERS));
+                                "The '%s' DE_AllowedManeuvers element is missing for %s lane ID %s",
+                                LANE_MANEUVERS, laneDesc.ingressOrEgress(), laneDesc.laneId()));
             }
 
             // Check for conditional nodes field requirements
@@ -459,6 +460,9 @@ public class CTI4501Validator {
             LaneType laneType,
             boolean isIngress
     ){
+        public String ingressOrEgress() {
+            return isIngress ? "ingress" : "egress";
+        }
         public boolean isBikeLane(){
             return laneType == BIKE_LANE;
         }
