@@ -373,7 +373,7 @@ public class CTI4501Validator {
                             createValidationMessage(mapStandardVersion,
                                     String.format("The laneSet 'connectsTo' DF_ConnectsToList is missing for lane ID %s, " +
                                             "lane type: %s " ,
-                                            laneDesc.laneId(), laneDesc.laneType())));
+                                            laneDesc.laneId(), laneDesc.laneType().getDescription())));
 
                 } else {
                     // Ignore egress or sidewalk/crosswalk lanes without connections
@@ -448,6 +448,9 @@ public class CTI4501Validator {
         MEDIAN,
         STRIPING,
         UNKNOWN;
+        public String getDescription() {
+            return this.name().toLowerCase().replace('_', ' ');
+        }
     }
 
 
