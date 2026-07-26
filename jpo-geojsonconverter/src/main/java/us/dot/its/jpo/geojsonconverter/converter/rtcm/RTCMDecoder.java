@@ -13,6 +13,7 @@ import us.dot.its.jpo.geojsonconverter.DateJsonMapper;
 import java.io.File;
 import java.io.IOException;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -191,7 +192,56 @@ public class RTCMDecoder {
             node.put("station_id", stationId);
         }
 
+        if (type == 1005 || type == 1006) {
+            getXYZCoordsFromRefStation(bytes).ifPresent(coords -> {
+                node.put("x", coords.x);
+                node.put("y", coords.y);
+                node.put("z", coords.z);
+            });
+        }
+
+        if (type >= 1071 && type <= 1230) {
+            getTimeOfWeekFromMSM(bytes).ifPresent(time -> node.put("tow", time));
+        }
+
         return node;
+    }
+
+    public static Optional<XYZCoords> getXYZCoordsFromRefStation(byte[] bytes) {
+        final BigDecimal antennaPositionResolution = new BigDecimal("0.0001");
+        if (bytes.length < 22) {
+            log.error("Not enough bytes to get XYZCoords From Ref Station message.  Need at least 22 bytes.");
+            return Optional.empty();
+        }
+        // X, Y, and Z coords are 38-bit signed numbers in 5 bytes each
+        long x = get38bitSignedInt(bytes[8], bytes[9], bytes[10], bytes[11], bytes[12]);
+        BigDecimal xd = antennaPositionResolution.multiply(new BigDecimal(x));
+        long y = get38bitSignedInt(bytes[13], bytes[14], bytes[15], bytes[16], bytes[17]);
+        BigDecimal yd = antennaPositionResolution.multiply(new BigDecimal(y));
+        long z = get38bitSignedInt(bytes[18], bytes[19], bytes[20], bytes[21], bytes[22]);
+        BigDecimal zd = antennaPositionResolution.multiply(new BigDecimal(z));
+        return Optional.of(new XYZCoords(xd, yd, zd));
+    }
+
+    public static long get38bitSignedInt(byte b1, byte b2, byte b3, byte b4, byte b5) {
+        long i1 = unsigned(b1);
+        long i2 = unsigned(b2);
+        long i3 = unsigned(b3);
+        long i4 = unsigned(b4);
+        long i5 = unsigned(b5);
+        long x = ((i1 & 0x3FL) << 32) | (i2 << 24) | (i3 << 16) | (i4 << 8) | i5;
+        if ((x & 0x20_0000_0000L) != 0) {
+            // First bit is one: twos complement
+            long absx = ((~x) & 0x3F_FFFF_FFFFL) + 1;
+            x = -absx;
+        }
+        return x;
+    }
+
+    public record XYZCoords(BigDecimal x, BigDecimal y, BigDecimal z){}
+
+    public static Optional<Long> getTimeOfWeekFromMSM(byte[] bytes) {
+        return Optional.empty();
     }
 
     /**
