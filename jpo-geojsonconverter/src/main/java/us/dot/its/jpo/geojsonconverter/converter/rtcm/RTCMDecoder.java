@@ -147,7 +147,7 @@ public class RTCMDecoder {
     }
 
     /**
-     * Partially decode the RTCM message.  Used when gpsdecode library is not available.
+     * Partially decode the RTCM message to get necessary items.  Used when gpsdecode library is not available.
      * Ref. <a href="https://gitlab.com/gpsd/gpsd/-/blob/master/drivers/driver_rtcm3.c">gpsd/driver_rtcm.c</a>
      * @param bytes byte array
      * @return JSON formatted partially decoded message.
@@ -214,28 +214,28 @@ public class RTCMDecoder {
             return Optional.empty();
         }
         // X, Y, and Z coords are 38-bit signed numbers in 5 bytes each
-        long x = get38bitSignedInt(bytes[8], bytes[9], bytes[10], bytes[11], bytes[12]);
+        long x = get38bitSignedInt(bytes, 7);
         BigDecimal xd = antennaPositionResolution.multiply(new BigDecimal(x));
-        long y = get38bitSignedInt(bytes[13], bytes[14], bytes[15], bytes[16], bytes[17]);
+        long y = get38bitSignedInt(bytes, 12);
         BigDecimal yd = antennaPositionResolution.multiply(new BigDecimal(y));
-        long z = get38bitSignedInt(bytes[18], bytes[19], bytes[20], bytes[21], bytes[22]);
+        long z = get38bitSignedInt(bytes, 17);
         BigDecimal zd = antennaPositionResolution.multiply(new BigDecimal(z));
         return Optional.of(new XYZCoords(xd, yd, zd));
     }
 
-    public static long get38bitSignedInt(byte b1, byte b2, byte b3, byte b4, byte b5) {
-        long i1 = unsigned(b1);
-        long i2 = unsigned(b2);
-        long i3 = unsigned(b3);
-        long i4 = unsigned(b4);
-        long i5 = unsigned(b5);
-        long x = ((i1 & 0x3FL) << 32) | (i2 << 24) | (i3 << 16) | (i4 << 8) | i5;
-        if ((x & 0x20_0000_0000L) != 0) {
+    public static long get38bitSignedInt(byte[] bytes, int offset) {
+        long i0 = unsigned(bytes[offset]);
+        long i1 = unsigned(bytes[offset + 1]);
+        long i2 = unsigned(bytes[offset + 2]);
+        long i3 = unsigned(bytes[offset + 3]);
+        long i4 = unsigned(bytes[offset + 4]);
+        long i = ((i0 & 0x3FL) << 32) | (i1 << 24) | (i2 << 16) | (i3 << 8) | i4;
+        if ((i & 0x20_0000_0000L) != 0) {
             // First bit is one: twos complement
-            long absx = ((~x) & 0x3F_FFFF_FFFFL) + 1;
-            x = -absx;
+            long abs = ((~i) & 0x3F_FFFF_FFFFL) + 1;
+            i = -abs;
         }
-        return x;
+        return i;
     }
 
     public record XYZCoords(BigDecimal x, BigDecimal y, BigDecimal z){}
