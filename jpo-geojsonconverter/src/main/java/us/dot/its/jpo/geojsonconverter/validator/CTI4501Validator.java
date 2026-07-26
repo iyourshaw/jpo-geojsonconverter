@@ -21,6 +21,33 @@ public class CTI4501Validator {
     // String constants used for validation
     private static final String INTERSECTION_ID_REGION = "intersection.id.region";
     private static final String LANE_MANEUVERS = "laneSet.GenericLane.maneuvers";
+    private static final String TIMING_START_TIME = "timing.startTime";
+    private static final String TIMING_MAX_END_TIME = "timing.maxEndTime";
+    private static final String TIMING_NEXT_TIME = "timing.nextTime";
+    private static final String TIMING = "timing";
+    private static final String SPEED_LIMITS_TYPE = "speedLimits.type";
+    private static final String SPEED_LIMITS_SPEED = "speedLimits.speed";
+    private static final String NODE_XY1_X = "nodeXY.delta.node-XY1.x";
+    private static final String NODE_XY1_Y = "nodeXY.delta.node-XY1.y";
+    private static final String NODE_XY2_X = "nodeXY.delta.node-XY2.x";
+    private static final String NODE_XY2_Y = "nodeXY.delta.node-XY2.y";
+    private static final String NODE_XY3_X = "nodeXY.delta.node-XY3.x";
+    private static final String NODE_XY3_Y = "nodeXY.delta.node-XY3.y";
+    private static final String NODE_XY4_X = "nodeXY.delta.node-XY4.x";
+    private static final String NODE_XY4_Y = "nodeXY.delta.node-XY4.y";
+    private static final String NODE_XY5_X = "nodeXY.delta.node-XY5.x";
+    private static final String NODE_XY5_Y = "nodeXY.delta.node-XY5.y";
+    private static final String NODE_XY6_X = "nodeXY.delta.node-XY6.x";
+    private static final String NODE_XY6_Y = "nodeXY.delta.node-XY6.y";
+    private static final String ATTRIBUTES_DATA_SPEED_LIMITS_TYPE = "attributes.data.speedLimits.type";
+    private static final String ATTRIBUTES_DATA_SPEED_LIMITS_SPEED = "attributes.data.speedLimits.speed";
+    private static final String ATTRIBUTES_DATA_SPEED_LIMITS = "attributes.data.speedLimits";
+    private static final String COMPUTED_REFERENCE_LANE_ID = "computed.referenceLaneId";
+    private static final String COMPUTED_OFFSET_X_AXIS = "computed.offsetXaxis";
+    private static final String COMPUTED_OFFSET_Y_AXIS = "computed.offsetYaxis";
+    private static final String CONNECTS_TO_CONNECTING_LANE_LANE = "connectsTo.connectingLane.lane";
+    private static final String CONNECTS_TO_CONNECTING_LANE_MANEUVER = "connectsTo.connectingLane.maneuver";
+    private static final String CONNECTS_TO_SIGNAL_GROUP = "connectsTo.signalGroup";
 
     /**
      * Checks if the provided SPAT (Signal Phase and Timing) object conforms to the CTI-4501 specification. This method
@@ -62,14 +89,14 @@ public class CTI4501Validator {
         // Check intersection fields
         if (spatStandardVersion == SpatStandard.CTI4501_V1) {
             if (intersection.getId().getRegion() == null) {
-                validationMap.put("intersection.id.region",
+                validationMap.put(INTERSECTION_ID_REGION,
                         createValidationMessage(spatStandardVersion,
                                 "The intersections 'id.region' DE_RoadRegulatorID is missing"));
             }
         } else {
             // spatStandardVersion == SpatStandard.CTI4501_V2_DRAFT
             if (intersection.getId().getRegion() != null) {
-                validationMap.put("intersection.id.region",
+                validationMap.put(INTERSECTION_ID_REGION,
                         createValidationMessage(spatStandardVersion,
                                 "The intersections 'id.region' DE_RoadRegulatorID is present. Its use is deprecated in CTI-4501 v2."));
             }
@@ -84,20 +111,20 @@ public class CTI4501Validator {
         for (MovementState mState : intersection.getStates()) {
             for (MovementEvent mEvent : mState.getState_time_speed()) {
                 if (mEvent.getTiming() != null) {
-                    if (mEvent.getTiming().getStartTime() == null && !validationMap.containsKey("timing.startTime")) {
-                        validationMap.put("timing.startTime", createValidationMessage(spatStandardVersion,
+                    if (mEvent.getTiming().getStartTime() == null && !validationMap.containsKey(TIMING_START_TIME)) {
+                        validationMap.put(TIMING_START_TIME, createValidationMessage(spatStandardVersion,
                                 "The state-time-speed 'timing.startTime' DE_TimeMark is missing"));
                     }
-                    if (mEvent.getTiming().getMaxEndTime() == null && !validationMap.containsKey("timing.maxEndTime")) {
-                        validationMap.put("timing.maxEndTime", createValidationMessage(spatStandardVersion,
+                    if (mEvent.getTiming().getMaxEndTime() == null && !validationMap.containsKey(TIMING_MAX_END_TIME)) {
+                        validationMap.put(TIMING_MAX_END_TIME, createValidationMessage(spatStandardVersion,
                                 "The state-time-speed 'timing.maxEndTime' DE_TimeMark is missing"));
                     }
-                    if (mEvent.getTiming().getNextTime() == null && !validationMap.containsKey("timing.nextTime")) {
-                        validationMap.put("timing.nextTime", createValidationMessage(spatStandardVersion,
+                    if (mEvent.getTiming().getNextTime() == null && !validationMap.containsKey(TIMING_NEXT_TIME)) {
+                        validationMap.put(TIMING_NEXT_TIME, createValidationMessage(spatStandardVersion,
                                 "The state-time-speed 'timing.nextTime' DE_TimeMark is missing"));
                     }
-                } else if (!validationMap.containsKey("timing")) {
-                    validationMap.put("timing",
+                } else if (!validationMap.containsKey(TIMING)) {
+                    validationMap.put(TIMING,
                             createValidationMessage(spatStandardVersion,
                                     "The state-time-speed 'timing' DF_TimeChangeDetails is missing"));
                 }
@@ -202,13 +229,13 @@ public class CTI4501Validator {
         // Check speedLimits
         if (intersection.getSpeedLimits() != null) {
             for (RegulatorySpeedLimit speedLimit : intersection.getSpeedLimits()) {
-                if (speedLimit.getType() == null && !validationMap.containsKey("speedLimits.type")) {
-                    validationMap.put("speedLimits.type",
+                if (speedLimit.getType() == null && !validationMap.containsKey(SPEED_LIMITS_TYPE)) {
+                    validationMap.put(SPEED_LIMITS_TYPE,
                             createValidationMessage(mapStandardVersion,
                                     "The speedLimits 'type' DE_SpeedLimitType is missing"));
                 }
-                if (speedLimit.getSpeed() == null && !validationMap.containsKey("speedLimits.speed")) {
-                    validationMap.put("speedLimits.speed",
+                if (speedLimit.getSpeed() == null && !validationMap.containsKey(SPEED_LIMITS_SPEED)) {
+                    validationMap.put(SPEED_LIMITS_SPEED,
                             createValidationMessage(mapStandardVersion,
                                     "The speedLimits 'speed' DE_Velocity is missing"));
                 }
@@ -237,79 +264,79 @@ public class CTI4501Validator {
                 for (NodeXY nodeXY : lane.getNodeList().getNodes()) {
                     if (nodeXY.getDelta().getNode_XY1() != null) {
                         if (nodeXY.getDelta().getNode_XY1().getX() == null
-                                && !validationMap.containsKey("nodeXY.delta.node-XY1.x")) {
-                            validationMap.put("nodeXY.delta.node-XY1.x", createValidationMessage(
+                                && !validationMap.containsKey(NODE_XY1_X)) {
+                            validationMap.put(NODE_XY1_X, createValidationMessage(
                                     mapStandardVersion,
                                     "The nodeXY 'delta.node-XY1.x' DE_Offset_B10 is missing but 'delta.node-XY1' DF_Node_XY_20b is present"));
                         }
                         if (nodeXY.getDelta().getNode_XY1().getY() == null
-                                && !validationMap.containsKey("nodeXY.delta.node-XY1.y")) {
-                            validationMap.put("nodeXY.delta.node-XY1.y", createValidationMessage(
+                                && !validationMap.containsKey(NODE_XY1_Y)) {
+                            validationMap.put(NODE_XY1_Y, createValidationMessage(
                                     mapStandardVersion,
                                     "The nodeXY 'delta.node-XY1.y' DE_Offset_B10 is missing but 'delta.node-XY1' DF_Node_XY_20b is present"));
                         }
                     } else if (nodeXY.getDelta().getNode_XY2() != null) {
                         if (nodeXY.getDelta().getNode_XY2().getX() == null
-                                && !validationMap.containsKey("nodeXY.delta.node-XY2.x")) {
-                            validationMap.put("nodeXY.delta.node-XY2.x", createValidationMessage(
+                                && !validationMap.containsKey(NODE_XY2_X)) {
+                            validationMap.put(NODE_XY2_X, createValidationMessage(
                                     mapStandardVersion,
                                     "The nodeXY 'delta.node-XY2.x' DE_Offset_B11 is missing but 'delta.node-XY2' DF_Node_XY_22b is present"));
                         }
                         if (nodeXY.getDelta().getNode_XY2().getY() == null
-                                && !validationMap.containsKey("nodeXY.delta.node-XY2.y")) {
-                            validationMap.put("nodeXY.delta.node-XY2.y", createValidationMessage(
+                                && !validationMap.containsKey(NODE_XY2_Y)) {
+                            validationMap.put(NODE_XY2_Y, createValidationMessage(
                                     mapStandardVersion,
                                     "The nodeXY 'delta.node-XY2.y' DE_Offset_B11 is missing but 'delta.node-XY2' DF_Node_XY_22b is present"));
                         }
                     } else if (nodeXY.getDelta().getNode_XY3() != null) {
                         if (nodeXY.getDelta().getNode_XY3().getX() == null
-                                && !validationMap.containsKey("nodeXY.delta.node-XY3.x")) {
-                            validationMap.put("nodeXY.delta.node-XY3.x", createValidationMessage(
+                                && !validationMap.containsKey(NODE_XY3_X)) {
+                            validationMap.put(NODE_XY3_X, createValidationMessage(
                                     mapStandardVersion,
                                     "The nodeXY 'delta.node-XY3.x' DE_Offset_B12 is missing but 'delta.node-XY3' DF_Node_XY_24b is present"));
                         }
                         if (nodeXY.getDelta().getNode_XY3().getY() == null
-                                && !validationMap.containsKey("nodeXY.delta.node-XY3.y")) {
-                            validationMap.put("nodeXY.delta.node-XY3.y", createValidationMessage(
+                                && !validationMap.containsKey(NODE_XY3_Y)) {
+                            validationMap.put(NODE_XY3_Y, createValidationMessage(
                                     mapStandardVersion,
                                     "The nodeXY 'delta.node-XY3.y' DE_Offset_B12 is missing but 'delta.node-XY3' DF_Node_XY_24b is present"));
                         }
                     } else if (nodeXY.getDelta().getNode_XY4() != null) {
                         if (nodeXY.getDelta().getNode_XY4().getX() == null
-                                && !validationMap.containsKey("nodeXY.delta.node-XY4.x")) {
-                            validationMap.put("nodeXY.delta.node-XY4.x", createValidationMessage(
+                                && !validationMap.containsKey(NODE_XY4_X)) {
+                            validationMap.put(NODE_XY4_X, createValidationMessage(
                                     mapStandardVersion,
                                     "The nodeXY 'delta.node-XY4.x' DE_Offset_B13 is missing but 'delta.node-XY4' DF_Node_XY_26b is present"));
                         }
                         if (nodeXY.getDelta().getNode_XY4().getY() == null
-                                && !validationMap.containsKey("nodeXY.delta.node-XY4.y")) {
-                            validationMap.put("nodeXY.delta.node-XY4.y", createValidationMessage(
+                                && !validationMap.containsKey(NODE_XY4_Y)) {
+                            validationMap.put(NODE_XY4_Y, createValidationMessage(
                                     mapStandardVersion,
                                     "The nodeXY 'delta.node-XY4.y' DE_Offset_B13 is missing but 'delta.node-XY4' DF_Node_XY_26b is present"));
                         }
                     } else if (nodeXY.getDelta().getNode_XY5() != null) {
                         if (nodeXY.getDelta().getNode_XY5().getX() == null
-                                && !validationMap.containsKey("nodeXY.delta.node-XY5.x")) {
-                            validationMap.put("nodeXY.delta.node-XY5.x", createValidationMessage(
+                                && !validationMap.containsKey(NODE_XY5_X)) {
+                            validationMap.put(NODE_XY5_X, createValidationMessage(
                                     mapStandardVersion,
                                     "The nodeXY 'delta.node-XY5.x' DE_Offset_B14 is missing but 'delta.node-XY5' DF_Node_XY_28b is present"));
                         }
                         if (nodeXY.getDelta().getNode_XY5().getY() == null
-                                && !validationMap.containsKey("nodeXY.delta.node-XY5.y")) {
-                            validationMap.put("nodeXY.delta.node-XY5.y", createValidationMessage(
+                                && !validationMap.containsKey(NODE_XY5_Y)) {
+                            validationMap.put(NODE_XY5_Y, createValidationMessage(
                                     mapStandardVersion,
                                     "The nodeXY 'delta.node-XY5.y' DE_Offset_B14 is missing but 'delta.node-XY5' DF_Node_XY_28b is present"));
                         }
                     } else if (nodeXY.getDelta().getNode_XY6() != null) {
                         if (nodeXY.getDelta().getNode_XY6().getX() == null
-                                && !validationMap.containsKey("nodeXY.delta.node-XY6.x")) {
-                            validationMap.put("nodeXY.delta.node-XY6.x", createValidationMessage(
+                                && !validationMap.containsKey(NODE_XY6_X)) {
+                            validationMap.put(NODE_XY6_X, createValidationMessage(
                                     mapStandardVersion,
                                     "The nodeXY 'delta.node-XY6.x' DE_Offset_B16 is missing but 'delta.node-XY6' DF_Node_XY_32b is present"));
                         }
                         if (nodeXY.getDelta().getNode_XY6().getY() == null
-                                && !validationMap.containsKey("nodeXY.delta.node-XY6.y")) {
-                            validationMap.put("nodeXY.delta.node-XY6.y", createValidationMessage(
+                                && !validationMap.containsKey(NODE_XY6_Y)) {
+                            validationMap.put(NODE_XY6_Y, createValidationMessage(
                                     mapStandardVersion,
                                     "The nodeXY 'delta.node-XY6.y' DE_Offset_B16 is missing but 'delta.node-XY6' DF_Node_XY_32b is present"));
                         }
@@ -322,20 +349,20 @@ public class CTI4501Validator {
                                 if (data.getSpeedLimits() != null) {
                                     for (RegulatorySpeedLimit speedLimit : data.getSpeedLimits()) {
                                         if (speedLimit.getType() == null
-                                                && !validationMap.containsKey("attributes.data.speedLimits.type")) {
-                                            validationMap.put("attributes.data.speedLimits.type",
+                                                && !validationMap.containsKey(ATTRIBUTES_DATA_SPEED_LIMITS_TYPE)) {
+                                            validationMap.put(ATTRIBUTES_DATA_SPEED_LIMITS_TYPE,
                                                     createValidationMessage(mapStandardVersion,
                                                             "The attributes 'data.speedLimits.type' DE_SpeedLimitType is missing"));
                                         }
                                         if (speedLimit.getSpeed() == null
-                                                && !validationMap.containsKey("attributes.data.speedLimits.speed")) {
-                                            validationMap.put("attributes.data.speedLimits.speed",
+                                                && !validationMap.containsKey(ATTRIBUTES_DATA_SPEED_LIMITS_SPEED)) {
+                                            validationMap.put(ATTRIBUTES_DATA_SPEED_LIMITS_SPEED,
                                                     createValidationMessage(mapStandardVersion,
                                                             "The attributes 'data.speedLimits.speed' DE_Velocity is missing"));
                                         }
                                     }
-                                } else if (!validationMap.containsKey("attributes.data.speedLimits")) {
-                                    validationMap.put("attributes.data.speedLimits", createValidationMessage(
+                                } else if (!validationMap.containsKey(ATTRIBUTES_DATA_SPEED_LIMITS)) {
+                                    validationMap.put(ATTRIBUTES_DATA_SPEED_LIMITS, createValidationMessage(
                                             mapStandardVersion,
                                             "The attributes 'data.speedLimits' DF_SpeedLimitList is missing but 'attributes.data' DF_LaneDataAttributeList is present"));
                                 }
@@ -345,19 +372,19 @@ public class CTI4501Validator {
                 }
             } else if (lane.getNodeList().getComputed() != null) {
                 if (lane.getNodeList().getComputed().getReferenceLaneId() == null
-                        && !validationMap.containsKey("computed.referenceLaneId")) {
-                    validationMap.put("computed.referenceLaneId",
+                        && !validationMap.containsKey(COMPUTED_REFERENCE_LANE_ID)) {
+                    validationMap.put(COMPUTED_REFERENCE_LANE_ID,
                             createValidationMessage(mapStandardVersion,
                                     "The computed 'referenceLaneId' DE_LaneID is missing"));
                 }
                 if (lane.getNodeList().getComputed().getOffsetXaxis() == null
-                        && !validationMap.containsKey("computed.offsetXaxis")) {
-                    validationMap.put("computed.offsetXaxis", createValidationMessage(mapStandardVersion,
+                        && !validationMap.containsKey(COMPUTED_OFFSET_X_AXIS)) {
+                    validationMap.put(COMPUTED_OFFSET_X_AXIS, createValidationMessage(mapStandardVersion,
                             "The computed 'offsetXaxis' DE_DrivenLineOffsetSmall or DE_DrivenLineOffsetLarge is missing"));
                 }
                 if (lane.getNodeList().getComputed().getOffsetYaxis() == null
-                        && !validationMap.containsKey("computed.offsetYaxis")) {
-                    validationMap.put("computed.offsetYaxis", createValidationMessage(mapStandardVersion,
+                        && !validationMap.containsKey(COMPUTED_OFFSET_Y_AXIS)) {
+                    validationMap.put(COMPUTED_OFFSET_Y_AXIS, createValidationMessage(mapStandardVersion,
                             "The computed 'offsetYaxis' DE_DrivenLineOffsetSmall or DE_DrivenLineOffsetLarge is missing"));
                 }
             }
@@ -367,20 +394,20 @@ public class CTI4501Validator {
                 for (Connection connection : lane.getConnectsTo()) {
                     if (connection.getConnectingLane() != null) {
                         if (connection.getConnectingLane().getLane() == null
-                                && !validationMap.containsKey("connectsTo.connectingLane.lane")) {
-                            validationMap.put("connectsTo.connectingLane.lane", createValidationMessage(
+                                && !validationMap.containsKey(CONNECTS_TO_CONNECTING_LANE_LANE)) {
+                            validationMap.put(CONNECTS_TO_CONNECTING_LANE_LANE, createValidationMessage(
                                     mapStandardVersion,
                                     "The connectsTo 'connectingLane.lane' DE_LaneID is missing"));
                         }
                         if (connection.getConnectingLane().getManeuver() == null
-                                && !validationMap.containsKey("connectsTo.connectingLane.maneuver")) {
-                            validationMap.put("connectsTo.connectingLane.maneuver", createValidationMessage(
+                                && !validationMap.containsKey(CONNECTS_TO_CONNECTING_LANE_MANEUVER)) {
+                            validationMap.put(CONNECTS_TO_CONNECTING_LANE_MANEUVER, createValidationMessage(
                                     mapStandardVersion,
                                     "The connectsTo 'connectingLane.maneuver' DE_AllowedManeuver is missing"));
                         }
                     }
-                    if (connection.getSignalGroup() == null && !validationMap.containsKey("connectsTo.signalGroup")) {
-                        validationMap.put("connectsTo.signalGroup",
+                    if (connection.getSignalGroup() == null && !validationMap.containsKey(CONNECTS_TO_SIGNAL_GROUP)) {
+                        validationMap.put(CONNECTS_TO_SIGNAL_GROUP,
                                 createValidationMessage(mapStandardVersion,
                                         "The connectsTo 'signalGroup' DE_SignalGroupID is missing"));
                     }
