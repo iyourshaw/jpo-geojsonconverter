@@ -450,10 +450,8 @@ public class CTI4501Validator {
                 String validationKey = "laneSet.connectsTo." + laneDesc.laneId();
                 validationMap.put(validationKey,
                         createValidationMessage(mapStandardVersion,
-                                String.format("The laneSet 'connectsTo' DF_ConnectsToList is missing for lane ID %s, " +
-                                                "lane type: %s " ,
-                                        laneDesc.laneId(), laneDesc.laneType().getDescription())));
-
+                                "The laneSet 'connectsTo' DF_ConnectsToList is missing for lane ID %s, lane type: %s " ,
+                                        laneDesc.laneId(), laneDesc.laneType().getDescription()));
             } else {
                 // Ignore egress or sidewalk/crosswalk lanes without connections
             }
