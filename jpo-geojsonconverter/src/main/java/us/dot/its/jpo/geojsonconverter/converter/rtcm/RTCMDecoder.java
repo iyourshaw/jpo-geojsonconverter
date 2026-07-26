@@ -238,7 +238,8 @@ public class RTCMDecoder {
         return i;
     }
 
-    public record XYZCoords(BigDecimal x, BigDecimal y, BigDecimal z){}
+    public record XYZCoords(BigDecimal x, BigDecimal y, BigDecimal z){
+    }
 
     public static Optional<Long> getTimeOfWeekFromMSM(byte[] bytes) {
         if (bytes.length < 10) {
@@ -247,10 +248,10 @@ public class RTCMDecoder {
         }
 
         // tow is first 30 bits of the 4 bytes after the first 6 bytes.
-        long i7 = unsigned(bytes[7]);
-        long i8 = unsigned(bytes[8]);
-        long i9 = unsigned(bytes[9]);
-        long i10 = unsigned(bytes[10]);
+        long i7 = unsigned(bytes[6]);
+        long i8 = unsigned(bytes[7]);
+        long i9 = unsigned(bytes[8]);
+        long i10 = unsigned(bytes[9]);
         long tow = ((i7 << 24) | (i8 << 16) | (i9 << 8) | i10) >>> 2;
         return Optional.of(tow);
     }
