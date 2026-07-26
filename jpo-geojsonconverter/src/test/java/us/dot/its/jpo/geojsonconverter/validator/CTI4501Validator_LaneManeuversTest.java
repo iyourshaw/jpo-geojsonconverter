@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
 
@@ -41,6 +42,13 @@ public class CTI4501Validator_LaneManeuversTest {
         List<String> messages = toMessages(CTI4501Validator.mapValidation(mapData, MapStandard.CTI4501_V1));
         assertThat(messages, hasItem(containsString(MANEUVERS_MISSING)));
         assertThat(messages, hasItem(containsString("ingress lane ID 1")));
+    }
+
+    @Test
+    public void testOnlyIngressLanes_MultipleLanesMissingManeuvers_DedupedMessage() {
+        MapData mapData = getMap().ingressLane(1, false).ingressLane(2, false).build();
+        List<String> messages = toMessages(CTI4501Validator.mapValidation(mapData, MapStandard.CTI4501_V1));
+        assertThat(countContaining(messages, MANEUVERS_MISSING), equalTo(1L));
     }
 
     // ============================================
@@ -81,6 +89,10 @@ public class CTI4501Validator_LaneManeuversTest {
         return messages.stream().map(ProcessedValidationMessage::getMessage).collect(Collectors.toList());
     }
 
+    private long countContaining(List<String> messages, String fragment) {
+        return messages.stream().filter(m -> m.contains(fragment)).count();
+    }
+
     private MapBuilder getMap() {
         return new MapBuilder();
     }
@@ -93,7 +105,11 @@ public class CTI4501Validator_LaneManeuversTest {
         private final List<LaneSpec> laneSpecs = new ArrayList<>();
 
         private MapBuilder ingressLane(boolean withManeuvers) {
-            laneSpecs.add(new LaneSpec(1, true, withManeuvers));
+            return ingressLane(1, withManeuvers);
+        }
+
+        private MapBuilder ingressLane(long laneId, boolean withManeuvers) {
+            laneSpecs.add(new LaneSpec(laneId, true, withManeuvers));
             return this;
         }
 

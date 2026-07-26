@@ -66,7 +66,8 @@ public class CTI4501Validator {
                         createValidationMessage(spatStandardVersion,
                                 "The intersections 'id.region' DE_RoadRegulatorID is missing"));
             }
-        } else if (spatStandardVersion == SpatStandard.CTI4501_V2_DRAFT) {
+        } else {
+            // spatStandardVersion == SpatStandard.CTI4501_V2_DRAFT
             if (intersection.getId().getRegion() != null) {
                 validationMap.put("intersection.id.region",
                         createValidationMessage(spatStandardVersion,
@@ -178,7 +179,8 @@ public class CTI4501Validator {
                         createValidationMessage(mapStandardVersion,
                                 "The intersections 'id.region' DE_RoadRegulatorID is missing"));
             }
-        } else if (mapStandardVersion == MapStandard.CTI4501_V2_DRAFT) {
+        } else {
+            // mapStandardVersion == MapStandard.CTI4501_V2_DRAFT
             if (intersection.getId().getRegion() != null) {
                 validationMap.put(INTERSECTION_ID_REGION,
                         createValidationMessage(mapStandardVersion,
