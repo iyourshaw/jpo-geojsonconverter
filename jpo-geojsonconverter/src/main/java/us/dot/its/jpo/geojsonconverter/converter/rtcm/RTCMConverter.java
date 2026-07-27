@@ -259,7 +259,7 @@ public class RTCMConverter {
     }
 
     /**
-     * For J3558, get lat/long and timestamp from the x,y,z and tow fields of the
+     * For J3258, get lat/long and timestamp from the x,y,z and tow fields of the
      * decoded messages.
      * @param properties Properties assumed to include decoded messages
      */
@@ -296,7 +296,7 @@ public class RTCMConverter {
             return;
         }
         if (!xNode.isNumber() || !yNode.isNumber() || !zNode.isNumber()) {
-            log.error("Invalid coordinates format x,y,x: {}, {}, {}", xNode, yNode, zNode);
+            log.error("Invalid coordinates format x,y,z: {}, {}, {}", xNode, yNode, zNode);
             return;
         }
         double x = xNode.doubleValue();
