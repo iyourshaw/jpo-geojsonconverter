@@ -57,7 +57,7 @@ public class RTCMTransformer
                     processed = rtcmConverter.processRTCM(odeReceivedAt.toInstant(), rtcmMessageFrame);
                     processed.getProperties().setOdeReceivedAt(odeReceivedAt);
                 } catch (DateTimeParseException e) {
-                    log.error("Error parsing ODE received at {}", metadata.getOdeReceivedAt());
+                    log.error("Error parsing ODE received at {}", metadata.getOdeReceivedAt(), e);
                     // ingest time not available; use current time
                     processed = rtcmConverter.processRTCM(rtcmMessageFrame);
                     processed.getProperties().addValidationMessage("Error parsing ODE received at date/time: " + metadata.getOdeReceivedAt());
