@@ -146,14 +146,14 @@ public class CTI4501Validator {
      * <p>
      * Checks for all strictly and conditionally mandatory fields defined in CTI-4501 (page 132)
      * <p>
-     * CTI-4501 Document: https://www.ite.org/ITEORG/assets/File/Standards/CTI%204501v0101.pdf
+     * <a href='https://www.ite.org/ITEORG/assets/File/Standards/CTI%204501v0101.pdf'>CTI-4501 Document</a>
      * <h3>
-     * Notes on the logic for deciding whether a lane must have a 'connectsTo':
+     * Notes on the logic for deciding whether a lane must have a 'connectsTo':</h3>
      * <h4>
-     * Summary:
+     * Summary:</h4>
      * <p>vehicle lanes, bike lanes, and sidewalks that are ingress lanes should have connections.
      * <h4>
-     * Reasoning:
+     * Reasoning:</h4>
      * <p>
      * Here we interpret cti-4501 (v1) such that all lanes which vehicles or VRUs travel on, and which are
      * ingress lanes that pass through the intersection, should have connections to either an egress lane
@@ -171,11 +171,11 @@ public class CTI4501Validator {
      * <p>
      *  We hope that future editions of CTI-4501 will clarify these issues more explicitly.
      *  <h4>Notes on logic for deciding whether a lane should have DE_AllowedManeuvers
-     *  <h5>Summary
+     *  <h5>Summary</h5>
      *  <p>We only require ingress lanes to have a DE_AllowedManeuvers element.  Egress lanes
      *  are not required to have a 'maneuvers' element.  This check is same for both CTI-4501 v1 and v2,
      *  despite some ambiguity in the v1 specification.
-     *  <h5>Reasoning
+     *  <h5>Reasoning</h5>
      *  <p>CTI-4501 v1, section 3.3.3.4.3 states "A connected intersection shall identify for a lane each maneuver
      *  that is allowed for that lane at the stop line for ingress lanes and at the first node point for the
      *  downstream lane, as defined by DE_AllowedManeuvers in SAE J2735_202007."
