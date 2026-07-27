@@ -384,13 +384,16 @@ public class RTCMConverter {
      * Number of GPS<->UTC leap seconds in effect at the given approximate UTC instant.
      */
     private static int gpsUtcLeapSecondOffset(long approxUtcEpochMilli) {
-        if (approxUtcEpochMilli >= LATEST_LEAP_SECOND_EPOCH_MILLIS) {
-            return CURRENT_GPS_UTC_LEAP_SECONDS;
+        if (approxUtcEpochMilli < LATEST_LEAP_SECOND_EPOCH_MILLIS) {
+            // Log an error if the timestamp is too old.
+            log.error(
+                    "Timestamp {} is too old. GPS<->UTC leap second offset is not known for timestamps before {}," +
+                            "using {} which is not correct.",
+                    Instant.ofEpochMilli(approxUtcEpochMilli),
+                    Instant.ofEpochMilli(LATEST_LEAP_SECOND_EPOCH_MILLIS),
+                    CURRENT_GPS_UTC_LEAP_SECONDS);
         }
-        throw new IllegalArgumentException(
-                "GPS<->UTC leap second offset is not known for timestamps before " +
-                        Instant.ofEpochMilli(LATEST_LEAP_SECOND_EPOCH_MILLIS) + ": " +
-                        Instant.ofEpochMilli(approxUtcEpochMilli));
+        return CURRENT_GPS_UTC_LEAP_SECONDS;
     }
 
     /**
