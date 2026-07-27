@@ -44,6 +44,8 @@ public class RTCMConverter {
     private final String spec;
     private final String conformanceIssue;
 
+    private final String TYPE = "type";
+
     @Autowired
     public RTCMConverter(RTCMDecoder decoder, GeoJsonConverterProperties properties) {
         this.decoder = decoder;
@@ -270,8 +272,13 @@ public class RTCMConverter {
     private void processCoordinates(RTCMProperties properties) {
         // Find station ref message type 1005 or 1006
         Optional<DecodedRTCMmessage> stationRefOpt = properties.getMessages().stream().filter(message -> {
-            int messageType = message.getDecodedMessage().get("type").asInt();
-            return messageType == 1005 || messageType == 1006;
+            JsonNode decodedMessage = message.getDecodedMessage();
+            if (decodedMessage != null && decodedMessage.hasNonNull(TYPE)) {
+                int messageType = decodedMessage.get(TYPE).asInt();
+                return messageType == 1005 || messageType == 1006;
+            }
+            log.warn("type missing from decoded message {}", decodedMessage);
+            return false;
         }).findFirst();
 
         if (stationRefOpt.isEmpty()) {
@@ -333,8 +340,13 @@ public class RTCMConverter {
         // Timestamp calc will only work with GPS which is supposed to be there, so don't try to
         // deal with any other constellations.
         Optional<DecodedRTCMmessage> msmOpt = properties.getMessages().stream().filter(message -> {
-            int messageType = message.getDecodedMessage().get("type").asInt();
-            return messageType >= 1071 && messageType <= 1077;
+            JsonNode decodedMessage = message.getDecodedMessage();
+            if (decodedMessage != null && decodedMessage.hasNonNull(TYPE)) {
+                int messageType = decodedMessage.get(TYPE).asInt();
+                return messageType >= 1071 && messageType <= 1077;
+            }
+            log.warn("type missing from decoded message {}", message.getDecodedMessage());
+            return false;
         }).findFirst();
 
         if (msmOpt.isEmpty()) {
