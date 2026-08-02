@@ -553,7 +553,7 @@ public class CTI4501ValidatorTest {
         getFirstLane(mapData).getLaneAttributes().setLaneType(laneTypeCrosswalk);
         List<String> crosswalkMessages = toMessages(CTI4501Validator.mapValidation(mapData, MapStandard.CTI4501_V1));
         assertThat(crosswalkMessages, not(hasItem(containsString("lane type: crosswalk"))));
-        CTI4501Validator.LaneDescription crosswalkDesc = CTI4501Validator.getLaneDescription(getFirstLane(mapData));
+        LaneDescription crosswalkDesc = CTI4501Validator.getLaneDescription(getFirstLane(mapData));
         assertThat(crosswalkDesc.isCrosswalk(), equalTo(true));
         assertThat(crosswalkDesc.isParking(), equalTo(false));
 
@@ -563,7 +563,7 @@ public class CTI4501ValidatorTest {
         getFirstLane(mapData).getLaneAttributes().setLaneType(laneTypeParking);
         List<String> parkingMessages = toMessages(CTI4501Validator.mapValidation(mapData, MapStandard.CTI4501_V1));
         assertThat(parkingMessages, not(hasItem(containsString("lane type: parking"))));
-        CTI4501Validator.LaneDescription parkingDesc = CTI4501Validator.getLaneDescription(getFirstLane(mapData));
+        LaneDescription parkingDesc = CTI4501Validator.getLaneDescription(getFirstLane(mapData));
         assertThat(parkingDesc.isParking(), equalTo(true));
         assertThat(parkingDesc.isMedian(), equalTo(false));
 
@@ -573,7 +573,7 @@ public class CTI4501ValidatorTest {
         getFirstLane(mapData).getLaneAttributes().setLaneType(laneTypeMedian);
         List<String> medianMessages = toMessages(CTI4501Validator.mapValidation(mapData, MapStandard.CTI4501_V1));
         assertThat(medianMessages, not(hasItem(containsString("lane type: median"))));
-        CTI4501Validator.LaneDescription medianDesc = CTI4501Validator.getLaneDescription(getFirstLane(mapData));
+        LaneDescription medianDesc = CTI4501Validator.getLaneDescription(getFirstLane(mapData));
         assertThat(medianDesc.isMedian(), equalTo(true));
         assertThat(medianDesc.isStriping(), equalTo(false));
 
@@ -583,7 +583,7 @@ public class CTI4501ValidatorTest {
         getFirstLane(mapData).getLaneAttributes().setLaneType(laneTypeStriping);
         List<String> stripingMessages = toMessages(CTI4501Validator.mapValidation(mapData, MapStandard.CTI4501_V1));
         assertThat(stripingMessages, not(hasItem(containsString("lane type: striping"))));
-        CTI4501Validator.LaneDescription stripingDesc = CTI4501Validator.getLaneDescription(getFirstLane(mapData));
+        LaneDescription stripingDesc = CTI4501Validator.getLaneDescription(getFirstLane(mapData));
         assertThat(stripingDesc.isStriping(), equalTo(true));
         assertThat(stripingDesc.isCrosswalk(), equalTo(false));
 
@@ -595,8 +595,8 @@ public class CTI4501ValidatorTest {
 
     @Test
     public void testLaneDescription_IngressOrEgress() {
-        CTI4501Validator.LaneDescription ingress = new CTI4501Validator.LaneDescription(1L, CTI4501Validator.LaneType.VEHICLE_LANE, true);
-        CTI4501Validator.LaneDescription egress = new CTI4501Validator.LaneDescription(2L, CTI4501Validator.LaneType.VEHICLE_LANE, false);
+        LaneDescription ingress = new LaneDescription(1L, LaneType.VEHICLE_LANE, true);
+        LaneDescription egress = new LaneDescription(2L, LaneType.VEHICLE_LANE, false);
 
         assertThat(ingress.ingressOrEgress(), equalTo("ingress"));
         assertThat(egress.ingressOrEgress(), equalTo("egress"));

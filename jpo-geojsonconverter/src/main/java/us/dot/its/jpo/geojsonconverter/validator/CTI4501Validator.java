@@ -19,7 +19,7 @@ import us.dot.its.jpo.asn.j2735.r2024.SPAT.SPAT;
 import us.dot.its.jpo.geojsonconverter.pojos.ProcessedValidationMessage;
 import us.dot.its.jpo.geojsonconverter.standards.MapStandard;
 import us.dot.its.jpo.geojsonconverter.standards.SpatStandard;
-import static us.dot.its.jpo.geojsonconverter.validator.CTI4501Validator.LaneType.*;
+import static us.dot.its.jpo.geojsonconverter.validator.LaneType.*;
 
 public class CTI4501Validator {
 
@@ -502,55 +502,7 @@ public class CTI4501Validator {
         return new LaneDescription(laneId, laneType, isIngress);
     }
 
-    public enum LaneType{
-        BIKE_LANE,
-        VEHICLE_LANE,
-        TRACKED_VEHICLE_LANE,
-        CROSSWALK,
-        SIDEWALK,
-        PARKING,
-        MEDIAN,
-        STRIPING,
-        UNKNOWN;
-        public String getDescription() {
-            return this.name().toLowerCase().replace('_', ' ');
-        }
-    }
 
-
-    public record LaneDescription(
-            Long laneId,
-            LaneType laneType,
-            boolean isIngress
-    ){
-        public String ingressOrEgress() {
-            return isIngress ? "ingress" : "egress";
-        }
-        public boolean isBikeLane(){
-            return laneType == BIKE_LANE;
-        }
-        public boolean isVehicleLane(){
-            return laneType == VEHICLE_LANE;
-        }
-        public boolean isTrackedVehicleLane(){
-            return laneType == TRACKED_VEHICLE_LANE;
-        }
-        public boolean isCrosswalk(){
-            return laneType == CROSSWALK;
-        }
-        public boolean isSidewalk(){
-            return laneType == SIDEWALK;
-        }
-        public boolean isParking(){
-            return laneType == PARKING;
-        }
-        public boolean isStriping(){
-            return laneType == STRIPING;
-        }
-        public boolean isMedian(){
-            return laneType == MEDIAN;
-        }
-    }
 
 
 }
