@@ -38,6 +38,15 @@ public class RTCMDecoder {
 
     private final boolean executableExists;
 
+    private static final int RTCM_PREAMBLE = 0xD3;
+    private static final int REF_STATION_ARP = 1005;
+    private static final int REF_STATION_ARP_PLUS_HEIGHT = 1006;
+    private static final int SYSTEM_PARAMETERS = 1013;
+    private static final int UNICODE_TEXT = 1029;
+    private static final int RECEIVER_ANTENNA_DESC = 1033;
+    private static final int MIN_MSM_MESSAGE_TYPE = 1071;
+    private static final int MAX_MSM_MESSAGE_TYPE = 1230;
+
     public List<byte[]> splitMessages(RTCMmessageList messageList) throws RTCMDecodeException {
         byte[] combinedBytes = combinePartialMessages(messageList);
         return splitCombinedMessages(combinedBytes);
@@ -132,7 +141,7 @@ public class RTCMDecoder {
 
         // Preamble: 8 bits
         int preamble = unsigned(bytes[offset]);
-        if (preamble != 0xD3) {
+        if (preamble != RTCM_PREAMBLE) {
             throw new RTCMDecodeException(String.format("Invalid RTCM preamble, can't find length: %02X, should be %02X", preamble, 0xD3));
         }
 
@@ -164,7 +173,7 @@ public class RTCMDecoder {
 
         // Preamble: 8 bits
         int preamble = unsigned(bytes[0]);
-        if (preamble != 0xD3) {
+        if (preamble != RTCM_PREAMBLE) {
             log.error(String.format("Invalid RTCM preamble: %02X, should be %20X", preamble, 0xD3));
             return node;
         }
@@ -187,12 +196,13 @@ public class RTCMDecoder {
 
         // Station ID: 12 bits
         // Get station ID for types known or guessed to have them per gpsd/driver_rtcm3.c
-        if (type <= 1013 || type == 1029 || type == 1033 || (type >= 1071 && type <= 1230)) {
+        if (type <= SYSTEM_PARAMETERS || type == UNICODE_TEXT || type == RECEIVER_ANTENNA_DESC
+                || (type >= MIN_MSM_MESSAGE_TYPE && type <= MAX_MSM_MESSAGE_TYPE)) {
             int stationId = ((unsigned(bytes[4]) & 0x0F) << 8) | unsigned(bytes[5]);
             node.put("station_id", stationId);
         }
 
-        if (type == 1005 || type == 1006) {
+        if (type == REF_STATION_ARP || type == REF_STATION_ARP_PLUS_HEIGHT) {
             getXYZCoordsFromRefStation(bytes).ifPresent(coords -> {
                 node.put("x", coords.x);
                 node.put("y", coords.y);
@@ -200,7 +210,7 @@ public class RTCMDecoder {
             });
         }
 
-        if (type >= 1071 && type <= 1230) {
+        if (type >= MIN_MSM_MESSAGE_TYPE && type <= MAX_MSM_MESSAGE_TYPE) {
             getTimeOfWeekFromMSM(bytes).ifPresent(time -> node.put("tow", time));
         }
 

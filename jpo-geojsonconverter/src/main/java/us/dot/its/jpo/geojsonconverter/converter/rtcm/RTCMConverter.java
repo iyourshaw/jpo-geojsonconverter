@@ -312,17 +312,25 @@ public class RTCMConverter {
         properties.setLatitude(lonLat.getY());
     }
 
+    private static final MathTransform ECEF_TO_LON_LAT;
+
+    static {
+        try {
+            ECEF_TO_LON_LAT = CRS.findMathTransform(DefaultGeocentricCRS.CARTESIAN, DefaultGeographicCRS.WGS84_3D);
+        } catch (FactoryException e) {
+            throw new RuntimeException("Couldn't initialize ECEF_TO_LON_LAT_HEIGHT", e);
+        }
+    }
+
     /**
      * Convert GPS Earth Centered (ECEF) coordinates to WGS-84 lon-lat coords.
      * Package-private for testing.
      */
     Optional<CoordinateXY> gpsXyzToWgs84LonLat(double x, double y, double z) {
         try {
-            MathTransform ecefToLonLatHeight =
-                    CRS.findMathTransform(DefaultGeocentricCRS.CARTESIAN, DefaultGeographicCRS.WGS84_3D);
             double[] srcPts = {x, y, z};
             double[] dstPts = new double[3];
-            ecefToLonLatHeight.transform(srcPts, 0, dstPts, 0, 1);
+            ECEF_TO_LON_LAT.transform(srcPts, 0, dstPts, 0, 1);
             double lon = dstPts[0];
             double lat = dstPts[1];
             if (!isValidLonLat(lon, lat)) {
@@ -331,7 +339,7 @@ public class RTCMConverter {
             }
             // We don't care about elevation for now, discard it
             return Optional.of(new CoordinateXY(lon, lat));
-        } catch (FactoryException | TransformException | AssertionError e) {
+        } catch (TransformException | AssertionError e) {
             // Out-of-range/degenerate ECEF input can make GeoTools throw AssertionError instead of
             // TransformException, depending on whether JVM assertions are enabled.
             log.error("Unable to convert ECEF ({}, {}, {}) to WGS-84 lon/lat", x, y, z, e);
