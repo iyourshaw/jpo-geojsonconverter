@@ -5,7 +5,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import us.dot.its.jpo.asn.j2735.r2024.Common.ComputedLane;
 import us.dot.its.jpo.asn.j2735.r2024.Common.LaneDataAttribute;
+import us.dot.its.jpo.asn.j2735.r2024.Common.NodeListXY;
+import us.dot.its.jpo.asn.j2735.r2024.Common.NodeOffsetPointXY;
 import us.dot.its.jpo.asn.j2735.r2024.Common.NodeXY;
 import us.dot.its.jpo.asn.j2735.r2024.Common.RegulatorySpeedLimit;
 import us.dot.its.jpo.asn.j2735.r2024.MapData.*;
@@ -190,12 +193,11 @@ public class CTI4501Validator {
      * @param mapData The MapData object to be validated for CTI-4501 conformance.
      * @return a list of validation messages describing CTI-4501 conformance issues, or an empty list if conformant.
      */
-    @SuppressWarnings("java:S3776") // Ignore Sonar 'cognitive complexity' warning
     public static List<ProcessedValidationMessage> mapValidation(MapData mapData, MapStandard mapStandardVersion) {
         HashMap<String, ProcessedValidationMessage> validationMap = new HashMap<>();
 
         // Get the first intersection from the Map object
-        IntersectionGeometry intersection = mapData.getIntersections().get(0);
+        IntersectionGeometry intersection = mapData.getIntersections().getFirst();
 
         // Check intersection fields
 
@@ -259,183 +261,148 @@ public class CTI4501Validator {
     private static void laneValidation(Map<String, ProcessedValidationMessage> validationMap, GenericLane lane,
                                        MapStandard mapStandardVersion) {
         final LaneDescription laneDesc = getLaneDescription(lane);
-        if (laneDesc.isIngress) {
-            // Only check for maneuvers for ingress lanes
-            if (lane.getManeuvers() == null && !validationMap.containsKey(LANE_MANEUVERS)) {
-                validationMap.put(LANE_MANEUVERS,
-                        createValidationMessage(mapStandardVersion,
-                                "The '%s' DE_AllowedManeuvers element is missing for %s lane ID %s",
-                                LANE_MANEUVERS, laneDesc.ingressOrEgress(), laneDesc.laneId()));
-            }
+        checkLaneManeuvers(validationMap, lane, laneDesc, mapStandardVersion);
+        checkNodeList(validationMap, lane.getNodeList(), laneDesc, mapStandardVersion);
+        checkConnectsTo(validationMap, lane, laneDesc, mapStandardVersion);
+    }
+
+    // Only check for maneuvers for ingress lanes
+    private static void checkLaneManeuvers(Map<String, ProcessedValidationMessage> validationMap, GenericLane lane,
+                                           LaneDescription laneDesc, MapStandard mapStandardVersion) {
+        if (!laneDesc.isIngress()) {
+            return;
         }
+        if (lane.getManeuvers() == null && !validationMap.containsKey(LANE_MANEUVERS)) {
+            validationMap.put(LANE_MANEUVERS,
+                    createValidationMessage(mapStandardVersion,
+                            "The '%s' DE_AllowedManeuvers element is missing for %s lane ID %s",
+                            LANE_MANEUVERS, laneDesc.ingressOrEgress(), laneDesc.laneId()));
+        }
+    }
 
-        // Check for conditional nodes field requirements
-        if (lane.getNodeList().getNodes() != null) {
-            for (NodeXY nodeXY : lane.getNodeList().getNodes()) {
-                if (nodeXY.getDelta().getNode_XY1() != null) {
-                    if (nodeXY.getDelta().getNode_XY1().getX() == null
-                            && !validationMap.containsKey(NODE_XY1_X)) {
-                        validationMap.put(NODE_XY1_X, createValidationMessage(
-                                mapStandardVersion,
-                                "The nodeXY 'delta.node-XY1.x' DE_Offset_B10 is missing but 'delta.node-XY1' DF_Node_XY_20b is present, lane ID %s",
-                                laneDesc.laneId()));
-                    }
-                    if (nodeXY.getDelta().getNode_XY1().getY() == null
-                            && !validationMap.containsKey(NODE_XY1_Y)) {
-                        validationMap.put(NODE_XY1_Y, createValidationMessage(
-                                mapStandardVersion,
-                                "The nodeXY 'delta.node-XY1.y' DE_Offset_B10 is missing but 'delta.node-XY1' DF_Node_XY_20b is present, lane ID %s",
-                                laneDesc.laneId()));
-                    }
-                } else if (nodeXY.getDelta().getNode_XY2() != null) {
-                    if (nodeXY.getDelta().getNode_XY2().getX() == null
-                            && !validationMap.containsKey(NODE_XY2_X)) {
-                        validationMap.put(NODE_XY2_X, createValidationMessage(
-                                mapStandardVersion,
-                                "The nodeXY 'delta.node-XY2.x' DE_Offset_B11 is missing but 'delta.node-XY2' DF_Node_XY_22b is present, lane ID %s",
-                                laneDesc.laneId()));
-                    }
-                    if (nodeXY.getDelta().getNode_XY2().getY() == null
-                            && !validationMap.containsKey(NODE_XY2_Y)) {
-                        validationMap.put(NODE_XY2_Y, createValidationMessage(
-                                mapStandardVersion,
-                                "The nodeXY 'delta.node-XY2.y' DE_Offset_B11 is missing but 'delta.node-XY2' DF_Node_XY_22b is present, lane ID %s",
-                                laneDesc.laneId()));
-                    }
-                } else if (nodeXY.getDelta().getNode_XY3() != null) {
-                    if (nodeXY.getDelta().getNode_XY3().getX() == null
-                            && !validationMap.containsKey(NODE_XY3_X)) {
-                        validationMap.put(NODE_XY3_X, createValidationMessage(
-                                mapStandardVersion,
-                                "The nodeXY 'delta.node-XY3.x' DE_Offset_B12 is missing but 'delta.node-XY3' DF_Node_XY_24b is present, lane ID %s",
-                                laneDesc.laneId()));
-                    }
-                    if (nodeXY.getDelta().getNode_XY3().getY() == null
-                            && !validationMap.containsKey(NODE_XY3_Y)) {
-                        validationMap.put(NODE_XY3_Y, createValidationMessage(
-                                mapStandardVersion,
-                                "The nodeXY 'delta.node-XY3.y' DE_Offset_B12 is missing but 'delta.node-XY3' DF_Node_XY_24b is present, lane ID %s",
-                                laneDesc.laneId()));
-                    }
-                } else if (nodeXY.getDelta().getNode_XY4() != null) {
-                    if (nodeXY.getDelta().getNode_XY4().getX() == null
-                            && !validationMap.containsKey(NODE_XY4_X)) {
-                        validationMap.put(NODE_XY4_X, createValidationMessage(
-                                mapStandardVersion,
-                                "The nodeXY 'delta.node-XY4.x' DE_Offset_B13 is missing but 'delta.node-XY4' DF_Node_XY_26b is present, lane ID %s",
-                                laneDesc.laneId()));
-                    }
-                    if (nodeXY.getDelta().getNode_XY4().getY() == null
-                            && !validationMap.containsKey(NODE_XY4_Y)) {
-                        validationMap.put(NODE_XY4_Y, createValidationMessage(
-                                mapStandardVersion,
-                                "The nodeXY 'delta.node-XY4.y' DE_Offset_B13 is missing but 'delta.node-XY4' DF_Node_XY_26b is present, lane ID %s",
-                                laneDesc.laneId()));
-                    }
-                } else if (nodeXY.getDelta().getNode_XY5() != null) {
-                    if (nodeXY.getDelta().getNode_XY5().getX() == null
-                            && !validationMap.containsKey(NODE_XY5_X)) {
-                        validationMap.put(NODE_XY5_X, createValidationMessage(
-                                mapStandardVersion,
-                                "The nodeXY 'delta.node-XY5.x' DE_Offset_B14 is missing but 'delta.node-XY5' DF_Node_XY_28b is present, lane ID %s",
-                                laneDesc.laneId()));
-                    }
-                    if (nodeXY.getDelta().getNode_XY5().getY() == null
-                            && !validationMap.containsKey(NODE_XY5_Y)) {
-                        validationMap.put(NODE_XY5_Y, createValidationMessage(
-                                mapStandardVersion,
-                                "The nodeXY 'delta.node-XY5.y' DE_Offset_B14 is missing but 'delta.node-XY5' DF_Node_XY_28b is present, lane ID %s",
-                                laneDesc.laneId()));
-                    }
-                } else if (nodeXY.getDelta().getNode_XY6() != null) {
-                    if (nodeXY.getDelta().getNode_XY6().getX() == null
-                            && !validationMap.containsKey(NODE_XY6_X)) {
-                        validationMap.put(NODE_XY6_X, createValidationMessage(
-                                mapStandardVersion,
-                                "The nodeXY 'delta.node-XY6.x' DE_Offset_B16 is missing but 'delta.node-XY6' DF_Node_XY_32b is present, lane ID %s",
-                                laneDesc.laneId()));
-                    }
-                    if (nodeXY.getDelta().getNode_XY6().getY() == null
-                            && !validationMap.containsKey(NODE_XY6_Y)) {
-                        validationMap.put(NODE_XY6_Y, createValidationMessage(
-                                mapStandardVersion,
-                                "The nodeXY 'delta.node-XY6.y' DE_Offset_B16 is missing but 'delta.node-XY6' DF_Node_XY_32b is present, lane ID %s",
-                                laneDesc.laneId()));
-                    }
+    // Check for conditional nodes field requirements
+    private static void checkNodeList(Map<String, ProcessedValidationMessage> validationMap, NodeListXY nodeList,
+                                      LaneDescription laneDesc, MapStandard mapStandardVersion) {
+        if (nodeList.getNodes() != null) {
+            for (NodeXY nodeXY : nodeList.getNodes()) {
+                checkNodeXYDelta(validationMap, nodeXY, laneDesc, mapStandardVersion);
+                checkNodeAttributes(validationMap, nodeXY, laneDesc, mapStandardVersion);
+            }
+        } else if (nodeList.getComputed() != null) {
+            checkComputedLane(validationMap, nodeList.getComputed(), laneDesc, mapStandardVersion);
+        }
+    }
+
+    private static void checkNodeXYDelta(Map<String, ProcessedValidationMessage> validationMap, NodeXY nodeXY,
+                                         LaneDescription laneDesc, MapStandard mapStandardVersion) {
+        NodeOffsetPointXY delta = nodeXY.getDelta();
+        if (delta.getNode_XY1() != null) {
+            checkNodeOffset(validationMap, delta.getNode_XY1().getX(), delta.getNode_XY1().getY(),
+                    NODE_XY1_X, NODE_XY1_Y, "node-XY1", "DE_Offset_B10", "DF_Node_XY_20b", laneDesc, mapStandardVersion);
+        } else if (delta.getNode_XY2() != null) {
+            checkNodeOffset(validationMap, delta.getNode_XY2().getX(), delta.getNode_XY2().getY(),
+                    NODE_XY2_X, NODE_XY2_Y, "node-XY2", "DE_Offset_B11", "DF_Node_XY_22b", laneDesc, mapStandardVersion);
+        } else if (delta.getNode_XY3() != null) {
+            checkNodeOffset(validationMap, delta.getNode_XY3().getX(), delta.getNode_XY3().getY(),
+                    NODE_XY3_X, NODE_XY3_Y, "node-XY3", "DE_Offset_B12", "DF_Node_XY_24b", laneDesc, mapStandardVersion);
+        } else if (delta.getNode_XY4() != null) {
+            checkNodeOffset(validationMap, delta.getNode_XY4().getX(), delta.getNode_XY4().getY(),
+                    NODE_XY4_X, NODE_XY4_Y, "node-XY4", "DE_Offset_B13", "DF_Node_XY_26b", laneDesc, mapStandardVersion);
+        } else if (delta.getNode_XY5() != null) {
+            checkNodeOffset(validationMap, delta.getNode_XY5().getX(), delta.getNode_XY5().getY(),
+                    NODE_XY5_X, NODE_XY5_Y, "node-XY5", "DE_Offset_B14", "DF_Node_XY_28b", laneDesc, mapStandardVersion);
+        } else if (delta.getNode_XY6() != null) {
+            checkNodeOffset(validationMap, delta.getNode_XY6().getX(), delta.getNode_XY6().getY(),
+                    NODE_XY6_X, NODE_XY6_Y, "node-XY6", "DE_Offset_B16", "DF_Node_XY_32b", laneDesc, mapStandardVersion);
+        }
+    }
+
+    private static void checkNodeOffset(Map<String, ProcessedValidationMessage> validationMap, Object x, Object y,
+                                        String xKey, String yKey, String nodeName, String deType, String dfType,
+                                        LaneDescription laneDesc, MapStandard mapStandardVersion) {
+        if (x == null && !validationMap.containsKey(xKey)) {
+            validationMap.put(xKey, createValidationMessage(
+                    mapStandardVersion,
+                    "The nodeXY 'delta.%s.x' %s is missing but 'delta.%s' %s is present, lane ID %s",
+                    nodeName, deType, nodeName, dfType, laneDesc.laneId()));
+        }
+        if (y == null && !validationMap.containsKey(yKey)) {
+            validationMap.put(yKey, createValidationMessage(
+                    mapStandardVersion,
+                    "The nodeXY 'delta.%s.y' %s is missing but 'delta.%s' %s is present, lane ID %s",
+                    nodeName, deType, nodeName, dfType, laneDesc.laneId()));
+        }
+    }
+
+    // Check for conditional node attributes
+    private static void checkNodeAttributes(Map<String, ProcessedValidationMessage> validationMap, NodeXY nodeXY,
+                                            LaneDescription laneDesc, MapStandard mapStandardVersion) {
+        if (nodeXY.getAttributes() == null || nodeXY.getAttributes().getData() == null) {
+            return;
+        }
+        for (LaneDataAttribute data : nodeXY.getAttributes().getData()) {
+            checkNodeSpeedLimits(validationMap, data, laneDesc, mapStandardVersion);
+        }
+    }
+
+    private static void checkNodeSpeedLimits(Map<String, ProcessedValidationMessage> validationMap,
+                                             LaneDataAttribute data, LaneDescription laneDesc,
+                                             MapStandard mapStandardVersion) {
+        if (data.getSpeedLimits() != null) {
+            for (RegulatorySpeedLimit speedLimit : data.getSpeedLimits()) {
+                if (speedLimit.getType() == null
+                        && !validationMap.containsKey(ATTRIBUTES_DATA_SPEED_LIMITS_TYPE)) {
+                    validationMap.put(ATTRIBUTES_DATA_SPEED_LIMITS_TYPE,
+                            createValidationMessage(mapStandardVersion,
+                                    "The attributes 'data.speedLimits.type' DE_SpeedLimitType is missing, lane ID %s",
+                                    laneDesc.laneId()));
                 }
-
-                // Check for conditional node attributes
-                if (nodeXY.getAttributes() != null) {
-                    if (nodeXY.getAttributes().getData() != null) {
-                        for (LaneDataAttribute data : nodeXY.getAttributes().getData()) {
-                            if (data.getSpeedLimits() != null) {
-                                for (RegulatorySpeedLimit speedLimit : data.getSpeedLimits()) {
-                                    if (speedLimit.getType() == null
-                                            && !validationMap.containsKey(ATTRIBUTES_DATA_SPEED_LIMITS_TYPE)) {
-                                        validationMap.put(ATTRIBUTES_DATA_SPEED_LIMITS_TYPE,
-                                                createValidationMessage(mapStandardVersion,
-                                                        "The attributes 'data.speedLimits.type' DE_SpeedLimitType is missing, lane ID %s",
-                                                        laneDesc.laneId()));
-                                    }
-                                    if (speedLimit.getSpeed() == null
-                                            && !validationMap.containsKey(ATTRIBUTES_DATA_SPEED_LIMITS_SPEED)) {
-                                        validationMap.put(ATTRIBUTES_DATA_SPEED_LIMITS_SPEED,
-                                                createValidationMessage(mapStandardVersion,
-                                                        "The attributes 'data.speedLimits.speed' DE_Velocity is missing, lane ID %s",
-                                                        laneDesc.laneId()));
-                                    }
-                                }
-                            } else if (!validationMap.containsKey(ATTRIBUTES_DATA_SPEED_LIMITS)) {
-                                validationMap.put(ATTRIBUTES_DATA_SPEED_LIMITS, createValidationMessage(
-                                        mapStandardVersion,
-                                        "The attributes 'data.speedLimits' DF_SpeedLimitList is missing but 'attributes.data' DF_LaneDataAttributeList is present, lane ID %s",
-                                        laneDesc.laneId()));
-                            }
-                        }
-                    }
+                if (speedLimit.getSpeed() == null
+                        && !validationMap.containsKey(ATTRIBUTES_DATA_SPEED_LIMITS_SPEED)) {
+                    validationMap.put(ATTRIBUTES_DATA_SPEED_LIMITS_SPEED,
+                            createValidationMessage(mapStandardVersion,
+                                    "The attributes 'data.speedLimits.speed' DE_Velocity is missing, lane ID %s",
+                                    laneDesc.laneId()));
                 }
             }
-        } else if (lane.getNodeList().getComputed() != null) {
-            if (lane.getNodeList().getComputed().getReferenceLaneId() == null
-                    && !validationMap.containsKey(COMPUTED_REFERENCE_LANE_ID)) {
-                validationMap.put(COMPUTED_REFERENCE_LANE_ID,
-                        createValidationMessage(mapStandardVersion,
-                                "The computed 'referenceLaneId' DE_LaneID is missing, lane ID %s",
-                                laneDesc.laneId()));
-            }
-            if (lane.getNodeList().getComputed().getOffsetXaxis() == null
-                    && !validationMap.containsKey(COMPUTED_OFFSET_X_AXIS)) {
-                validationMap.put(COMPUTED_OFFSET_X_AXIS, createValidationMessage(mapStandardVersion,
-                        "The computed 'offsetXaxis' DE_DrivenLineOffsetSmall or DE_DrivenLineOffsetLarge is missing, lane ID %s",
-                        laneDesc.laneId()));
-            }
-            if (lane.getNodeList().getComputed().getOffsetYaxis() == null
-                    && !validationMap.containsKey(COMPUTED_OFFSET_Y_AXIS)) {
-                validationMap.put(COMPUTED_OFFSET_Y_AXIS, createValidationMessage(mapStandardVersion,
-                        "The computed 'offsetYaxis' DE_DrivenLineOffsetSmall or DE_DrivenLineOffsetLarge is missing, lane ID %s",
-                        laneDesc.laneId()));
-            }
+        } else if (!validationMap.containsKey(ATTRIBUTES_DATA_SPEED_LIMITS)) {
+            validationMap.put(ATTRIBUTES_DATA_SPEED_LIMITS, createValidationMessage(
+                    mapStandardVersion,
+                    "The attributes 'data.speedLimits' DF_SpeedLimitList is missing but 'attributes.data' DF_LaneDataAttributeList is present, lane ID %s",
+                    laneDesc.laneId()));
         }
+    }
 
-        // Check for connectsTo field and its nested fields
+    private static void checkComputedLane(Map<String, ProcessedValidationMessage> validationMap,
+                                          ComputedLane computed, LaneDescription laneDesc,
+                                          MapStandard mapStandardVersion) {
+        if (computed.getReferenceLaneId() == null
+                && !validationMap.containsKey(COMPUTED_REFERENCE_LANE_ID)) {
+            validationMap.put(COMPUTED_REFERENCE_LANE_ID,
+                    createValidationMessage(mapStandardVersion,
+                            "The computed 'referenceLaneId' DE_LaneID is missing, lane ID %s",
+                            laneDesc.laneId()));
+        }
+        if (computed.getOffsetXaxis() == null
+                && !validationMap.containsKey(COMPUTED_OFFSET_X_AXIS)) {
+            validationMap.put(COMPUTED_OFFSET_X_AXIS, createValidationMessage(mapStandardVersion,
+                    "The computed 'offsetXaxis' DE_DrivenLineOffsetSmall or DE_DrivenLineOffsetLarge is missing, lane ID %s",
+                    laneDesc.laneId()));
+        }
+        if (computed.getOffsetYaxis() == null
+                && !validationMap.containsKey(COMPUTED_OFFSET_Y_AXIS)) {
+            validationMap.put(COMPUTED_OFFSET_Y_AXIS, createValidationMessage(mapStandardVersion,
+                    "The computed 'offsetYaxis' DE_DrivenLineOffsetSmall or DE_DrivenLineOffsetLarge is missing, lane ID %s",
+                    laneDesc.laneId()));
+        }
+    }
+
+    // Check for connectsTo field and its nested fields
+    private static void checkConnectsTo(Map<String, ProcessedValidationMessage> validationMap, GenericLane lane,
+                                        LaneDescription laneDesc, MapStandard mapStandardVersion) {
         if (lane.getConnectsTo() != null) {
             for (Connection connection : lane.getConnectsTo()) {
-                if (connection.getConnectingLane() != null) {
-                    if (connection.getConnectingLane().getLane() == null
-                            && !validationMap.containsKey(CONNECTS_TO_CONNECTING_LANE_LANE)) {
-                        validationMap.put(CONNECTS_TO_CONNECTING_LANE_LANE, createValidationMessage(
-                                mapStandardVersion,
-                                "The connectsTo 'connectingLane.lane' DE_LaneID is missing, lane ID %s",
-                                laneDesc.laneId()));
-                    }
-                    if (connection.getConnectingLane().getManeuver() == null
-                            && !validationMap.containsKey(CONNECTS_TO_CONNECTING_LANE_MANEUVER)) {
-                        validationMap.put(CONNECTS_TO_CONNECTING_LANE_MANEUVER, createValidationMessage(
-                                mapStandardVersion,
-                                "The connectsTo 'connectingLane.maneuver' DE_AllowedManeuver is missing, lane ID %s",
-                                laneDesc.laneId()));
-                    }
-                }
+                checkConnectingLane(validationMap, connection, laneDesc, mapStandardVersion);
                 if (connection.getSignalGroup() == null && !validationMap.containsKey(CONNECTS_TO_SIGNAL_GROUP)) {
                     validationMap.put(CONNECTS_TO_SIGNAL_GROUP,
                             createValidationMessage(mapStandardVersion,
@@ -444,17 +411,44 @@ public class CTI4501Validator {
                 }
             }
         } else {
-            boolean shouldHaveConnection = laneDesc.isVehicleLane() || laneDesc.isBikeLane()
-                    || laneDesc.isTrackedVehicleLane() || laneDesc.isSidewalk();
-            if (laneDesc.isIngress() && shouldHaveConnection) {
-                String validationKey = "laneSet.connectsTo." + laneDesc.laneId();
-                validationMap.put(validationKey,
-                        createValidationMessage(mapStandardVersion,
-                                "The laneSet 'connectsTo' DF_ConnectsToList is missing for lane ID %s, lane type: %s" ,
-                                        laneDesc.laneId(), laneDesc.laneType().getDescription()));
-            } else {
-                // Ignore egress or sidewalk/crosswalk lanes without connections
-            }
+            checkMissingConnectsTo(validationMap, laneDesc, mapStandardVersion);
+        }
+    }
+
+    private static void checkConnectingLane(Map<String, ProcessedValidationMessage> validationMap,
+                                            Connection connection, LaneDescription laneDesc,
+                                            MapStandard mapStandardVersion) {
+        if (connection.getConnectingLane() == null) {
+            return;
+        }
+        if (connection.getConnectingLane().getLane() == null
+                && !validationMap.containsKey(CONNECTS_TO_CONNECTING_LANE_LANE)) {
+            validationMap.put(CONNECTS_TO_CONNECTING_LANE_LANE, createValidationMessage(
+                    mapStandardVersion,
+                    "The connectsTo 'connectingLane.lane' DE_LaneID is missing, lane ID %s",
+                    laneDesc.laneId()));
+        }
+        if (connection.getConnectingLane().getManeuver() == null
+                && !validationMap.containsKey(CONNECTS_TO_CONNECTING_LANE_MANEUVER)) {
+            validationMap.put(CONNECTS_TO_CONNECTING_LANE_MANEUVER, createValidationMessage(
+                    mapStandardVersion,
+                    "The connectsTo 'connectingLane.maneuver' DE_AllowedManeuver is missing, lane ID %s",
+                    laneDesc.laneId()));
+        }
+    }
+
+    // Ingress vehicle, bike, tracked-vehicle, and sidewalk lanes without connections are noncompliant.
+    // Egress or sidewalk/crosswalk lanes without connections are ignored.
+    private static void checkMissingConnectsTo(Map<String, ProcessedValidationMessage> validationMap,
+                                               LaneDescription laneDesc, MapStandard mapStandardVersion) {
+        boolean shouldHaveConnection = laneDesc.isVehicleLane() || laneDesc.isBikeLane()
+                || laneDesc.isTrackedVehicleLane() || laneDesc.isSidewalk();
+        if (laneDesc.isIngress() && shouldHaveConnection) {
+            String validationKey = "laneSet.connectsTo." + laneDesc.laneId();
+            validationMap.put(validationKey,
+                    createValidationMessage(mapStandardVersion,
+                            "The laneSet 'connectsTo' DF_ConnectsToList is missing for lane ID %s, lane type: %s" ,
+                                    laneDesc.laneId(), laneDesc.laneType().getDescription()));
         }
     }
 
