@@ -15,7 +15,7 @@
 		"originIp": "172.18.0.1",
 		"asn1": "00201A0000021BD86891DE75F84DA101C13F042E2214141FFF00022C2000270000000163B2CC79860100",
 		"validationMessages": [],
-		"basicType": "aPEDESTRIAN",
+		"basicType": "APEDESTRIAN",
 		"id": "24779D7E",
 		"msgCnt": 26,
 		"secMark": 3564,
