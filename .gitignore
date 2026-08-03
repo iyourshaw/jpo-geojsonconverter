@@ -2,3 +2,5 @@ jpo-geojsonconverter/target/**
 .env
 .idea/
 *.iml
+.claude/
+CLAUDE.md

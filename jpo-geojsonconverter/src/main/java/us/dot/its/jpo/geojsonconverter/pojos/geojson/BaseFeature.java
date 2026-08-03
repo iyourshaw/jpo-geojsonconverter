@@ -7,9 +7,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import us.dot.its.jpo.geojsonconverter.DateJsonMapper;
 
+import lombok.EqualsAndHashCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@EqualsAndHashCode
 @JsonIgnoreProperties(value={ "type" }, allowGetters=true)
 @JsonPropertyOrder({"type", "id", "geometry", "properties"})
 public abstract class BaseFeature<TId, TGeometry, TProperties> {

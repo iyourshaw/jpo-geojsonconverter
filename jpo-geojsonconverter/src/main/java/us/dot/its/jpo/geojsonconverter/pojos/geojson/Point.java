@@ -1,15 +1,16 @@
 package us.dot.its.jpo.geojsonconverter.pojos.geojson;
 
 import java.util.Arrays;
-import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 @Getter
+@EqualsAndHashCode(callSuper = false)
 @JsonInclude(Include.NON_NULL)
 public class Point extends Geometry {
     private final double[] coordinates;
@@ -30,21 +31,6 @@ public class Point extends Geometry {
         super();
         this.coordinates = coordinates;
         this.bbox = null;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == this)
-            return true;
-        if (!(o instanceof Point point)) {
-            return false;
-        }
-        return Arrays.equals(coordinates, point.coordinates) && Arrays.equals(bbox, point.bbox);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(Arrays.hashCode(coordinates), Arrays.hashCode(bbox));
     }
 
     @Override
