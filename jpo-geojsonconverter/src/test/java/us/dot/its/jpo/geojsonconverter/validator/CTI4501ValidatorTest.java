@@ -196,6 +196,34 @@ public class CTI4501ValidatorTest {
     }
 
     @Test
+    public void testMapValidation_MissingSpeedLimitType_DedupedAcrossLimits() {
+        MapData mapData = getMap().build();
+
+        SpeedLimitList speedLimits = new SpeedLimitList();
+        speedLimits.add(regulatorySpeedLimit(null, new Velocity(200)));
+        speedLimits.add(regulatorySpeedLimit(null, new Velocity(200)));
+        mapData.getIntersections().getFirst().setSpeedLimits(speedLimits);
+
+        List<String> messages = toMessages(CTI4501Validator.mapValidation(mapData, MapStandard.CTI4501_V1));
+
+        assertThat(countContaining(messages, "speedLimits 'type'"), equalTo(1L));
+    }
+
+    @Test
+    public void testMapValidation_MissingSpeedLimitSpeed_DedupedAcrossLimits() {
+        MapData mapData = getMap().build();
+
+        SpeedLimitList speedLimits = new SpeedLimitList();
+        speedLimits.add(regulatorySpeedLimit(SpeedLimitType.VEHICLEMAXSPEED, null));
+        speedLimits.add(regulatorySpeedLimit(SpeedLimitType.VEHICLEMAXSPEED, null));
+        mapData.getIntersections().getFirst().setSpeedLimits(speedLimits);
+
+        List<String> messages = toMessages(CTI4501Validator.mapValidation(mapData, MapStandard.CTI4501_V1));
+
+        assertThat(countContaining(messages, "speedLimits 'speed'"), equalTo(1L));
+    }
+
+    @Test
     public void testMapValidation_IngressVehicleLane_MissingConnectsTo() {
         MapData mapData = getMap().withoutConnectsTo().build();
         List<String> messages = toMessages(CTI4501Validator.mapValidation(mapData, MapStandard.CTI4501_V1));
@@ -214,6 +242,13 @@ public class CTI4501ValidatorTest {
         MapData mapData = getMap().build();
         List<String> messages = toMessages(CTI4501Validator.mapValidation(mapData, MapStandard.CTI4501_V2_DRAFT));
         assertThat(messages, hasItem(containsString("deprecated in CTI-4501 v2")));
+    }
+
+    @Test
+    public void testMapValidation_V2_NoRegion_NoDeprecatedMessage() {
+        MapData mapData = getMap().withoutRegion().build();
+        List<String> messages = toMessages(CTI4501Validator.mapValidation(mapData, MapStandard.CTI4501_V2_DRAFT));
+        assertThat(messages, not(hasItem(containsString("deprecated"))));
     }
 
     @Test
@@ -288,6 +323,21 @@ public class CTI4501ValidatorTest {
         assertThat(countContaining(messages, "node-XY5.y"), equalTo(1L));
         assertThat(countContaining(messages, "node-XY6.x"), equalTo(1L));
         assertThat(countContaining(messages, "node-XY6.y"), equalTo(1L));
+    }
+
+    @Test
+    public void testMapValidation_NodeXY_NoDeltaVariantSet_NoNodeXYMessages() {
+        MapData mapData = getMap().build();
+
+        NodeSetXY nodes = new NodeSetXY();
+        NodeXY node = new NodeXY();
+        node.setDelta(new NodeOffsetPointXY());
+        nodes.add(node);
+        setLaneNodes(getFirstLane(mapData), nodes);
+
+        List<String> messages = toMessages(CTI4501Validator.mapValidation(mapData, MapStandard.CTI4501_V1));
+
+        assertThat(messages, not(hasItem(containsString("nodeXY 'delta"))));
     }
 
     @Test
@@ -397,6 +447,39 @@ public class CTI4501ValidatorTest {
     }
 
     @Test
+    public void testMapValidation_ComputedLane_NeitherNodesNorComputedSet_NoComputedMessages() {
+        MapData mapData = getMap().build();
+
+        getFirstLane(mapData).setNodeList(new NodeListXY());
+
+        List<String> messages = toMessages(CTI4501Validator.mapValidation(mapData, MapStandard.CTI4501_V1));
+
+        assertThat(messages, not(hasItem(containsString("computed '"))));
+    }
+
+    @Test
+    public void testMapValidation_ComputedLane_FullyPopulated_NoValidationMessages() {
+        MapData mapData = getMap().build();
+
+        ComputedLane.OffsetXaxisChoice offsetX = new ComputedLane.OffsetXaxisChoice();
+        offsetX.setLarge(new DrivenLineOffsetLg(100));
+        ComputedLane.OffsetYaxisChoice offsetY = new ComputedLane.OffsetYaxisChoice();
+        offsetY.setLarge(new DrivenLineOffsetLg(100));
+
+        ComputedLane computedLane = new ComputedLane();
+        computedLane.setReferenceLaneId(new LaneID(2));
+        computedLane.setOffsetXaxis(offsetX);
+        computedLane.setOffsetYaxis(offsetY);
+        NodeListXY nodeListXY = new NodeListXY();
+        nodeListXY.setComputed(computedLane);
+        getFirstLane(mapData).setNodeList(nodeListXY);
+
+        List<String> messages = toMessages(CTI4501Validator.mapValidation(mapData, MapStandard.CTI4501_V1));
+
+        assertThat(messages, not(hasItem(containsString("computed '"))));
+    }
+
+    @Test
     public void testMapValidation_ConnectsTo_MissingConnectingLaneFields() {
         MapData mapData = getMap().build();
 
@@ -470,6 +553,9 @@ public class CTI4501ValidatorTest {
         getFirstLane(mapData).getLaneAttributes().setLaneType(laneTypeCrosswalk);
         List<String> crosswalkMessages = toMessages(CTI4501Validator.mapValidation(mapData, MapStandard.CTI4501_V1));
         assertThat(crosswalkMessages, not(hasItem(containsString("lane type: crosswalk"))));
+        LaneDescription crosswalkDesc = CTI4501Validator.getLaneDescription(getFirstLane(mapData));
+        assertThat(crosswalkDesc.isCrosswalk(), equalTo(true));
+        assertThat(crosswalkDesc.isParking(), equalTo(false));
 
         // Parking
         LaneTypeAttributes laneTypeParking = new LaneTypeAttributes();
@@ -477,6 +563,9 @@ public class CTI4501ValidatorTest {
         getFirstLane(mapData).getLaneAttributes().setLaneType(laneTypeParking);
         List<String> parkingMessages = toMessages(CTI4501Validator.mapValidation(mapData, MapStandard.CTI4501_V1));
         assertThat(parkingMessages, not(hasItem(containsString("lane type: parking"))));
+        LaneDescription parkingDesc = CTI4501Validator.getLaneDescription(getFirstLane(mapData));
+        assertThat(parkingDesc.isParking(), equalTo(true));
+        assertThat(parkingDesc.isMedian(), equalTo(false));
 
         // Median
         LaneTypeAttributes laneTypeMedian = new LaneTypeAttributes();
@@ -484,6 +573,9 @@ public class CTI4501ValidatorTest {
         getFirstLane(mapData).getLaneAttributes().setLaneType(laneTypeMedian);
         List<String> medianMessages = toMessages(CTI4501Validator.mapValidation(mapData, MapStandard.CTI4501_V1));
         assertThat(medianMessages, not(hasItem(containsString("lane type: median"))));
+        LaneDescription medianDesc = CTI4501Validator.getLaneDescription(getFirstLane(mapData));
+        assertThat(medianDesc.isMedian(), equalTo(true));
+        assertThat(medianDesc.isStriping(), equalTo(false));
 
         // Striping
         LaneTypeAttributes laneTypeStriping = new LaneTypeAttributes();
@@ -491,11 +583,23 @@ public class CTI4501ValidatorTest {
         getFirstLane(mapData).getLaneAttributes().setLaneType(laneTypeStriping);
         List<String> stripingMessages = toMessages(CTI4501Validator.mapValidation(mapData, MapStandard.CTI4501_V1));
         assertThat(stripingMessages, not(hasItem(containsString("lane type: striping"))));
+        LaneDescription stripingDesc = CTI4501Validator.getLaneDescription(getFirstLane(mapData));
+        assertThat(stripingDesc.isStriping(), equalTo(true));
+        assertThat(stripingDesc.isCrosswalk(), equalTo(false));
 
         // Unknown lane type (null laneType attributes)
         getFirstLane(mapData).getLaneAttributes().setLaneType(null);
         List<String> unknownMessages = toMessages(CTI4501Validator.mapValidation(mapData, MapStandard.CTI4501_V1));
         assertThat(unknownMessages, not(hasItem(containsString("lane type: unknown"))));
+    }
+
+    @Test
+    public void testLaneDescription_IngressOrEgress() {
+        LaneDescription ingress = new LaneDescription(1L, LaneType.VEHICLE_LANE, true);
+        LaneDescription egress = new LaneDescription(2L, LaneType.VEHICLE_LANE, false);
+
+        assertThat(ingress.ingressOrEgress(), equalTo("ingress"));
+        assertThat(egress.ingressOrEgress(), equalTo("egress"));
     }
 
     @Test

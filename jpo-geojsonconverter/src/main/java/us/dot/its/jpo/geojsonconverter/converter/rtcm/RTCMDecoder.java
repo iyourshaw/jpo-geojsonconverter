@@ -13,6 +13,7 @@ import us.dot.its.jpo.geojsonconverter.DateJsonMapper;
 import java.io.File;
 import java.io.IOException;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -36,6 +37,15 @@ public class RTCMDecoder {
     private static final String EXECUTABLE = "/usr/bin/gpsdecode";
 
     private final boolean executableExists;
+
+    private static final int RTCM_PREAMBLE = 0xD3;
+    private static final int REF_STATION_ARP = 1005;
+    private static final int REF_STATION_ARP_PLUS_HEIGHT = 1006;
+    private static final int SYSTEM_PARAMETERS = 1013;
+    private static final int UNICODE_TEXT = 1029;
+    private static final int RECEIVER_ANTENNA_DESC = 1033;
+    private static final int MIN_MSM_MESSAGE_TYPE = 1071;
+    private static final int MAX_MSM_MESSAGE_TYPE = 1230;
 
     public List<byte[]> splitMessages(RTCMmessageList messageList) throws RTCMDecodeException {
         byte[] combinedBytes = combinePartialMessages(messageList);
@@ -131,7 +141,7 @@ public class RTCMDecoder {
 
         // Preamble: 8 bits
         int preamble = unsigned(bytes[offset]);
-        if (preamble != 0xD3) {
+        if (preamble != RTCM_PREAMBLE) {
             throw new RTCMDecodeException(String.format("Invalid RTCM preamble, can't find length: %02X, should be %02X", preamble, 0xD3));
         }
 
@@ -146,7 +156,7 @@ public class RTCMDecoder {
     }
 
     /**
-     * Partially decode the RTCM message.  Used when gpsdecode library is not available.
+     * Partially decode the RTCM message to get necessary items.  Used when gpsdecode library is not available.
      * Ref. <a href="https://gitlab.com/gpsd/gpsd/-/blob/master/drivers/driver_rtcm3.c">gpsd/driver_rtcm.c</a>
      * @param bytes byte array
      * @return JSON formatted partially decoded message.
@@ -163,7 +173,7 @@ public class RTCMDecoder {
 
         // Preamble: 8 bits
         int preamble = unsigned(bytes[0]);
-        if (preamble != 0xD3) {
+        if (preamble != RTCM_PREAMBLE) {
             log.error(String.format("Invalid RTCM preamble: %02X, should be %20X", preamble, 0xD3));
             return node;
         }
@@ -186,12 +196,74 @@ public class RTCMDecoder {
 
         // Station ID: 12 bits
         // Get station ID for types known or guessed to have them per gpsd/driver_rtcm3.c
-        if (type <= 1013 || type == 1029 || type == 1033 || (type >= 1071 && type <= 1230)) {
+        if (type <= SYSTEM_PARAMETERS || type == UNICODE_TEXT || type == RECEIVER_ANTENNA_DESC
+                || (type >= MIN_MSM_MESSAGE_TYPE && type <= MAX_MSM_MESSAGE_TYPE)) {
             int stationId = ((unsigned(bytes[4]) & 0x0F) << 8) | unsigned(bytes[5]);
             node.put("station_id", stationId);
         }
 
+        if (type == REF_STATION_ARP || type == REF_STATION_ARP_PLUS_HEIGHT) {
+            getXYZCoordsFromRefStation(bytes).ifPresent(coords -> {
+                node.put("x", coords.x);
+                node.put("y", coords.y);
+                node.put("z", coords.z);
+            });
+        }
+
+        if (type >= MIN_MSM_MESSAGE_TYPE && type <= MAX_MSM_MESSAGE_TYPE) {
+            getTimeOfWeekFromMSM(bytes).ifPresent(time -> node.put("tow", time));
+        }
+
         return node;
+    }
+
+    public static Optional<XYZCoords> getXYZCoordsFromRefStation(byte[] bytes) {
+        final BigDecimal antennaPositionResolution = new BigDecimal("0.0001");
+        if (bytes.length < 22) {
+            log.error("Not enough bytes to get XYZCoords From Ref Station message.  Need at least 22 bytes.");
+            return Optional.empty();
+        }
+        // X, Y, and Z coords are 38-bit signed numbers in 5 bytes each
+        long x = get38bitSignedInt(bytes, 7);
+        BigDecimal xd = antennaPositionResolution.multiply(new BigDecimal(x));
+        long y = get38bitSignedInt(bytes, 12);
+        BigDecimal yd = antennaPositionResolution.multiply(new BigDecimal(y));
+        long z = get38bitSignedInt(bytes, 17);
+        BigDecimal zd = antennaPositionResolution.multiply(new BigDecimal(z));
+        return Optional.of(new XYZCoords(xd, yd, zd));
+    }
+
+    public static long get38bitSignedInt(byte[] bytes, int offset) {
+        long i0 = unsigned(bytes[offset]);
+        long i1 = unsigned(bytes[offset + 1]);
+        long i2 = unsigned(bytes[offset + 2]);
+        long i3 = unsigned(bytes[offset + 3]);
+        long i4 = unsigned(bytes[offset + 4]);
+        long i = ((i0 & 0x3FL) << 32) | (i1 << 24) | (i2 << 16) | (i3 << 8) | i4;
+        if ((i & 0x20_0000_0000L) != 0) {
+            // First bit is one: twos complement
+            long abs = ((~i) & 0x3F_FFFF_FFFFL) + 1;
+            i = -abs;
+        }
+        return i;
+    }
+
+    public record XYZCoords(BigDecimal x, BigDecimal y, BigDecimal z){
+    }
+
+    public static Optional<Long> getTimeOfWeekFromMSM(byte[] bytes) {
+        if (bytes.length < 10) {
+            log.error("Not enough bytes to get time of week (tow) from RTCM.  Need at least 10 bytes.");
+            return Optional.empty();
+        }
+
+        // tow is first 30 bits of the 4 bytes after the first 6 bytes.
+        long i7 = unsigned(bytes[6]);
+        long i8 = unsigned(bytes[7]);
+        long i9 = unsigned(bytes[8]);
+        long i10 = unsigned(bytes[9]);
+        long tow = ((i7 << 24) | (i8 << 16) | (i9 << 8) | i10) >>> 2;
+        return Optional.of(tow);
     }
 
     /**

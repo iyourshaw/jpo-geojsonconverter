@@ -21,6 +21,10 @@ import us.dot.its.jpo.geojsonconverter.pojos.geojson.rtcm.RTCMProperties;
 import us.dot.its.jpo.geojsonconverter.standards.RtcmStandard;
 import us.dot.its.jpo.geojsonconverter.validator.JsonValidatorResult;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -343,6 +347,53 @@ public class RTCMConverterTest {
     }
 
     @Test
+    public void testProcessRtcm_J3258_TimestampFromMSM() throws JsonProcessingException {
+        RTCMcorrectionsMessageFrame messageFrame = mapper.readValue(RTCM_J3258_1006_AND_MSM4, RTCMcorrectionsMessageFrame.class);
+        Instant odeReceivedAt = RTCM_J3258_1006_AND_MSM_ODE_INGEST_TIME;
+        RTCMConverter converter = getConverterJ3258();
+        ProcessedRTCM processedRtcm = converter.processRTCM(odeReceivedAt, messageFrame);
+        assertThat(processedRtcm, notNullValue());
+        RTCMProperties properties = processedRtcm.getProperties();
+        assertThat(properties, notNullValue());
+        assertThat(properties.getUtcTime(), notNullValue());
+
+
+        Duration diff = Duration.ofMillis(Math.abs(odeReceivedAt.toEpochMilli() - properties.getUtcTime()));
+        Instant utcTimeInstant = Instant.ofEpochMilli(properties.getUtcTime());
+        log.info("Ref timestamp: {}, GPS UTC timestamp: {}, MSM timestamp diff from reference: {}",
+                odeReceivedAt, utcTimeInstant, diff);
+
+        // Expect timestamp to be in the ballpark of the ingest time but not identical
+        assertThat(diff, allOf(
+                greaterThan(Duration.ofMillis(0)),
+                lessThan(Duration.ofMinutes(1))));
+
+        // Expect timestamp to be a round number of seconds
+        assertThat(utcTimeInstant.get(ChronoField.MILLI_OF_SECOND), equalTo(0));
+
+    }
+
+    @Test
+    public void testProcessRtcm_J3258_LonLatFromStationRef() throws JsonProcessingException {
+        RTCMcorrectionsMessageFrame messageFrame = mapper.readValue(RTCM_J3258_1006_AND_MSM4, RTCMcorrectionsMessageFrame.class);
+        RTCMConverter converter = getConverterJ3258();
+        ProcessedRTCM processedRtcm = converter.processRTCM(messageFrame);
+        assertThat(processedRtcm, notNullValue());
+        RTCMProperties properties = processedRtcm.getProperties();
+        assertThat(properties, notNullValue());
+
+        assertThat(properties.getLongitude(), notNullValue());
+        assertThat(properties.getLatitude(), notNullValue());
+
+        log.info("lon/lat: {}/{}", properties.getLongitude(), properties.getLatitude());
+
+        // Lat/lon in vicinity of continental USA?
+        assertThat(properties.getLongitude(), allOf(greaterThan(-125.0), lessThan(-65.0)));
+        assertThat(properties.getLatitude(), allOf(greaterThan(25.0), lessThan(50.)));
+
+    }
+
+    @Test
     public void testJsonValidation() {
         var result = new JsonValidatorResult();
         result.addException(new Exception("test"));
@@ -360,6 +411,8 @@ public class RTCMConverterTest {
                 .toList();
         assertThat(exceptions, hasSize(equalTo(1)));
     }
+
+
 
 
     private RTCMConverter getConverterV1() {
@@ -440,6 +493,24 @@ public class RTCMConverterTest {
                         "rev": "rtcmRev3",
                         "msgs": [
                             "D300153EE00103012E3ADE9E350FDE024F89F13209210000393065D300DA43200175A4B302002084012D060000000020210100777FFFF7A223A622A528A229B0CD89FB6831753E7D27E61DCC07988CFD19FC23FC229E85638AD817B82BC05938B3917EFCC5399AF347E8C07810F759F084047A07B406682CFA57F9DFF547EE0F4CE33D79CFF5E74846D201324FC4C94005C87C1977F065E081F84B0817E8281A90A06A82BE56FA5FDBEC675FB19D3F06230F23083EF3A0FBCFC42E82F46F57D1F6FF47DBFFAB42FF73C3FDCF0FFB84FFFFFFFFFFFFFFFFFFFBBBBFFFFFFC0000001A69AE38614C93D98E5B7375D9692454DB9E7A4B25170071F5D9D300EC44600175A4B30000209185052000000000200111007FFFFFFFACAAA8A72D2DAC28FF92E67FCF01D0C42BC9ED46DCADBAC3789617CC5218B5319914D12A425588ADF005201DE04FC0CB8BB81A6036086ED6862D385A86353F175630906248C78621EC4B78A7717D7B848BF08177C306FF140A792DCDE99A7FA8543EA96C85CF5C1A9EF86E8521B9F580711A02ECF00D5B2039C88275820A18E82804E0A9827987A9E6355F98A8FE6DC585C47217E46062A3018A04791363E69A8F9D111E7A0D7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF80000000577616DD8E9867AF1AEBBF5BD55E175155D5D96E1663A6F98044DBA6"
+                        ]
+                    }
+                }
+            }
+            """;
+
+    // Actual RTCM with Station Ref 1006 and MSM4 1074 and 1094 messages
+    private final static Instant RTCM_J3258_1006_AND_MSM_ODE_INGEST_TIME
+            = Instant.parse("2026-07-17T16:50:59.713Z");
+    private final static String RTCM_J3258_1006_AND_MSM4 = """
+            {
+                "messageId": 28,
+                "value": {
+                    "RTCMcorrections": {
+                        "msgCnt": 54,
+                        "rev": "rtcmRev3",
+                        "msgs": [
+                            "D300153EE00103012E3ADE94350FDE024F89F13209220000D81007D3010F43200175769E22002084212D86000000002021010077F7FFFFF7A4AAA122A329252824A9B6A7D0751382DB8BF776A5098F56AEA8FD594AC0169D2D865B8CE629C86393E00B8004801A0217C1DF83C708AE27FD1A7A6074D0EBE6503CA0B94282A2C3C70818105020E27FDCFF42007DB61B9DF74FEED4FB2273EECC5FBB3182B1930B41742D0600C45843EAE31066D0419B50098D8039D800E76008A4EF9434FE9883FA6223ECB3EF9F3F7E8601FA17FBE779F0B0BBC2C9C20B27103581608082C204350810D8231FA0FF5C83EF870FBE13DAC7BF73273DCCA2F76DB3FFF3333FFFFFFFFFFFFFFFFFFFFFFFFFFFFFC0000000018618471CB5EBAEB9E5B75965AF334B4DB5D77E71CB3DD75D749247701F4C75D300B644600175769E2000209441000028000000200111007FFFFFA927ADA8A72D1C9B20EBFEDEA0A191233226734D170FBB2042419885A96A82EAC5EA0C0170ECE2F5C71790AE775CFCBA08B43A7EBFFF4FFFE802A06D01C1D97B87821A1E55284497412BFD04F8B8143B905B6D017B7985D5C417F897C6EEBF4F167D6291F5D597A027BE8E69FA3025E99017F6085FD9117F743BFE7A3FFFFFFFFFFFFFFFFFFFFFFFF800000639EDA69B73B5165F6E39EFA6DBF5BD565F603FD72F"
                         ]
                     }
                 }

@@ -8,13 +8,18 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.Transformer;
 import org.apache.kafka.streams.processor.ProcessorContext;
+import org.geotools.referencing.GeodeticCalculator;
+import org.locationtech.jts.geom.Coordinate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import us.dot.its.jpo.asn.j2735.r2024.Common.*;
@@ -319,19 +324,38 @@ public class MapProcessedJsonConverter
         MapRefPoint refPoint = new MapRefPoint();
         refPoint.setFromPosition3D(convertPosition3D(intersection.getRefPoint()));
 
-        HashMap<Integer, double[]> lanePoints = new HashMap<Integer, double[]>();
+        HashMap<Integer, Coordinate> laneFirstPoints = new HashMap<Integer, Coordinate>();
+        HashMap<Integer, Coordinate> laneLastPoints = new HashMap<Integer, Coordinate>();
+        HashMap<Integer, GenericLane> laneById = new HashMap<Integer, GenericLane>();
         for (GenericLane lane : intersection.getLaneSet()) {
-            if (!lanePoints.containsKey((int) lane.getLaneID().getValue())) {
+            int laneId = (int) lane.getLaneID().getValue();
+            if (!laneById.containsKey(laneId)) {
                 LineString laneGeometry = createGeometry(lane, refPoint);
-                double coordinate[] = {laneGeometry.getCoordinates()[0][0], laneGeometry.getCoordinates()[0][1]};
-                lanePoints.put((int) lane.getLaneID().getValue(), coordinate);
+                double[][] laneGeometryCoordinates = laneGeometry.getCoordinates();
+                laneFirstPoints.put(laneId, new Coordinate(laneGeometryCoordinates[0][0], laneGeometryCoordinates[0][1]));
+                double[] lastCoordinate = laneGeometryCoordinates[laneGeometryCoordinates.length - 1];
+                laneLastPoints.put(laneId, new Coordinate(lastCoordinate[0], lastCoordinate[1]));
+                laneById.put(laneId, lane);
             }
         }
 
+        // Tracks (fromLaneId, toLaneId) pairs already emitted, so a connection redundantly declared
+        // from both lanes isn't rendered twice. Only the reverse direction is ever checked, so multiple
+        // connections declared in the same direction (e.g. different signal groups) are unaffected.
+        Set<Pair<Integer, Integer>> emittedConnections = new HashSet<>();
+
         List<ConnectingLanesFeature<LineString>> lanesFeatures = new ArrayList<>();
         for (GenericLane lane : intersection.getLaneSet()) {
-            if (lane.getLaneAttributes().getDirectionalUse().isIngressPath() == true) {
-                double[] laneCoordinates = lanePoints.get((int) lane.getLaneID().getValue()); // first point
+            boolean isIngress = lane.getLaneAttributes().getDirectionalUse().isIngressPath();
+            boolean isEgress = lane.getLaneAttributes().getDirectionalUse().isEgressPath();
+            // Cover case where a no-travel lane has a connection.
+            // But still ignore the case of egress-only lanes with connections, in case implementors
+            // have redundant connections on ingress and egress.
+            boolean isNeither = !isIngress && !isEgress;
+            if (isIngress || isNeither) {
+                int laneId = (int) lane.getLaneID().getValue();
+                Coordinate laneFirstPoint = laneFirstPoints.get(laneId);
+                Coordinate laneLastPoint = laneLastPoints.get(laneId);
                 if (lane.getConnectsTo() == null)
                     continue;
 
@@ -344,10 +368,53 @@ public class MapProcessedJsonConverter
                     laneProps.setSignalGroupId(
                             connection.getSignalGroup() != null ? (int) connection.getSignalGroup().getValue() : null);
 
-                    // Point
-                    double[] connectionCoordinates =
-                            lanePoints.get((int) connection.getConnectingLane().getLane().getValue()); // last point
-                    double[][] coordinates = new double[][] {laneCoordinates, connectionCoordinates};
+                    if (connection.getConnectingLane() == null || connection.getConnectingLane().getLane() == null) {
+                        // skip if connecting lane is null, avoid NPE
+                        continue;
+                    }
+
+                    int targetLaneId = (int) connection.getConnectingLane().getLane().getValue();
+                    GenericLane targetLane = laneById.get(targetLaneId);
+                    if (targetLane == null) {
+                        // skip if target lane is null, avoid NPE
+                        continue;
+                    }
+                    boolean targetIsIngress = targetLane.getLaneAttributes().getDirectionalUse().isIngressPath();
+                    boolean targetIsEgress = targetLane.getLaneAttributes().getDirectionalUse().isEgressPath();
+                    boolean targetIsNeither = !targetIsIngress && !targetIsEgress;
+
+                    // Skip if the target lane's own connectsTo list already declared this connection in reverse.
+                    boolean targetCouldAlsoBeCurrent = targetIsIngress || targetIsNeither;
+                    if (targetCouldAlsoBeCurrent && emittedConnections.contains(Pair.of(targetLaneId, laneId))) {
+                        continue;
+                    }
+                    emittedConnections.add(Pair.of(laneId, targetLaneId));
+
+                    Coordinate targetFirstPoint = laneFirstPoints.get(targetLaneId);
+                    Coordinate targetLastPoint = laneLastPoints.get(targetLaneId);
+
+                    // The normal case: an exclusively-ingress lane connecting to an exclusively-egress lane.
+                    // Both lanes' node lists start at the point nearest the intersection, so the first point
+                    // of each is the correct connection point.
+                    boolean isIngressToEgress = isIngress && !isEgress && targetIsEgress && !targetIsIngress;
+
+                    Coordinate connectionStart;
+                    Coordinate connectionEnd;
+                    if (isIngressToEgress) {
+                        connectionStart = laneFirstPoint;
+                        connectionEnd = targetFirstPoint;
+                    } else {
+                        // Either lane has both directional flags set, or neither set, so it's not safe to
+                        // assume the first point of each lane is the near-intersection end. Instead, connect
+                        // whichever pair of endpoints (first/last of each lane) are geodetically closest.
+                        Coordinate[] nearestEndpoints = findNearestEndpoints(
+                                laneFirstPoint, laneLastPoint, targetFirstPoint, targetLastPoint);
+                        connectionStart = nearestEndpoints[0];
+                        connectionEnd = nearestEndpoints[1];
+                    }
+
+                    double[][] coordinates = new double[][] {
+                            {connectionStart.x, connectionStart.y}, {connectionEnd.x, connectionEnd.y}};
                     LineString geometry = new LineString(coordinates);
 
                     String id = String.format("%s-%s", laneProps.getIngressLaneId(), laneProps.getEgressLaneId());
@@ -357,6 +424,41 @@ public class MapProcessedJsonConverter
         }
 
         return new ConnectingLanesFeatureCollection<LineString>(lanesFeatures.toArray(new ConnectingLanesFeature[0]));
+    }
+
+    /**
+     * Given both endpoints of two lanes, find which pair of endpoints (one from each lane) are
+     * geodetically closest together.
+     *
+     * @return a two-element array: {@code [0]} is the chosen endpoint of the first lane, {@code [1]}
+     *         is the chosen endpoint of the second lane.
+     */
+    private Coordinate[] findNearestEndpoints(
+            Coordinate thisFirst, Coordinate thisLast, Coordinate targetFirst, Coordinate targetLast) {
+        Coordinate[][] candidatePairs = new Coordinate[][] {
+                {thisFirst, targetFirst},
+                {thisFirst, targetLast},
+                {thisLast, targetFirst},
+                {thisLast, targetLast}
+        };
+
+        Coordinate[] nearestPair = candidatePairs[0];
+        double nearestDistance = geodeticDistanceMeters(nearestPair[0], nearestPair[1]);
+        for (int i = 1; i < candidatePairs.length; i++) {
+            double distance = geodeticDistanceMeters(candidatePairs[i][0], candidatePairs[i][1]);
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearestPair = candidatePairs[i];
+            }
+        }
+        return nearestPair;
+    }
+
+    private double geodeticDistanceMeters(Coordinate a, Coordinate b) {
+        GeodeticCalculator calculator = new GeodeticCalculator();
+        calculator.setStartingGeographicPoint(a.x, a.y);
+        calculator.setDestinationGeographicPoint(b.x, b.y);
+        return calculator.getOrthodromicDistance();
     }
 
     public LineString createGeometry(GenericLane lane, MapRefPoint refPoint) {

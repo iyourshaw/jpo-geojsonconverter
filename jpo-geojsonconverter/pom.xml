@@ -37,6 +37,7 @@
         <!-- Allow override of github organization when publishing artifacts to github -->
         <github_organization>usdot-jpo-ode</github_organization>
         <jsonschema.generator.version>4.38.0</jsonschema.generator.version>
+        <geotools.version>29.6</geotools.version>
     </properties>
     <dependencies>
         <!-- Spring Boot Dependencies -->
@@ -167,6 +168,16 @@
             <artifactId>jts-core</artifactId>
             <version>1.19.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-main</artifactId>
+            <version>${geotools.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-opengis</artifactId>
+            <version>${geotools.version}</version>
+        </dependency>
 
         <!-- JSON Schema Generator -->
         <dependency>
@@ -201,6 +212,29 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+    <repositories>
+        <!-- Always check Central repo first -->
+        <repository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>central</id>
+            <name>Central Repository</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+        </repository>
+        <!-- OSGEO repositories for jts and geotools.  Only use release versions, not snapshots  -->
+        <repository>
+            <id>osgeo</id>
+            <name>OSGeo Release Repository</name>
+            <url>https://repo.osgeo.org/repository/release/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+    </repositories>
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>

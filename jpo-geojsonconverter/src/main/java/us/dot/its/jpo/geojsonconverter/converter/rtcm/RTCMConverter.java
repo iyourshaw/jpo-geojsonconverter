@@ -4,6 +4,13 @@ package us.dot.its.jpo.geojsonconverter.converter.rtcm;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.networknt.schema.Error;
 import lombok.extern.slf4j.Slf4j;
+import org.geotools.referencing.CRS;
+import org.geotools.referencing.crs.DefaultGeocentricCRS;
+import org.geotools.referencing.crs.DefaultGeographicCRS;
+import org.locationtech.jts.geom.CoordinateXY;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.operation.MathTransform;
+import org.opengis.referencing.operation.TransformException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import us.dot.its.jpo.asn.j2735.r2024.Common.*;
@@ -19,6 +26,7 @@ import us.dot.its.jpo.geojsonconverter.pojos.geojson.rtcm.RTCMProperties;
 import us.dot.its.jpo.geojsonconverter.standards.RtcmStandard;
 import us.dot.its.jpo.geojsonconverter.validator.JsonValidatorResult;
 
+import java.time.Instant;
 import java.util.*;
 
 import static us.dot.its.jpo.geojsonconverter.converter.FieldConversions.*;
@@ -36,6 +44,8 @@ public class RTCMConverter {
     private final String spec;
     private final String conformanceIssue;
 
+    private final String TYPE = "type";
+
     @Autowired
     public RTCMConverter(RTCMDecoder decoder, GeoJsonConverterProperties properties) {
         this.decoder = decoder;
@@ -50,12 +60,25 @@ public class RTCMConverter {
     }
 
     /**
+     * Converts a J2735 RTCMcorrections Message Frame to a ProcessedRTCM.
+     * Uses the current system time to determine what week it is for the GPS timestamp.
+     * @param messageFrame The RTCM message frame
+     * @return The processed RTCM
+     */
+    public ProcessedRTCM processRTCM(final RTCMcorrectionsMessageFrame messageFrame) {
+        return processRTCM(Instant.now(), messageFrame);
+    }
+
+    /**
      * Converts a J2735 RTCMcorrections Message Frame to a ProcessedRTCM
+     * @param referenceTimestamp Reference timestamp for the sole purpose of determining the
+     *                           gps week to use with the time-of-week timestamp.
      * @param rtcmFrame The RTCM message frame
      * @return The processed RTCM
      */
     @SuppressWarnings("java:S3776") // Ignore Sonar 'cognitive complexity' warning
-    public ProcessedRTCM processRTCM(final RTCMcorrectionsMessageFrame rtcmFrame) {
+    public ProcessedRTCM processRTCM(Instant referenceTimestamp,
+                                     final RTCMcorrectionsMessageFrame rtcmFrame) {
         var properties = new RTCMProperties();
 
         if (rtcmFrame == null) {
@@ -90,6 +113,23 @@ public class RTCMConverter {
                       "present.  It is forbidden by CTI-4501.");
         }
 
+        // CTI 4501 v01.01, Sec. 4.3.3.5.1: optional RTCMheader is forbidden
+        RTCMheader header = rtcm.getRtcmHeader();
+        if (header != null) {
+            properties.addValidationMessage(
+                    conformanceIssue + "The RTCMcorrections optional field 'rtcmHeader' (DF_RTCMheader) is" +
+                            " present.  It is forbidden by CTI-4501.");
+        }
+
+        final RTCMmessageList messageList = rtcm.getMsgs();
+        if (messageList != null) {
+            decodeMessages(properties, messageList);
+        } else {
+            log.info("RTCM messageList is null");
+        }
+
+
+
         // FullPositionVector is mandatory in CTI 4501
         // See CTI 4501 v01.01, Sec. 4.3.3.1.1.11, Table 11
         if (rtcmStandardVersion == RtcmStandard.CTI4501_V1) {
@@ -108,21 +148,9 @@ public class RTCMConverter {
                         conformanceIssue + "The RTCMcorrections 'anchorPoint' (DF_FullPositionVector) is " +
                                 "present. It is disallowed by J3258.");
             }
-        }
-
-        // CTI 4501 v01.01, Sec. 4.3.3.5.1: optional RTCMheader is forbidden
-        RTCMheader header = rtcm.getRtcmHeader();
-        if (header != null) {
-            properties.addValidationMessage(
-                    conformanceIssue + "The RTCMcorrections optional field 'rtcmHeader' (DF_RTCMheader) is" +
-                            " present.  It is forbidden by CTI-4501.");
-        }
-
-        final RTCMmessageList messageList = rtcm.getMsgs();
-        if (messageList != null) {
-            decodeMessages(properties, messageList);
-        } else {
-            log.info("RTCM messageList is null");
+            // In J3258, get coordinates and timestamp from the decodes messages instead
+            // of from full position vector
+            processCoordinatesAndTimestamp(referenceTimestamp, properties);
         }
 
 
@@ -228,6 +256,188 @@ public class RTCMConverter {
                             "present but should not be included.");
         }
 
+    }
+
+    /**
+     * For J3258, get lat/long and timestamp from the x,y,z and tow fields of the
+     * decoded messages.
+     * @param properties Properties assumed to include decoded messages
+     */
+    private void processCoordinatesAndTimestamp(Instant referenceTimestamp,
+                                                RTCMProperties properties) {
+        processCoordinates(properties);
+        processTimestamp(referenceTimestamp, properties);
+    }
+
+    private void processCoordinates(RTCMProperties properties) {
+        // Find station ref message type 1005 or 1006
+        Optional<DecodedRTCMmessage> stationRefOpt = properties.getMessages().stream().filter(message -> {
+            JsonNode decodedMessage = message.getDecodedMessage();
+            if (decodedMessage != null && decodedMessage.hasNonNull(TYPE)) {
+                int messageType = decodedMessage.get(TYPE).asInt();
+                return messageType == 1005 || messageType == 1006;
+            }
+            log.warn("type missing from decoded message {}", decodedMessage);
+            return false;
+        }).findFirst();
+
+        if (stationRefOpt.isEmpty()) {
+            log.error("No 1005 or 1006 type message is present, can't get rtcm coordinates");
+            return;
+        }
+
+        DecodedRTCMmessage stationRef = stationRefOpt.get();
+        JsonNode nodes = stationRef.getDecodedMessage();
+        JsonNode xNode = nodes.get("x");
+        JsonNode yNode = nodes.get("y");
+        JsonNode zNode = nodes.get("z");
+        if (xNode == null || yNode == null || zNode == null) {
+            log.error("One or more coordinates are missing.");
+            return;
+        }
+        if (!xNode.isNumber() || !yNode.isNumber() || !zNode.isNumber()) {
+            log.error("Invalid coordinates format x,y,z: {}, {}, {}", xNode, yNode, zNode);
+            return;
+        }
+        double x = xNode.doubleValue();
+        double y = yNode.doubleValue();
+        double z = zNode.doubleValue();
+        Optional<CoordinateXY> lonLatOpt = gpsXyzToWgs84LonLat(x, y, z);
+        if (lonLatOpt.isEmpty()) {
+            log.error("Couldn't convert xyz coords to lon-lat");
+            return;
+        }
+        CoordinateXY lonLat = lonLatOpt.get();
+        properties.setLongitude(lonLat.getX());
+        properties.setLatitude(lonLat.getY());
+    }
+
+    private static final MathTransform ECEF_TO_LON_LAT;
+
+    static {
+        try {
+            ECEF_TO_LON_LAT = CRS.findMathTransform(DefaultGeocentricCRS.CARTESIAN, DefaultGeographicCRS.WGS84_3D);
+        } catch (FactoryException e) {
+            throw new RuntimeException("Couldn't initialize ECEF_TO_LON_LAT_HEIGHT", e);
+        }
+    }
+
+    /**
+     * Convert GPS Earth Centered (ECEF) coordinates to WGS-84 lon-lat coords.
+     * Package-private for testing.
+     */
+    Optional<CoordinateXY> gpsXyzToWgs84LonLat(double x, double y, double z) {
+        try {
+            double[] srcPts = {x, y, z};
+            double[] dstPts = new double[3];
+            ECEF_TO_LON_LAT.transform(srcPts, 0, dstPts, 0, 1);
+            double lon = dstPts[0];
+            double lat = dstPts[1];
+            if (!isValidLonLat(lon, lat)) {
+                log.error("ECEF ({}, {}, {}) converted to invalid lon/lat ({}, {})", x, y, z, lon, lat);
+                return Optional.empty();
+            }
+            // We don't care about elevation for now, discard it
+            return Optional.of(new CoordinateXY(lon, lat));
+        } catch (TransformException | AssertionError e) {
+            // Out-of-range/degenerate ECEF input can make GeoTools throw AssertionError instead of
+            // TransformException, depending on whether JVM assertions are enabled.
+            log.error("Unable to convert ECEF ({}, {}, {}) to WGS-84 lon/lat", x, y, z, e);
+            return Optional.empty();
+        }
+    }
+
+    private static boolean isValidLonLat(double lon, double lat) {
+        return Double.isFinite(lon) && Double.isFinite(lat) && lon >= -180 && lon <= 180 && lat >= -90 && lat <= 90;
+    }
+
+    /**
+     * Process GPS timestamp to get utc timestamp
+     * @param referenceTime - Reference timestamp to figure out what gps week it is
+     * @param properties rtcm properties, including decoded payloads
+     */
+    private void processTimestamp(Instant referenceTime, RTCMProperties properties) {
+        // Find the GPS MSM message (1071-1077)
+        // Timestamp calc will only work with GPS which is supposed to be there, so don't try to
+        // deal with any other constellations.
+        Optional<DecodedRTCMmessage> msmOpt = properties.getMessages().stream().filter(message -> {
+            JsonNode decodedMessage = message.getDecodedMessage();
+            if (decodedMessage != null && decodedMessage.hasNonNull(TYPE)) {
+                int messageType = decodedMessage.get(TYPE).asInt();
+                return messageType >= 1071 && messageType <= 1077;
+            }
+            log.warn("type missing from decoded message {}", message.getDecodedMessage());
+            return false;
+        }).findFirst();
+
+        if (msmOpt.isEmpty()) {
+            log.error("No GPS MSM message is present, can't get rtcm timestamp");
+            return;
+        }
+
+        DecodedRTCMmessage msm = msmOpt.get();
+        JsonNode nodes = msm.getDecodedMessage();
+        JsonNode towNode = nodes.get("tow");
+        if (towNode == null) {
+            log.error("tow node not found in MSM message, can't get rtcm timestamp");
+            return;
+        }
+        if (!towNode.isLong()) {
+            log.error("tow node {} in MSM is not long int, can't get rtcm timestamp", towNode);
+        }
+        long tow = towNode.asLong();
+        long gpsWeek = getGpsWeek(referenceTime);
+        long utcMillis = convertGpsTimeOfWeekToEpochMillis(gpsWeek, tow);
+        properties.setUtcTime(utcMillis);
+    }
+
+    private static final Instant GPS_EPOCH = Instant.parse("1980-01-06T00:00:00Z");
+    private static final long MILLIS_PER_GPS_WEEK = 604_800_000L; // 7 days in ms
+
+    // Effective instant of the most recent GPS<->UTC leap second.
+    // Ref https://en.wikipedia.org/wiki/Leap_second
+    private static final long LATEST_LEAP_SECOND_EPOCH_MILLIS =
+            Instant.parse("2017-01-01T00:00:00Z").toEpochMilli();
+    // Number of leap seconds since start of GPS time in 1980
+    private static final int CURRENT_GPS_UTC_LEAP_SECONDS = 18;
+
+    /**
+     * Number of GPS<->UTC leap seconds in effect at the given approximate UTC instant.
+     */
+    private static int gpsUtcLeapSecondOffset(long approxUtcEpochMilli) {
+        if (approxUtcEpochMilli < LATEST_LEAP_SECOND_EPOCH_MILLIS) {
+            // Log an error if the timestamp is too old.
+            log.error(
+                    "Timestamp {} is too old. GPS<->UTC leap second offset is not known for timestamps before {}," +
+                            "using {} which is not correct.",
+                    Instant.ofEpochMilli(approxUtcEpochMilli),
+                    Instant.ofEpochMilli(LATEST_LEAP_SECOND_EPOCH_MILLIS),
+                    CURRENT_GPS_UTC_LEAP_SECONDS);
+        }
+        return CURRENT_GPS_UTC_LEAP_SECONDS;
+    }
+
+    /**
+     * Convert GPS time of week timestamp to epoch millisecond timestamp
+     * @param gpsWeek GPS week number
+     * @param tow time of week
+     * @return timestamp in epoch milliseconds
+     */
+    private long convertGpsTimeOfWeekToEpochMillis(long gpsWeek, long tow) {
+        long gpsEpochMillis = GPS_EPOCH.toEpochMilli() + gpsWeek * MILLIS_PER_GPS_WEEK + tow;
+        // we need to care about leap seconds because the offset is 18 seconds from utc as of 2026
+        return gpsEpochMillis - gpsUtcLeapSecondOffset(gpsEpochMillis) * 1000L;
+    }
+
+    /**
+     * Get the GPS week of the instant
+     * @param instant timestamp
+     * @return GPS week number
+     */
+    private long getGpsWeek(Instant instant) {
+        long utcEpochMillis = instant.toEpochMilli();
+        long gpsEpochMillis = utcEpochMillis + gpsUtcLeapSecondOffset(utcEpochMillis) * 1000L;
+        return (gpsEpochMillis - GPS_EPOCH.toEpochMilli()) / MILLIS_PER_GPS_WEEK;
     }
 
     @SuppressWarnings("java:S3776") // Ignore Sonar 'cognitive complexity' warning

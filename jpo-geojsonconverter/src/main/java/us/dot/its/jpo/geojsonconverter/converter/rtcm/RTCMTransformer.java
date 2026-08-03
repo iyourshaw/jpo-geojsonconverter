@@ -50,18 +50,22 @@ public class RTCMTransformer
                 RTCMcorrectionsMessageFrame rtcmMessageFrame =
                         (RTCMcorrectionsMessageFrame) payload.getData();
 
-                // Create ProcessedRTCM
-                ProcessedRTCM processed = rtcmConverter.processRTCM(rtcmMessageFrame);
+                ProcessedRTCM processed;
+                try {
+                    ZonedDateTime odeReceivedAt = Instant.parse(metadata.getOdeReceivedAt()).atZone(ZoneId.of("UTC"));
+                    // Use ingest time as reference
+                    processed = rtcmConverter.processRTCM(odeReceivedAt.toInstant(), rtcmMessageFrame);
+                    processed.getProperties().setOdeReceivedAt(odeReceivedAt);
+                } catch (DateTimeParseException e) {
+                    log.error("Error parsing ODE received at {}", metadata.getOdeReceivedAt(), e);
+                    // ingest time not available; use current time
+                    processed = rtcmConverter.processRTCM(rtcmMessageFrame);
+                    processed.getProperties().addValidationMessage("Error parsing ODE received at date/time: " + metadata.getOdeReceivedAt());
+                }
 
                 // Metadata
                 processed.getProperties().setSchemaVersion(ProcessedSchemaVersions.PROCESSED_RTCM_SCHEMA_VERSION);
-                try {
-                    ZonedDateTime odeReceivedAt = Instant.parse(metadata.getOdeReceivedAt()).atZone(ZoneId.of("UTC"));
-                    processed.getProperties().setOdeReceivedAt(odeReceivedAt);
-                } catch (DateTimeParseException e) {
-                    log.error("Error parsing ODE received at {}", metadata.getOdeReceivedAt());
-                    processed.getProperties().addValidationMessage("Error parsing ODE received at date/time: " + metadata.getOdeReceivedAt());
-                }
+
                 processed.getProperties().setAsn1(metadata.getAsn1());
                 if (metadata.getOriginIp() != null && !metadata.getOriginIp().isEmpty()) {
                     processed.getProperties().setOriginIp(metadata.getOriginIp());

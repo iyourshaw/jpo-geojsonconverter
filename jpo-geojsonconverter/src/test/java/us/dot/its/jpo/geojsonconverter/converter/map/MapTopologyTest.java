@@ -76,7 +76,7 @@ public class MapTopologyTest {
             assertEquals(2,
                     mapGeoJson.value.getMapFeatureCollection().getFeatures()[0].getProperties().getIngressApproach());
             assertEquals(false, mapGeoJson.value.getProperties().getCti4501Conformant());
-            assertEquals(4, mapGeoJson.value.getProperties().getValidationMessages().size());
+            assertEquals(3, mapGeoJson.value.getProperties().getValidationMessages().size());
         }
     }
 
