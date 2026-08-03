@@ -3,3 +3,4 @@ jpo-geojsonconverter/target/**
 .idea/
 *.iml
 .claude/
+CLAUDE.md
