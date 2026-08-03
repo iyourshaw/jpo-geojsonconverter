@@ -12,6 +12,7 @@ on:
 
 jobs:
   dockerhub-geojsonconverter:
+    if: github.repository_owner == 'usdot-jpo-ode'
     uses: usdot-jpo-ode/actions/.github/workflows/dockerhub.yml@main
     with:
       image: usdotjpoode/geojsonconverter
