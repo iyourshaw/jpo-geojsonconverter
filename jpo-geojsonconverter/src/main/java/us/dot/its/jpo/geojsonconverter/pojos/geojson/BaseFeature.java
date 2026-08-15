@@ -11,6 +11,14 @@ import lombok.EqualsAndHashCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Base class for geographic Features.
+ * <p>Note: derived classes should use `@EqualsAndHashCode(callSuper = true)` for correct equality comparison</p>
+ * @param <TId> The ID type (optional, set to Void if not applicable)
+ * @param <TGeometry> The geometry type, always should be set.  Geometry may be a GeoJSON type, or
+ *                  other type, such as a String representing WKT.
+ * @param <TProperties> The properties type, always should be set
+ */
 @EqualsAndHashCode
 @JsonIgnoreProperties(value={ "type" }, allowGetters=true)
 @JsonPropertyOrder({"type", "id", "geometry", "properties"})
@@ -60,4 +68,5 @@ public abstract class BaseFeature<TId, TGeometry, TProperties> {
         }
         return testReturn;
     }
+
 }

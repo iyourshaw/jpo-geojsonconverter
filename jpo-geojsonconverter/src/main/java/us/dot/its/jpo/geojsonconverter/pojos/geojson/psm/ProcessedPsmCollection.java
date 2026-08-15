@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.EqualsAndHashCode;
 import lombok.Generated;
 import lombok.extern.slf4j.Slf4j;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.BaseFeatureCollection;
@@ -13,6 +14,7 @@ import us.dot.its.jpo.geojsonconverter.pojos.geojson.BaseFeatureCollection;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Slf4j
+@EqualsAndHashCode(callSuper = true)
 public class ProcessedPsmCollection<TGeometry> extends BaseFeatureCollection<ProcessedPsm<TGeometry>> {
     @JsonCreator
     public ProcessedPsmCollection(@JsonProperty("features") ProcessedPsm<TGeometry>[] features) {

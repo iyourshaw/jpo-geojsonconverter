@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.EqualsAndHashCode;
 import lombok.Generated;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.BaseFeature;
 import us.dot.its.jpo.geojsonconverter.pojos.geojson.Point;
@@ -21,6 +22,7 @@ import us.dot.its.jpo.geojsonconverter.pojos.geojson.Point;
 @Generated
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
+@EqualsAndHashCode(callSuper = true)
 public class ProcessedSrm extends BaseFeature<Void, Point, SrmProperties> {
     @JsonCreator
     public ProcessedSrm(@JsonProperty("geometry") Point geometry,
